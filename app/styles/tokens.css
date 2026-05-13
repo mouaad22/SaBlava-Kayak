@@ -1,0 +1,52 @@
+:root {
+  --color-primary: #0b6e8c;
+  --color-primary-dark: #0a4d6b;
+  --color-secondary: #fafaf5;
+  --color-accent: #ff8c6b;
+  --color-accent-soft: #ffd9cc;
+  --color-sage: #4a9b72;
+  --color-background: #fafaf5;
+  --color-surface: #ffffff;
+  --color-surface-tinted: #ebf4f8;
+  --color-text-primary: #1a2b3a;
+  --color-text-secondary: #6b7e8a;
+  --color-border: #dde3e0;
+  --color-emergency: #d93a2b;
+
+  --font-display: "Alegreya", "Iowan Old Style", "Palatino Linotype", Georgia,
+    serif;
+  --font-body: "Proza Libre", "Helvetica Neue", system-ui, sans-serif;
+
+  --fs-display-lg: 36px;
+  --fs-display-md: 26px;
+  --fs-heading-sm: 20px;
+  --fs-body-md: 16px;
+  --fs-body-sm: 14px;
+  --fs-label-md: 12px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  --radius-control: 12px;
+  --radius-card: 14px;
+  --radius-sheet: 20px;
+  --radius-pill: 9999px;
+
+  --shadow-card: 0 2px 14px rgba(10, 77, 107, 0.09);
+  --shadow-card-hover: 0 6px 22px rgba(10, 77, 107, 0.14);
+  --shadow-sheet: 0 -4px 32px rgba(10, 77, 107, 0.12);
+  --shadow-cta: 0 4px 16px rgba(11, 110, 140, 0.3);
+  --shadow-pill: 0 2px 10px rgba(217, 58, 43, 0.28);
+
+  --ease-entrance: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-exit: cubic-bezier(0.32, 0.72, 0.35, 1);
+
+  --canvas-max: 390px;
+  --page-margin: 20px;
+}

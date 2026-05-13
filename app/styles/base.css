@@ -1,0 +1,138 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #e8ece4;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-md);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  min-height: 100dvh;
+  min-height: 100vh;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  color: var(--color-primary-dark);
+  margin: 0;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+p {
+  margin: 0;
+}
+
+::selection {
+  background: var(--color-surface-tinted);
+  color: var(--color-primary-dark);
+}
+
+.app-frame {
+  width: 100%;
+  max-width: var(--canvas-max);
+  background: var(--color-background);
+  position: relative;
+  overflow: hidden;
+  min-height: 100dvh;
+  min-height: 100vh;
+  box-shadow: 0 0 0 1px rgba(10, 77, 107, 0.06),
+    0 30px 80px rgba(10, 77, 107, 0.18);
+}
+
+.screen-stack {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  min-height: 100vh;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms var(--ease-entrance),
+    transform 380ms var(--ease-entrance);
+  will-change: opacity, transform;
+}
+
+.screen.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.screen.is-entering-from-right {
+  transform: translateX(24px);
+}
+
+.screen.is-entering-from-bottom {
+  transform: translateY(24px);
+}
+
+.label-up {
+  font-family: var(--font-body);
+  font-size: var(--fs-label-md);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.serif-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+}
+
+@media (min-width: 480px) {
+  body {
+    padding: 24px 0;
+  }
+  .app-frame {
+    border-radius: 32px;
+  }
+}

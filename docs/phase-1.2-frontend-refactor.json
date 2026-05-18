@@ -141,7 +141,7 @@
       "finished_at": "2026-05-18",
       "tested": true,
       "committed": true,
-      "commit_sha": "TO_FILL_AFTER_COMMIT",
+      "commit_sha": "1affbfe",
       "paper_artboards": ["9UR-0"],
       "files_in_scope": [
         "app/js/screens/routes.js",

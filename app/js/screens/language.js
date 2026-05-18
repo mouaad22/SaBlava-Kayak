@@ -2,32 +2,36 @@ import { LANGUAGES, t, setLanguage, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
 import { FLAGS } from "../flags.js";
 
+const CHECK_ICON = `
+  <svg class="lang-row__check" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M21.7969 7.545L9.79687 19.545C9.69236 19.6499 9.56816 19.7331 9.43142 19.7899C9.29467 19.8467 9.14806 19.8759 9 19.8759C8.85193 19.8759 8.70532 19.8467 8.56858 19.7899C8.43183 19.7331 8.30764 19.6499 8.20312 19.545L2.95312 14.295C2.84848 14.1904 2.76547 14.0661 2.70883 13.9294C2.6522 13.7927 2.62305 13.6461 2.62305 13.4981C2.62305 13.3501 2.6522 13.2036 2.70883 13.0669C2.76547 12.9301 2.84848 12.8059 2.95312 12.7012C3.05777 12.5966 3.182 12.5136 3.31873 12.457C3.45546 12.4003 3.60201 12.3712 3.75 12.3712C3.89799 12.3712 4.04454 12.4003 4.18126 12.457C4.31799 12.5136 4.44223 12.5966 4.54687 12.7012L9.00094 17.1553L20.205 5.95312C20.4163 5.74178 20.703 5.62305 21.0019 5.62305C21.3008 5.62305 21.5874 5.74178 21.7987 5.95312C22.0101 6.16447 22.1288 6.45111 22.1288 6.75C22.1288 7.04888 22.0101 7.33553 21.7987 7.54687L21.7969 7.545Z" fill="#1B6B8A"/>
+  </svg>
+`;
+
 export function renderLanguageScreen(host) {
   const screen = document.createElement("section");
   screen.className = "screen lang-screen";
   screen.dataset.screen = "language";
 
   screen.innerHTML = `
-    <div class="lang-screen__bg" aria-hidden="true">
-      ${coastIllustration()}
+    <div class="lang-screen__top">
+      <div class="lang-screen__hero-img" role="img" aria-label="Aiguablava beach"
+           style="background-image:url('./assets/illustrations/hero-2.jpg');"></div>
+      <div class="lang-screen__welcome">
+        <h1 class="lang-screen__welcome-title" data-i18n="lang.welcome">${t(
+          "lang.welcome"
+        )}</h1>
+      </div>
     </div>
 
-    <div class="lang-screen__content">
-      <div class="lang-screen__hero">
-        <div class="brand-mark" aria-hidden="true">
-          ${brandGlyph()}
-        </div>
-        <h1 class="brand-name">Sa Blava</h1>
-        <p class="brand-tagline" data-i18n="lang.tagline">${t("lang.tagline")}</p>
-      </div>
-
-      <p class="label-up lang-screen__list-label" data-i18n="lang.section">${t(
+    <div class="lang-screen__bottom">
+      <p class="lang-screen__prompt" data-i18n="lang.section">${t(
         "lang.section"
       )}</p>
 
       <div class="lang-list" role="radiogroup" aria-label="${t("lang.section")}">
         ${LANGUAGES.map(
-          (l, i) => `
+          (l) => `
             <button
               type="button"
               class="lang-row"
@@ -36,26 +40,22 @@ export function renderLanguageScreen(host) {
               data-lang="${l.code}"
               tabindex="${l.code === getLanguage() ? "0" : "-1"}"
             >
-              <span class="lang-row__flag" aria-hidden="true">${FLAGS[l.code] || ""}</span>
-              <span class="lang-row__name">${l.name}</span>
-              <span class="lang-row__radio" aria-hidden="true"></span>
+              <span class="lang-row__flag">${FLAGS[l.code] || ""}</span>
+              <span class="lang-row__body">
+                <span class="lang-row__name">${l.name}</span>
+                ${CHECK_ICON}
+              </span>
             </button>
           `
         ).join("")}
       </div>
 
-      <div class="lang-screen__cta-wrap">
-        <button class="btn btn--primary" data-action="continue">
-          <span data-i18n="lang.cta">${t("lang.cta")}</span>
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
-          </svg>
-        </button>
-      </div>
+      <button class="lang-screen__cta" type="button" data-action="continue">
+        <span data-i18n="lang.cta">${t("lang.cta")}</span>
+      </button>
     </div>
   `;
 
-  // Selection
   screen.querySelectorAll("[data-lang]").forEach((row) => {
     row.addEventListener("click", () => {
       const code = row.dataset.lang;
@@ -65,7 +65,6 @@ export function renderLanguageScreen(host) {
         r.setAttribute("aria-checked", checked ? "true" : "false");
         r.tabIndex = checked ? 0 : -1;
       });
-      // Re-localize visible strings on this screen
       screen
         .querySelectorAll("[data-i18n]")
         .forEach((n) => (n.textContent = t(n.dataset.i18n)));
@@ -85,65 +84,4 @@ export function renderLanguageScreen(host) {
       setTimeout(() => screen.remove(), 320);
     },
   };
-}
-
-function brandGlyph() {
-  // Stylized wave + kayak silhouette
-  return `
-    <svg viewBox="0 0 64 64" class="brand-mark__glyph" aria-hidden="true">
-      <defs>
-        <linearGradient id="bm-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#0B6E8C"/>
-          <stop offset="100%" stop-color="#0A4D6B"/>
-        </linearGradient>
-      </defs>
-      <path d="M 6 38 Q 18 30 32 38 T 58 38" stroke="url(#bm-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M 4 48 Q 18 42 32 48 T 60 48" stroke="url(#bm-grad)" stroke-width="2.4" fill="none" opacity="0.65" stroke-linecap="round"/>
-      <path d="M 18 28 L 32 14 L 46 28 L 32 22 Z" fill="url(#bm-grad)" opacity="0.9"/>
-      <circle cx="32" cy="22" r="2.2" fill="#FF8C6B"/>
-    </svg>
-  `;
-}
-
-function coastIllustration() {
-  // Faint coastline backdrop — limestone cliff silhouette + horizon line.
-  return `
-    <svg viewBox="0 0 390 600" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="lang-water" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#bbd5d8" stop-opacity="0"/>
-          <stop offset="100%" stop-color="#bbd5d8" stop-opacity="0.85"/>
-        </linearGradient>
-      </defs>
-      <!-- horizon water -->
-      <rect x="0" y="380" width="390" height="220" fill="url(#lang-water)"/>
-      <!-- water ripples -->
-      <g stroke="#7e9aa3" stroke-width="0.6" fill="none" opacity="0.45">
-        <path d="M 0 460 Q 60 454 120 460 T 240 460 T 390 460"/>
-        <path d="M 0 488 Q 70 482 140 488 T 280 488 T 390 488"/>
-        <path d="M 0 520 Q 80 514 160 520 T 320 520 T 390 520"/>
-        <path d="M 0 552 Q 60 546 120 552 T 240 552 T 390 552"/>
-      </g>
-      <!-- limestone cliffs silhouette -->
-      <path d="M -10 420 L 30 380 L 60 400 L 100 360 L 140 390 L 180 350 L 220 395 L 260 372 L 310 405 L 360 380 L 400 410 L 400 460 L -10 460 Z" fill="#d8c8a0" opacity="0.65"/>
-      <path d="M -10 440 L 50 410 L 90 425 L 140 405 L 200 430 L 260 415 L 320 432 L 400 420 L 400 480 L -10 480 Z" fill="#c9b48a" opacity="0.55"/>
-      <!-- pines -->
-      <g fill="#6f8a6c" opacity="0.65">
-        <circle cx="40" cy="372" r="3"/>
-        <circle cx="55" cy="378" r="2.6"/>
-        <circle cx="78" cy="380" r="2"/>
-        <circle cx="115" cy="356" r="3"/>
-        <circle cx="155" cy="378" r="2.4"/>
-        <circle cx="200" cy="346" r="3"/>
-        <circle cx="245" cy="368" r="2.6"/>
-        <circle cx="290" cy="394" r="2.6"/>
-        <circle cx="332" cy="402" r="2.4"/>
-      </g>
-      <!-- distant kayak -->
-      <g opacity="0.75">
-        <ellipse cx="170" cy="495" rx="14" ry="2.2" fill="#0A4D6B"/>
-        <path d="M 162 493 q 8 -5 16 0" stroke="#0A4D6B" stroke-width="1.2" fill="none"/>
-      </g>
-    </svg>
-  `;
 }

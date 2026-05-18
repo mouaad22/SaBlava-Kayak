@@ -1,5 +1,6 @@
 import { loadLanguage } from "./i18n.js";
 import { parseHash, onRouteChange } from "./router.js";
+import { renderLoadingScreen } from "./screens/loading.js";
 import { renderLanguageScreen } from "./screens/language.js";
 import { renderRoutesScreen } from "./screens/routes.js";
 import { renderRouteScreen } from "./screens/route.js";
@@ -75,5 +76,7 @@ function render(route) {
 }
 
 loadLanguage();
-render(parseHash());
-onRouteChange(render);
+renderLoadingScreen(host, () => {
+  render(parseHash());
+  onRouteChange(render);
+});

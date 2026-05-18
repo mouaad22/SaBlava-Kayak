@@ -14,7 +14,7 @@ cd app
 python server.py
 ```
 
-Open http://localhost:8000.
+Open http://localhost:5173.
 
 ## Structure
 

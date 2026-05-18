@@ -1,6 +1,6 @@
 export const LANGUAGES = [
   { code: "ca", name: "Català" },
-  { code: "es", name: "Español" },
+  { code: "es", name: "Castellano" },
   { code: "en", name: "English" },
   { code: "fr", name: "Français" },
 ];
@@ -9,9 +9,10 @@ export const DEFAULT_LANGUAGE = "ca";
 
 const dict = {
   ca: {
+    "lang.welcome": "Benvingut!",
     "lang.tagline": "Explora la Costa Brava en kayak",
-    "lang.section": "Selecciona el teu idioma",
-    "lang.cta": "Veure les rutes",
+    "lang.section": "Tria el teu idioma",
+    "lang.cta": "Veure rutes",
     "routes.eyebrow": "Aiguablava · Costa Brava",
     "routes.title": "Tria la teva ruta",
     "routes.count": (n) => `${n} rutes disponibles`,
@@ -91,9 +92,10 @@ const dict = {
     "status.no-go.long": "Condicions adverses — no recomanat avui",
   },
   es: {
+    "lang.welcome": "¡Bienvenido!",
     "lang.tagline": "Explora la Costa Brava en kayak",
-    "lang.section": "Selecciona tu idioma",
-    "lang.cta": "Ver las rutas",
+    "lang.section": "Elige tu idioma",
+    "lang.cta": "Ver rutas",
     "routes.eyebrow": "Aiguablava · Costa Brava",
     "routes.title": "Elige tu ruta",
     "routes.count": (n) => `${n} rutas disponibles`,
@@ -173,9 +175,10 @@ const dict = {
     "status.no-go.long": "Condiciones adversas — no recomendado hoy",
   },
   en: {
+    "lang.welcome": "Welcome!",
     "lang.tagline": "Explore the Costa Brava by kayak",
-    "lang.section": "Select your language",
-    "lang.cta": "See the routes",
+    "lang.section": "Choose your language",
+    "lang.cta": "See routes",
     "routes.eyebrow": "Aiguablava · Costa Brava",
     "routes.title": "Pick your route",
     "routes.count": (n) => `${n} routes available`,
@@ -255,6 +258,7 @@ const dict = {
     "status.no-go.long": "Adverse conditions — not recommended today",
   },
   fr: {
+    "lang.welcome": "Bienvenue !",
     "lang.tagline": "Explore la Costa Brava en kayak",
     "lang.section": "Choisis ta langue",
     "lang.cta": "Voir les itinéraires",

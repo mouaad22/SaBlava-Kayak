@@ -80,7 +80,9 @@ export function renderPoiOverlay(host, routeId, poiIndex) {
 
             <div class="poi-sheet__map" data-poi-map></div>
 
-            <p class="poi-sheet__description">${poi.description[lang]}</p>
+            <p class="poi-sheet__description">${
+              poi.description?.[lang] ?? t("poi.description.placeholder")
+            }</p>
 
             <div class="poi-sheet__actions">
               <button class="btn btn--ghost" type="button" data-action="open-map">

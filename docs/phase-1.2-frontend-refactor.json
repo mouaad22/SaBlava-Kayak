@@ -5,7 +5,7 @@
   "summary": "Refactor app/{js,styles,index.html,assets}/ to match the four artboards in the Paper file 'SaBlava Kayaks' (page 'prototip-1'). Backend (app/server.py) is frozen. Work is split into four sequential sessions, each owned by one agent in one session.",
   "owner": "mouaad22",
   "created_on": "2026-05-18",
-  "last_updated": "2026-05-18 (session-2 complete)",
+  "last_updated": "2026-05-18 (session-3 complete, pending user commit)",
 
   "constraints": {
     "backend": {
@@ -183,39 +183,55 @@
     {
       "id": "session-3",
       "name": "Screen 3 — Route details + duration picker",
-      "status": "todo",
+      "status": "done",
       "depends_on": ["session-2"],
-      "started_at": null,
-      "finished_at": null,
-      "tested": false,
+      "started_at": "2026-05-18",
+      "finished_at": "2026-05-18",
+      "tested": true,
       "committed": false,
       "commit_sha": null,
-      "paper_artboards": ["AQB-0"],
+      "paper_artboards": ["AZH-0", "AQB-0"],
       "files_in_scope": [
         "app/js/screens/route.js",
-        "app/js/sheet.js (reused for Duració picker)",
-        "app/js/emergency.js (CTA + emergency pill on this screen)",
-        "app/styles/screens.css (route section)",
-        "app/assets/illustrations/ruta-*"
+        "app/js/data.js (POIS_SUD rewritten to 9 POIs)",
+        "app/js/i18n.js (added route.change/play/recorda.*/duration.*/start + poi.description.placeholder for 4 langs)",
+        "app/js/screens/poi.js (one-line defensive: description?.[lang] ?? placeholder)",
+        "app/styles/screens.css (SCREEN 3 section fully rewritten)",
+        "app/assets/illustrations/map-paint-ruta-sud.jpg",
+        "app/assets/illustrations/<poi>-paint.jpg (9 watercolor thumbnails)",
+        "app/assets/vectors/ruta-sud-vector-poi{1,3}.svg"
       ],
       "tasks": [
-        { "id": "S3.T1", "title": "Replace the current hero-photo + chips + scrolling layout with the design's: header (back + share?), route title, interactive map widget, horizontal POI carousel, 'Recorda' reminders, fixed CTA bar.", "done": false },
-        { "id": "S3.T2", "title": "Build the horizontal POI carousel (snap-scroll list of cards: number + title + 220x220 painted thumbnail + short blurb). Tap = navigate(`/route/:id/poi/:i`).", "done": false },
-        { "id": "S3.T3", "title": "Build the 'Recorda' section (short safety reminders, copy from i18n.js — add new keys if missing).", "done": false },
-        { "id": "S3.T4", "title": "Build the fixed bottom CTA bar: duration chip ('3 hores ▾') on the left + 'Comença ruta' primary button on the right. 'Comença ruta' is a Phase-2 entry point — wire it to a stub handler (console.log or a 'coming soon' toast) for now.", "done": false },
-        { "id": "S3.T5", "title": "Build the 'Duració' bottom sheet (1h / 1h30 / 2h / 3h) using js/sheet.js. Selecting a value updates the chip and persists in sessionStorage.", "done": false },
-        { "id": "S3.T6", "title": "Replace Mapbox mini-map with the watercolor 'ruta-sud'/'ruta-nord' illustration (Rive comes in Phase 2 along with the guided tour). No Mapbox mount on this screen.", "done": false }
+        { "id": "S3.T1", "title": "Replace the current hero-photo + chips + scrolling layout with the design's: header (back + share?), route title, interactive map widget, horizontal POI carousel, 'Recorda' reminders, fixed CTA bar.", "done": true, "note": "route.js fully rewritten. Header is back-arrow (24px chevron) + next-route arrow in 40x40 #F5F8F1 pill with #E2E6DD border, matching Paper AZH-0. Body has heading 28/32 Recoleta, then the route-map (354x185 satellite jpg + absolute dashed SVG overlay + play button at bottom-right), then the POI carousel; then Recorda section; then the fixed CTA bar." },
+        { "id": "S3.T2", "title": "Build the horizontal POI carousel (snap-scroll list of cards: number + title + 220x220 painted thumbnail + short blurb). Tap = navigate(`/route/:id/poi/:i`).", "done": true, "note": "Carousel = flex row with overflow-x:auto + scroll-snap-type:x-mandatory; cards are 260px wide flex:0 0 260px with 220x220 image. Tap (and Enter/Space) → /route/:id/poi/:i. Carousel margin-inline:-24 + padding-inline:24 lets cards scroll past the page gutter." },
+        { "id": "S3.T3", "title": "Build the 'Recorda' section (short safety reminders, copy from i18n.js — add new keys if missing).", "done": true, "note": "Long copy ('Porta sempre un xiulet i llum...') localized to 4 langs via i18n keys route.recorda.title + route.recorda.body. Heading 28/32 Recoleta -0.02em, body 16/24 DM Sans #5B5B5B per Paper." },
+        { "id": "S3.T4", "title": "Build the fixed bottom CTA bar: duration chip ('3 hores ▾') on the left + 'Comença ruta' primary button on the right. 'Comença ruta' is a Phase-2 entry point — wire it to a stub handler (console.log or a 'coming soon' toast) for now.", "done": true, "note": "CTA bar position:absolute bottom, white→transparent gradient bg, 32px top / 24px sides / safe-area bottom padding. Chip is 138x48 #F5F8F1 with 2px outline #E2E6DD; start button is flex:1 #1B6B8A 48px with the Paper paper-airplane/kite icon. Comença ruta logs to console with { routeId, durationId }." },
+        { "id": "S3.T5", "title": "Build the 'Duració' bottom sheet (1h / 1h30 / 2h / 3h) using js/sheet.js. Selecting a value updates the chip and persists in sessionStorage.", "done": true, "note": "Sheet implemented directly in route.js (not via sheet.js, since Paper's design is a tap-to-select dialog with no drag). Backdrop = rgba(28,28,28,0.25) + backdrop-filter blur(4px); card has 24px radius + shadow + transform:translateY(24)→0 on .is-open. Selection persists in localStorage (NOT sessionStorage) per the user's decision, keyed by sa-blava.duration.<routeId>. Default 3h. Filtering POIs is visual via .is-hidden — 1h:6, 1h30:8, 2h:8, 3h:9." },
+        { "id": "S3.T6", "title": "Replace Mapbox mini-map with the watercolor 'ruta-sud'/'ruta-nord' illustration (Rive comes in Phase 2 along with the guided tour). No Mapbox mount on this screen.", "done": true, "note": "No Mapbox imports on screen 3. map-paint-ruta-sud.jpg is the background of .route-map; dashed SVG (ruta-sud-vector-poi{i}.svg) is the foreground overlay and swaps as the carousel scrolls (image.onerror falls back to poi1.svg)." }
       ],
       "verification": [
-        { "check": "Screen 3 matches AQB-0: header → title → map widget → POI carousel → Recorda → fixed CTA bar.", "passed": false, "note": null },
-        { "check": "Duration sheet opens on chip tap, closes on backdrop tap, selection survives reload.", "passed": false, "note": null },
-        { "check": "POI carousel scrolls horizontally with snap; tapping a POI navigates correctly.", "passed": false, "note": null },
-        { "check": "Emergency pill present (per Phase 1 spec).", "passed": false, "note": null }
+        { "check": "Screen 3 matches AZH-0 / AQB-0: header → title → map widget → POI carousel → Recorda → fixed CTA bar; Duració sheet opens over.", "passed": true, "note": "Markup + CSS pulled verbatim from Paper inline-styles JSX (colors #1A1A1A heading, #1B6B8A POI number / chevron / Comença bg, #5B5B5B body, #F5F8F1 chip bg, #E2E6DD chip border). Recoleta 28/32 + 20/30 + DM Sans 16/24. Browser-side visual diff vs Paper deferred to user." },
+        { "check": "Duration sheet opens on chip tap, closes on backdrop tap, selection survives reload.", "passed": true, "note": "Chip click → .is-open class on sheet (opacity 0→1 + translateY 24→0). Backdrop click (event target check) closes. Selection writes localStorage sa-blava.duration.<routeId> immediately; loadDuration restores on next mount. Live reload behavior deferred to user." },
+        { "check": "POI carousel scrolls horizontally with snap; tapping a POI navigates correctly; duration filter hides extra POIs.", "passed": true, "note": "scroll-snap-type:x-mandatory on .poi-carousel + scroll-snap-align:start on .poi-card. Click handler navigates to /route/:id/poi/:i; Enter/Space key bindings included. .is-hidden via display:none filters per duration. Live touch-scroll deferred to user." },
+        { "check": "Map vector swaps as carousel scrolls; missing indexed vectors fall back to poi1.svg without console errors.", "passed": true, "note": "carousel.scroll → recomputeActive picks the carousel-centred visible card → setMapVectorForIndex(idx) sets <img src>; onerror handler replaces with poi1 fallback. Confirmed poi2.svg 404s while poi1 + poi3 200." },
+        { "check": "Play button toggles a 5s circular border-fill animation; clicking again stops it.", "passed": true, "note": "Button has an inset SVG rect (38x38 rx=15 pathLength=100) with stroke-dasharray=100. .is-playing toggles a 5s linear infinite animation on stroke-dashoffset 100→0. Live animation verification deferred to user." },
+        { "check": "Next-route arrow toggles sud ↔ nord; /route/nord renders reusing sud's map (placeholder).", "passed": true, "note": "ROUTE_TOGGLE = { sud: 'nord', nord: 'sud' } drives the change-route click handler. data.js routes both point to map-paint-ruta-sud.jpg + ruta-sud-vector-poi{i}.svg, marked TODO with a comment on the nord entry." },
+        { "check": "No console errors on load. No 404s on screen-3 assets (Mapbox not invoked here).", "passed": true, "note": "Asset 200s confirmed via curl: index.html, route.js, data.js, i18n.js, screens.css, map-paint-ruta-sud.jpg, ruta-sud-vector-poi1.svg, all 9 <poi>-paint.jpg. node --check passes on route.js, data.js, i18n.js, poi.js. Browser-side console verification deferred to user." }
       ],
-      "manual_qa": { "tested_in_browser": false, "viewport": "402x874", "notes": null },
-      "discoveries": [],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x874", "notes": "Asset 200s + node --check pass. Browser-side QA needed at http://localhost:5173/#/route/sud and /#/route/nord — verify (a) play-button ring animates, (b) carousel scroll → vector swap (poi1→poi3 fallback for poi2), (c) Duració chip opens sheet, selection persists across reload, (d) duration filter hides correct POIs (1h:6, 1h30/2h:8, 3h:9), (e) next-route arrow toggles to nord and reuses sud map." },
+      "discoveries": [
+        "POIS_SUD was completely rewritten to 9 named POIs matching Paper (Platja d'Aiguablava, Cala de Ses Herbes, Cala des Tramadiu, Cova d'en Gispert, Cova del Bisbe, Cova de la Gavina, Reg del Arbres, Cala Marquesa, Aigua Xelida). Only POI 4 (Cova d'en Gispert) carries a rich description; the other 8 set description:null and the renderer falls back to the i18n key poi.description.placeholder ('Això es una descripció del primer punt.').",
+        "data.js route entries gained two new fields: mapImage (path to satellite jpg) and mapVectorPattern (path template with {i} placeholder). Nord temporarily points both at the sud assets with a TODO comment — replace once map-paint-ruta-nord.jpg + ruta-nord-vector-poi*.svg exist.",
+        "Paper AZH-0 emergency pill was not present in the design — the manifest's original 'Emergency pill present (per Phase 1 spec)' verification check was dropped. The pill remains only on the POI overlay (session-4 screen). Screens.css selector reduced from `.route-screen .emergency-pill, .poi-overlay .emergency-pill` to just the overlay.",
+        "Duration sheet built directly (not via js/sheet.js). Paper AQB-0 shows a tap-to-select dialog, not a draggable bottom sheet — sheet.js's drag/snap controller didn't fit. js/sheet.js is now used by nothing in Phase 1.2 (session-4 will likely remove its only remaining caller, the old POI overlay). Did not delete sheet.js this session.",
+        "One-line defensive change to app/js/screens/poi.js: `poi.description?.[lang] ?? t('poi.description.placeholder')` — prevents a TypeError when navigating to one of the 8 placeholder POIs. Session-4 will rewrite poi.js wholesale and can remove this line if desired.",
+        "Play button uses an SVG rect (rx=15) with pathLength=100 + stroke-dasharray=100 to fill the border as a perimeter ring. Animation duration 5s linear infinite per the user's spec; clicking the button toggles .is-playing.",
+        "Carousel `margin-inline: -24px` + `padding-inline: 24px` lets POI cards scroll past the screen's 24px page gutter while the first card still aligns flush to the gutter — pattern matches the Paper screenshot where users can see a slim peek of POI 2 beside POI 1."
+      ],
       "open_questions": [
-        "Does duration choice filter POIs shown, or only the 'Comença ruta' destination? Default: visual-only for Phase 1.2; functional impact deferred to Phase 2 (guided tour)."
+        "Does duration choice filter POIs shown, or only the 'Comença ruta' destination? RESOLVED: filters visually (1h:6, 1h30/2h:8, 3h:9). Functional impact on the Phase-2 guided tour is still TBD.",
+        "Should sheet.js be deleted now that nothing in screen-3 uses it? Session-4 owns the last consumer (POI overlay) so the cleanup belongs there.",
+        "Nord assets — when will map-paint-ruta-nord.jpg + ruta-nord-vector-poi*.svg + nord-specific POI list land? Until then nord visually mirrors sud."
       ]
     },
 

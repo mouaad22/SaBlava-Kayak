@@ -216,598 +216,236 @@
   background: var(--color-primary-dark);
 }
 
-/* ============== SCREEN 2 — ROUTES BROWSER ============== */
+/* ============== SCREEN 2 — SEE ROUTES (Paper 9UR-0) ============== */
 
+/* .screen base already sets position:absolute + display:flex + flex-direction:column,
+   which gives the dialog/strip a containing block to absolute-position against. */
 .routes-screen {
-  overflow: hidden;
-  background: var(--color-background);
-}
-
-.routes-screen__map {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 100%;
-  z-index: 0;
-}
-
-.map-canvas {
+  background: #ffffff;
+  align-items: center;
+  gap: 24px;
   width: 100%;
-  height: 100%;
-  position: relative;
-  background: linear-gradient(180deg, #e8eee4 0%, #d6e3d2 100%);
-  overflow: hidden;
-}
-
-.map-canvas svg.fallback-map {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.map-canvas .mapboxgl-ctrl-bottom-left,
-.map-canvas .mapboxgl-ctrl-bottom-right {
-  display: none;
-}
-
-.routes-screen__topbar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 6;
-  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  pointer-events: none;
-}
-
-.routes-screen__topbar > * {
-  pointer-events: auto;
-}
-
-.brand-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 14px 0 8px;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 2px 10px rgba(10, 77, 107, 0.16);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--color-primary-dark);
-  letter-spacing: -0.005em;
-}
-
-.brand-pill__dot {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-}
-
-.brand-pill__dot svg {
-  width: 12px;
-  height: 12px;
-}
-
-.routes-sheet {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 5;
-  height: 58%;
-  display: flex;
-  flex-direction: column;
-  transition: height 320ms var(--ease-entrance);
-  will-change: height;
-}
-
-.routes-sheet.is-dragging {
-  transition: none;
-}
-
-.routes-sheet.is-expanded {
-  height: 92%;
-}
-
-.routes-sheet.is-collapsed {
-  height: 22%;
-}
-
-.routes-sheet__header {
-  padding: 4px 20px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.routes-sheet__eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.routes-sheet__eyebrow .label-up {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-}
-
-.routes-sheet__title-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.routes-sheet__title {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--color-primary-dark);
-  letter-spacing: -0.01em;
-  line-height: 1.1;
-}
-
-.routes-sheet__count {
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}
-
-.routes-sheet__lede {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 500;
-  font-size: 16px;
-  color: var(--color-text-secondary);
-  margin-top: 6px;
-  line-height: 1.4;
-}
-
-.routes-sheet__cards {
-  display: flex;
-  gap: 14px;
-  padding: 8px 20px 20px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  font-synthesis: none;
+  overflow-x: hidden;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.routes-sheet__cards::-webkit-scrollbar {
-  display: none;
+  padding-bottom: 24px;
 }
 
-.route-card {
-  flex: 0 0 280px;
-  height: 220px;
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
-  scroll-snap-align: start;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: transform 200ms var(--ease-exit),
-    box-shadow 200ms var(--ease-exit), border 160ms var(--ease-exit);
-  border: 2px solid transparent;
-  text-align: left;
-  position: relative;
-}
-
-.route-card:active {
-  transform: scale(0.985);
-}
-
-.route-card.is-active {
-  border-color: var(--color-primary);
-  transform: scale(1.02);
-  box-shadow: var(--shadow-card-hover);
-}
-
-.route-card__media {
-  flex: 0 0 60%;
-  position: relative;
-}
-
-.route-card__badge {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: inline-flex;
-  align-items: center;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: var(--radius-pill);
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #fff;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.route-card__body {
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background: var(--color-surface);
-}
-
-.route-card__name {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.005em;
-  line-height: 1.2;
-  margin: 0;
-}
-
-.route-card__chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.routes-sheet__cta {
-  padding: 16px 20px calc(env(safe-area-inset-bottom, 0px) + 22px);
-  background: linear-gradient(
-    to top,
-    var(--color-surface) 70%,
-    rgba(255, 255, 255, 0)
-  );
-  margin-top: auto;
-}
-
-/* Map overlay route legend */
-.map-legend {
-  position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 78px);
-  left: 16px;
-  right: 16px;
-  z-index: 5;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  pointer-events: none;
-}
-
-.map-legend__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  box-shadow: 0 2px 8px rgba(10, 77, 107, 0.12);
-}
-
-.map-legend__chip .swatch {
-  width: 14px;
-  height: 3px;
-  border-radius: 2px;
-}
-
-/* ============== WEATHER SECTION ============== */
-
-.weather-section {
-  margin: 8px var(--page-margin) 0;
-  padding: 18px 18px 16px;
-  background: var(--color-surface);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  cursor: pointer;
-  user-select: none;
-  transition: box-shadow 200ms var(--ease-exit);
-  position: relative;
-  overflow: hidden;
-}
-
-.weather-section::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-      circle at top right,
-      rgba(11, 110, 140, 0.06),
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at bottom left,
-      rgba(255, 140, 107, 0.05),
-      transparent 50%
-    );
-  pointer-events: none;
-}
-
-.weather-section:active {
-  box-shadow: var(--shadow-card-hover);
-}
-
-.weather-section[data-state="loading"],
-.weather-section[data-state="error"] {
-  cursor: default;
-}
-
-.weather-section[data-state="offline"] {
-  background: linear-gradient(180deg, #fdf3ec 0%, #fff 60%);
-}
-
-.weather-section__head {
-  position: relative;
-  z-index: 1;
-  margin-bottom: 14px;
-}
-
-.weather-section__title {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-primary-dark);
-  letter-spacing: -0.005em;
-  margin: 0;
-}
-
-.weather-section__skeleton {
-  height: 96px;
-  border-radius: 12px;
-  width: 100%;
-}
-
-.weather-section__error {
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.weather-section__hero {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 16px;
-}
-
-.weather-section__wind {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  color: var(--color-primary-dark);
-  font-family: var(--font-display);
-}
-
-.weather-section__wind-value {
-  font-size: 44px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-.weather-section__wind-unit {
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.weather-section__wind-dir {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  margin-left: 8px;
-}
-
-.weather-section__named {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--color-accent);
-  letter-spacing: 0.005em;
-}
-
-.weather-section__interp {
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--color-text-primary);
-  margin: 2px 0 0;
-  line-height: 1.45;
-}
-
-.weather-section__grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  margin-bottom: 16px;
-}
-
-.stat-tile {
+.routes-screen__weather {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
-  padding: 10px 9px;
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  min-height: 60px;
+  gap: 16px;
+  padding-inline: 24px;
+  position: relative;
+}
+
+.routes-screen__weather-heading-wrap {
+  align-self: stretch;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.routes-screen__weather-heading {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 32px;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.routes-screen__animation {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
+  height: 226px;
+  align-self: stretch;
+}
+
+.routes-screen__animation-img {
+  width: 354px;
+  height: 221px;
+  background-position: 50%;
+  background-size: cover;
+  flex-shrink: 0;
+}
+
+/* Dialog bubble — sits over the top-right of the watercolor scene.
+   Paper places it at top:70, horizontally offset right of artboard centre. */
+.weather-dialog {
+  position: absolute;
+  top: 70px;
+  left: calc(50% + 102.5px);
+  translate: -50%;
+  width: 149px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #1b6b8a;
+  border-radius: 16px 16px 16px 4px;
+  box-shadow: 0 0 12px -5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weather-dialog__text {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 16px;
+  color: #1b6b8a;
+  text-align: center;
+  text-wrap: pretty;
+  flex: 1;
+}
+
+/* Weather strip — sits over the bottom of the watercolor scene.
+   Paper places it at top:203, centred on the artboard. */
+.weather-strip {
+  position: absolute;
+  top: 203px;
+  left: calc(50% + 2px);
+  translate: -50%;
+  width: 340px;
+  height: 91px;
+  padding: 12px 48px;
+  background-image: linear-gradient(
+    in oklab 180deg,
+    oklab(50.1% -0.047 -0.062 / 0%) 0%,
+    oklab(49.6% -0.058 -0.067 / 80%) 100%
+  );
+  background-origin: border-box;
+  border-radius: 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weather-strip__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
 }
 
-.stat-tile__label {
+.weather-strip__stat svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.weather-strip__value {
   font-family: var(--font-body);
-  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
+  font-size: 16px;
+  line-height: 28px;
+  color: #ffffff;
+  text-align: center;
+  width: fit-content;
 }
 
-.stat-tile__value {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-primary-dark);
-  line-height: 1;
-  letter-spacing: -0.005em;
-}
+/* Routes list */
 
-.stat-tile__sub {
-  font-family: var(--font-body);
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.weather-section__per-route {
-  position: relative;
-  z-index: 1;
+.routes-screen__list {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding-top: 14px;
-  border-top: 1px solid var(--color-border);
-  margin-bottom: 8px;
-}
-
-.per-route-row {
-  display: flex;
   align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 0;
-  background: transparent;
-  text-align: left;
-  transition: opacity 160ms var(--ease-exit);
-}
-
-.per-route-row:active {
-  opacity: 0.6;
-}
-
-.per-route-row__swatch {
-  width: 18px;
-  height: 3px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.per-route-row__name {
-  flex: 1;
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  letter-spacing: -0.005em;
-}
-
-.weather-section__foot {
+  gap: 16px;
+  padding-inline: 24px;
   position: relative;
-  z-index: 1;
-  font-family: var(--font-body);
-  font-size: 11px;
+}
+
+.routes-screen__list-heading-wrap {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.routes-screen__list-heading {
+  font-family: var(--font-display);
   font-weight: 500;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.02em;
+  font-size: 28px;
+  line-height: 32px;
+  color: #1a1a1a;
+  margin: 0;
 }
 
-/* ============== STATUS PILL ON ROUTE CARDS ============== */
-
-.route-card__status {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 2;
-  display: inline-flex;
-}
-
-.route-card__status:empty {
-  display: none;
-}
-
-.status-pill {
-  display: inline-flex;
+.route-tile {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 5px;
-  height: 24px;
-  padding: 0 9px 0 7px;
-  border-radius: var(--radius-pill);
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #fff;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  gap: 16px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: center;
+  font: inherit;
+  color: inherit;
 }
 
-.status-pill--go {
-  background: rgba(74, 155, 114, 0.94);
-}
-
-.status-pill--caution {
-  background: rgba(232, 161, 74, 0.94);
-}
-
-.status-pill--no-go {
-  background: rgba(217, 58, 43, 0.94);
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #fff;
-  display: inline-block;
+.route-tile--a {
+  width: 376px;
   flex-shrink: 0;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
 }
 
-.status-pill--no-go .status-dot {
-  animation: status-pulse 1.6s var(--ease-exit) infinite;
+.route-tile--b {
+  align-self: stretch;
+  padding-inline: 24px;
 }
 
-@keyframes status-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
-  }
-  50% {
-    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.45);
-  }
+.route-tile__media {
+  background-position: 50%;
+  background-size: cover;
+  flex-shrink: 0;
+}
+
+.route-tile--a .route-tile__media {
+  width: 376px;
+  height: 184px;
+}
+
+.route-tile--b .route-tile__media {
+  width: 352px;
+  height: 202px;
+  max-width: 100%;
+}
+
+.route-tile__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.route-tile__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 32px;
+  color: #1b6b8a;
+  margin: 0;
+}
+
+.route-tile__desc {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 24px;
+  color: #5b5b5b;
+  text-align: center;
+  width: 200px;
+  margin: 0;
 }
 
 /* ============== SCREEN 3 — ROUTE DETAIL ============== */

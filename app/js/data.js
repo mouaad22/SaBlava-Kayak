@@ -1,11 +1,15 @@
-// Route + POI data. Photo URLs are stable Picsum seeds — swap with real
-// Sa Blava coastal photography in production. Coordinates are approximate
-// hand-tuned around Aiguablava.
+// Route + POI data for the SaBlava Kayak app.
+//
+// Two routes match Paper artboard 9UR-0 ("2 - See routes"):
+//   - sud  → "Sud-Cova d'en Gispert" (south, sea caves)
+//   - nord → "Nord-Fornells"         (north, cliffs toward Fornells)
+//
+// POI lists, geometry, and `conditions` thresholds are preserved from the
+// Phase-1 dataset so later screens (route detail, POI detail) still have
+// something to render. Coordinates are approximate hand-tuned around
+// Aiguablava.
 
-const img = (seed, w = 800, h = 450) =>
-  `https://picsum.photos/seed/${seed}/${w}/${h}`;
-
-const POIS_CALES = [
+const POIS_SUD = [
   {
     id: "cala-fonda",
     type: "cala",
@@ -28,10 +32,13 @@ const POIS_CALES = [
       en: "A sandy-bottomed cove with crystalline water and limestone walls dropping gently to 4m. Beach the kayak on the sand and dive in. Pines provide shade from noon.",
       fr: "Une crique au fond sablonneux avec une eau cristalline et des parois calcaires descendant doucement jusqu'à 4m. Pose le kayak sur le sable et baigne-toi. Les pins font de l'ombre dès midi.",
     },
-    images: [img("cala-fonda-1"), img("cala-fonda-2"), img("cala-fonda-3")],
+    images: [
+      "./assets/illustrations/cova-gispert-paint.jpg",
+      "./assets/illustrations/cala-marquesa-paint.jpg",
+    ],
   },
   {
-    id: "cova-pirates",
+    id: "cova-gispert",
     type: "cova",
     typeIcon: "🕳",
     minutesFromStart: 50,
@@ -41,18 +48,21 @@ const POIS_CALES = [
     snorkel: 5,
     accessibility: "kayak",
     name: {
-      ca: "Cova dels Pirates",
-      es: "Cueva de los Piratas",
-      en: "Pirates' Cave",
-      fr: "Grotte des Pirates",
+      ca: "Cova d'en Gispert",
+      es: "Cueva d'en Gispert",
+      en: "Gispert's Cave",
+      fr: "Grotte d'en Gispert",
     },
     description: {
       ca: "Una cova marina de 18 metres de fondària amb sostre baix i aigua maragda dins. Entra a poc a poc i mantén el caiac al centre del túnel. Vigila amb les onades a la boca de la cova.",
       es: "Una cueva marina de 18 metros de profundidad con techo bajo y agua esmeralda. Entra despacio y mantén el kayak en el centro del túnel. Cuidado con el oleaje a la entrada.",
-      en: "A 18-metre sea cave with low ceiling and emerald water inside. Enter slowly and keep the kayak centered. Watch the swell at the entrance.",
+      en: "An 18-metre sea cave with low ceiling and emerald water inside. Enter slowly and keep the kayak centered. Watch the swell at the entrance.",
       fr: "Une grotte marine de 18 mètres au plafond bas et à l'eau émeraude. Entre doucement, garde le kayak au centre. Attention à la houle à l'entrée.",
     },
-    images: [img("cova-pirates-1"), img("cova-pirates-2")],
+    images: [
+      "./assets/illustrations/cova-gispert-paint.jpg",
+      "./assets/illustrations/cova-bisbe-paint.jpg",
+    ],
   },
   {
     id: "platja-raco",
@@ -76,7 +86,10 @@ const POIS_CALES = [
       en: "Small fine-sand beach sheltered from the tramontana wind. Perfect for a break — beach the kayak and have a snack. Also reachable on foot via the coastal path.",
       fr: "Petite plage de sable fin abritée de la tramontane. Parfait pour une pause — sors le kayak et casse la croûte. Accessible aussi à pied par le chemin côtier.",
     },
-    images: [img("platja-raco-1"), img("platja-raco-2"), img("platja-raco-3")],
+    images: [
+      "./assets/illustrations/aigua-xelida-paint.jpg",
+      "./assets/illustrations/cala-des-tramadiu-paint.jpg",
+    ],
   },
   {
     id: "snorkel-cap-blanc",
@@ -101,34 +114,9 @@ const POIS_CALES = [
       fr: "L'un des meilleurs spots de snorkeling de la côte. Visibilité souvent supérieure à 8m. Prairies de posidonies, sars et dorades. Amarre le kayak au rocher et plonge.",
     },
     images: [
-      img("snorkel-cap-blanc-1"),
-      img("snorkel-cap-blanc-2"),
-      img("snorkel-cap-blanc-3"),
+      "./assets/illustrations/ses-herbes-paint.jpg",
+      "./assets/illustrations/cova-gavina-paint.jpg",
     ],
-  },
-  {
-    id: "mirador-freus",
-    type: "mirador",
-    typeIcon: "👁",
-    minutesFromStart: 105,
-    coords: [3.229, 41.9349],
-    depthM: 12,
-    shade: "no",
-    snorkel: 2,
-    accessibility: "kayak",
-    name: {
-      ca: "Mirador dels Freus",
-      es: "Mirador dels Freus",
-      en: "Freus Viewpoint",
-      fr: "Belvédère dels Freus",
-    },
-    description: {
-      ca: "Punt panoràmic amb vistes a les illes Medes en dies clars. Fons de 12 metres just sota el caiac. No hi ha lloc per amarrar — manté't en moviment i gaudeix del paisatge.",
-      es: "Punto panorámico con vistas a las Islas Medes en días claros. 12 metros de fondo justo bajo el kayak. No hay lugar de amarre — mantente en movimiento.",
-      en: "Panoramic point with views of the Medes Islands on clear days. 12m depth right below. No mooring — stay moving and enjoy the view.",
-      fr: "Point panoramique avec vue sur les Îles Medes par temps clair. 12m de fond. Pas d'amarrage — reste en mouvement.",
-    },
-    images: [img("mirador-freus-1"), img("mirador-freus-2")],
   },
   {
     id: "port-aiguablava",
@@ -152,11 +140,14 @@ const POIS_CALES = [
       en: "Back at the Sa Blava jetty. Calm shallow water to finish the trip. Return the kayak to its original spot and check in with the guide.",
       fr: "Retour au ponton de Sa Blava. Eaux calmes et peu profondes pour terminer. Remets le kayak à sa place et préviens le moniteur.",
     },
-    images: [img("port-aiguablava-1"), img("port-aiguablava-2")],
+    images: [
+      "./assets/illustrations/aiguablava-paint.jpg",
+      "./assets/photos/aiguablava/aiguablava-1.jpg",
+    ],
   },
 ];
 
-const POIS_PENYA = [
+const POIS_NORD = [
   {
     id: "far-aiguablava",
     type: "mirador",
@@ -179,7 +170,10 @@ const POIS_PENYA = [
       en: "The lighthouse stands 35m above the cape. Dramatic view down to the kayak — prime photo moment.",
       fr: "Le phare domine le cap à 35m. Vue plongeante sur le kayak — moment photo idéal.",
     },
-    images: [img("far-aiguablava-1"), img("far-aiguablava-2")],
+    images: [
+      "./assets/illustrations/reg-arbres-paint.jpg",
+      "./assets/illustrations/cala-marquesa-paint.jpg",
+    ],
   },
   {
     id: "penya-cap-blanc",
@@ -203,7 +197,10 @@ const POIS_PENYA = [
       en: "The Cap Blanc cliffs drop 60m to the sea. Easy paddling, keep 8m off the wall — occasional rockfall.",
       fr: "Les falaises du Cap Blanc plongent à 60m. Pagaie souple, garde 8m de distance — chutes de pierres occasionnelles.",
     },
-    images: [img("penya-cap-blanc-1"), img("penya-cap-blanc-2")],
+    images: [
+      "./assets/illustrations/cala-marquesa-paint.jpg",
+      "./assets/illustrations/cova-bisbe-paint.jpg",
+    ],
   },
   {
     id: "tres-forats",
@@ -228,10 +225,8 @@ const POIS_PENYA = [
       fr: "Trois ouvertures naturelles illuminent une chambre de 12m. Lumière bleue spectaculaire vers 11h. Entrer uniquement par mer calme.",
     },
     images: [
-      img("tres-forats-1"),
-      img("tres-forats-2"),
-      img("tres-forats-3"),
-      img("tres-forats-4"),
+      "./assets/illustrations/cova-gavina-paint.jpg",
+      "./assets/illustrations/cova-bisbe-paint.jpg",
     ],
   },
   {
@@ -256,12 +251,15 @@ const POIS_PENYA = [
       en: "Hidden cove with rounded pebbles and ice-cold water — hence the name. A must-stop midway. Freshwater spring on the eastern cliff.",
       fr: "Crique cachée aux galets ronds et eau glacée — d'où le nom. Halte obligatoire. Source d'eau douce sur la falaise est.",
     },
-    images: [img("cala-aiguafreda-1"), img("cala-aiguafreda-2")],
+    images: [
+      "./assets/illustrations/aigua-xelida-paint.jpg",
+      "./assets/illustrations/cala-des-tramadiu-paint.jpg",
+    ],
   },
   {
-    id: "cap-de-begur",
-    type: "mirador",
-    typeIcon: "👁",
+    id: "fornells",
+    type: "port",
+    typeIcon: "⚓",
     minutesFromStart: 165,
     coords: [3.2262, 41.9201],
     depthM: 22,
@@ -269,130 +267,57 @@ const POIS_PENYA = [
     snorkel: 2,
     accessibility: "kayak",
     name: {
-      ca: "Cap de Begur",
-      es: "Cap de Begur",
-      en: "Cap de Begur",
-      fr: "Cap de Begur",
+      ca: "Fornells",
+      es: "Fornells",
+      en: "Fornells",
+      fr: "Fornells",
     },
     description: {
-      ca: "El punt més extrem de la ruta. Mar oberta cap a llevant. Tomba i torna cap al moll — el viatge de tornada té el vent a favor en general.",
-      es: "El punto más extremo de la ruta. Mar abierta al este. Da la vuelta — el viaje de regreso suele tener viento a favor.",
-      en: "The furthest point. Open sea to the east. Turn back — the return leg usually has tailwind.",
-      fr: "Le point le plus éloigné. Mer ouverte vers l'est. Demi-tour — le retour est généralement vent arrière.",
+      ca: "Punt més extrem de la ruta — el petit port de Fornells. Mar oberta cap a llevant. Tomba i torna cap al moll; el viatge de tornada té el vent a favor en general.",
+      es: "El punto más extremo de la ruta — el pequeño puerto de Fornells. Mar abierta al este. Da la vuelta — el viaje de regreso suele tener viento a favor.",
+      en: "The furthest point — the small harbour of Fornells. Open sea to the east. Turn back — the return leg usually has tailwind.",
+      fr: "Le point le plus éloigné — le petit port de Fornells. Mer ouverte vers l'est. Demi-tour — le retour est généralement vent arrière.",
     },
-    images: [img("cap-de-begur-1"), img("cap-de-begur-2")],
-  },
-];
-
-const POIS_FAMILIAR = [
-  {
-    id: "punta-hort",
-    type: "mirador",
-    typeIcon: "👁",
-    minutesFromStart: 12,
-    coords: [3.2135, 41.932],
-    depthM: 3,
-    shade: "tot el dia",
-    snorkel: 3,
-    accessibility: "kayak",
-    name: {
-      ca: "Punta de l'Hort",
-      es: "Punta de l'Hort",
-      en: "Punta de l'Hort",
-      fr: "Punta de l'Hort",
-    },
-    description: {
-      ca: "Petit promontori amb vistes obertes a la badia. Aigua poc profunda, ideal per a nens. Hi ha bancs de peix petit just a la base.",
-      es: "Pequeño promontorio con vistas a la bahía. Agua poco profunda, ideal para niños. Bancos de peces pequeños en la base.",
-      en: "A small promontory with bay views. Shallow, perfect for kids. Schools of small fish at the base.",
-      fr: "Petit promontoire avec vue sur la baie. Eau peu profonde, parfait pour les enfants. Bancs de petits poissons à la base.",
-    },
-    images: [img("punta-hort-1"), img("punta-hort-2")],
-  },
-  {
-    id: "cala-petita",
-    type: "cala",
-    typeIcon: "🏖",
-    minutesFromStart: 25,
-    coords: [3.2118, 41.9308],
-    depthM: 1.5,
-    shade: "tarda",
-    snorkel: 3,
-    accessibility: "kayak,peu",
-    name: {
-      ca: "Cala Petita",
-      es: "Cala Petita",
-      en: "Cala Petita",
-      fr: "Cala Petita",
-    },
-    description: {
-      ca: "Cala diminuta amb un metre i mig d'aigua sobre sorra blanca. Perfecta per fer un bany amb la família i deixar el caiac al rocam.",
-      es: "Cala diminuta con metro y medio de agua sobre arena blanca. Perfecta para un baño en familia y dejar el kayak en la roca.",
-      en: "Tiny cove with 1.5m of water over white sand. Perfect for a family swim — beach the kayak on the rocks.",
-      fr: "Crique minuscule avec 1,5m d'eau sur sable blanc. Parfait pour une baignade en famille — kayak sur les rochers.",
-    },
-    images: [img("cala-petita-1"), img("cala-petita-2"), img("cala-petita-3")],
-  },
-  {
-    id: "roca-pi",
-    type: "mirador",
-    typeIcon: "🌲",
-    minutesFromStart: 45,
-    coords: [3.2152, 41.9304],
-    depthM: 4,
-    shade: "tot el dia",
-    snorkel: 4,
-    accessibility: "kayak",
-    name: {
-      ca: "Roca del Pi",
-      es: "Roca del Pino",
-      en: "Pine Rock",
-      fr: "Rocher du Pin",
-    },
-    description: {
-      ca: "Una roca solitària amb un pi creixent al seu cim, gairebé tocant l'aigua. Punt fotogràfic de tota la ruta. La tornada al moll és just a 5 minuts.",
-      es: "Una roca solitaria con un pino creciendo en la cima, casi tocando el agua. Punto fotográfico clave. La vuelta al muelle está a 5 minutos.",
-      en: "A lone rock with a pine growing at the top, almost touching the water. Signature photo spot. Five minutes back to the jetty.",
-      fr: "Un rocher solitaire avec un pin au sommet, presque dans l'eau. Point photo emblématique. 5 min du ponton.",
-    },
-    images: [img("roca-pi-1"), img("roca-pi-2")],
+    images: [
+      "./assets/illustrations/reg-arbres-paint.jpg",
+      "./assets/illustrations/aiguablava-paint.jpg",
+    ],
   },
 ];
 
 export const ROUTES = [
   {
-    id: "cales",
+    id: "sud",
     name: {
-      ca: "Ruta de les Cales",
-      es: "Ruta de las Calas",
-      en: "Coves Route",
-      fr: "Route des Criques",
+      ca: "Sud-Cova d'en Gispert",
+      es: "Sur-Cova d'en Gispert",
+      en: "South-Cova d'en Gispert",
+      fr: "Sud-Cova d'en Gispert",
     },
     tagline: {
-      ca: "De la platja a les coves de Cap Blanc.",
-      es: "De la playa a las cuevas de Cap Blanc.",
-      en: "From the beach to the Cap Blanc sea caves.",
-      fr: "De la plage aux grottes du Cap Blanc.",
+      ca: "Del moll a les coves de Cap Blanc.",
+      es: "Del muelle a las cuevas de Cap Blanc.",
+      en: "From the jetty to the Cap Blanc sea caves.",
+      fr: "Du ponton aux grottes du Cap Blanc.",
     },
     description: {
-      ca: "Endinsa't a les cales amagades del litoral d'Aiguablava, des de la platja del moll fins a les coves marines de Cap Blanc. Aigües tranquil·les, parets de pedra calcària i pinedes que arriben fins al mar. La ruta més emblemàtica de Sa Blava.",
-      es: "Adéntrate en las calas escondidas del litoral de Aiguablava, desde la playa del muelle hasta las cuevas marinas de Cap Blanc. La ruta más emblemática de Sa Blava.",
-      en: "Slip into the hidden coves of Aiguablava, from the jetty beach to the Cap Blanc sea caves. Calm water, limestone walls, pines down to the sea. Sa Blava's signature route.",
-      fr: "Plonge-toi dans les criques cachées d'Aiguablava, jusqu'aux grottes marines du Cap Blanc. La route emblématique de Sa Blava.",
+      ca: "Això es una descripció breu de la ruta A.",
+      es: "Esta es una descripción breve de la ruta A.",
+      en: "This is a short description of route A.",
+      fr: "Ceci est une brève description de la route A.",
     },
-    color: "#0B6E8C",
+    color: "#1B6B8A",
     distanceKm: 4.2,
     durationHours: 2,
     difficulty: "medium",
     conditions: {
-      // wind speed in knots, wave height in metres
       wind: { ok: 12, caution: 18 },
       wave: { ok: 0.5, caution: 0.8 },
     },
-    poiCount: POIS_CALES.length,
-    image: img("aiguablava-cales-hero", 800, 480),
-    cardImage: img("aiguablava-cales-card", 560, 340),
-    pois: POIS_CALES,
+    poiCount: POIS_SUD.length,
+    image: "./assets/illustrations/ruta-sud.png",
+    cardImage: "./assets/illustrations/ruta-sud.png",
+    pois: POIS_SUD,
     geometry: [
       [3.2155, 41.9326],
       [3.2178, 41.9333],
@@ -403,26 +328,26 @@ export const ROUTES = [
     ],
   },
   {
-    id: "penya-segats",
+    id: "nord",
     name: {
-      ca: "Ruta dels Penya-segats",
-      es: "Ruta de los Acantilados",
-      en: "Cliffs Route",
-      fr: "Route des Falaises",
+      ca: "Nord-Fornells",
+      es: "Norte-Fornells",
+      en: "North-Fornells",
+      fr: "Nord-Fornells",
     },
     tagline: {
-      ca: "Imponents penya-segats del Cap de Begur.",
-      es: "Imponentes acantilados del Cap de Begur.",
-      en: "Towering cliffs of Cap de Begur.",
-      fr: "Falaises imposantes du Cap de Begur.",
+      ca: "Penya-segats del Cap de Begur fins a Fornells.",
+      es: "Acantilados del Cap de Begur hasta Fornells.",
+      en: "Cap de Begur cliffs all the way to Fornells.",
+      fr: "Falaises du Cap de Begur jusqu'à Fornells.",
     },
     description: {
-      ca: "Una aventura pels penya-segats de Cap Blanc fins al Cap de Begur. Parets de 60 metres, coves marines i punts de snorkel excepcionals. Per a paladors experimentats — vigila el vent de gregal.",
-      es: "Una aventura por los acantilados de Cap Blanc hasta Cap de Begur. Paredes de 60m, cuevas marinas y snorkel excepcional. Para palistas experimentados.",
-      en: "An adventure along the Cap Blanc cliffs to Cap de Begur. 60m walls, sea caves and exceptional snorkel. For experienced paddlers — watch the gregal wind.",
-      fr: "Une aventure le long des falaises du Cap Blanc jusqu'au Cap de Begur. Parois de 60m, grottes et snorkel exceptionnel. Pour pagayeurs expérimentés.",
+      ca: "Això es una descripció breu de la ruta B.",
+      es: "Esta es una descripción breve de la ruta B.",
+      en: "This is a short description of route B.",
+      fr: "Ceci est une brève description de la route B.",
     },
-    color: "#FF8C6B",
+    color: "#1B6B8A",
     distanceKm: 6.8,
     durationHours: 3.5,
     difficulty: "hard",
@@ -430,10 +355,10 @@ export const ROUTES = [
       wind: { ok: 10, caution: 15 },
       wave: { ok: 0.4, caution: 0.7 },
     },
-    poiCount: POIS_PENYA.length,
-    image: img("aiguablava-cliffs-hero", 800, 480),
-    cardImage: img("aiguablava-cliffs-card", 560, 340),
-    pois: POIS_PENYA,
+    poiCount: POIS_NORD.length,
+    image: "./assets/illustrations/ruta-nord.png",
+    cardImage: "./assets/illustrations/ruta-nord.png",
+    pois: POIS_NORD,
     geometry: [
       [3.2155, 41.9326],
       [3.217, 41.9298],
@@ -441,47 +366,6 @@ export const ROUTES = [
       [3.2212, 41.9239],
       [3.2238, 41.9213],
       [3.2262, 41.9201],
-    ],
-  },
-  {
-    id: "familiar",
-    name: {
-      ca: "Ruta Familiar",
-      es: "Ruta Familiar",
-      en: "Family Route",
-      fr: "Route Famille",
-    },
-    tagline: {
-      ca: "Aigües tranquil·les, ideal per a famílies.",
-      es: "Aguas tranquilas, ideal para familias.",
-      en: "Calm waters, perfect for families.",
-      fr: "Eaux calmes, parfait en famille.",
-    },
-    description: {
-      ca: "La ruta ideal per a famílies i principiants. Aigües tranquil·les, cales accessibles i un parell d'aturades fotogràfiques. Sortida directa del moll, sense vent de fora.",
-      es: "Ruta ideal para familias y principiantes. Aguas tranquilas, calas accesibles y paradas fotográficas. Sin viento de fuera.",
-      en: "Ideal for families and beginners. Calm water, accessible coves, two or three photo stops. Sheltered from offshore wind.",
-      fr: "Idéal pour les familles et les débutants. Eaux calmes, criques accessibles, arrêts photos. À l'abri du vent du large.",
-    },
-    color: "#4A9B72",
-    distanceKm: 2.1,
-    durationHours: 1,
-    difficulty: "easy",
-    conditions: {
-      wind: { ok: 15, caution: 22 },
-      wave: { ok: 0.7, caution: 1.0 },
-    },
-    poiCount: POIS_FAMILIAR.length,
-    image: img("aiguablava-family-hero", 800, 480),
-    cardImage: img("aiguablava-family-card", 560, 340),
-    pois: POIS_FAMILIAR,
-    geometry: [
-      [3.2155, 41.9326],
-      [3.2135, 41.932],
-      [3.2118, 41.9308],
-      [3.2122, 41.9295],
-      [3.2138, 41.9292],
-      [3.2152, 41.9304],
     ],
   },
 ];

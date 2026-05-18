@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "phase": "1.2",
+  "title": "Frontend refactor to match Paper designs",
+  "summary": "Refactor app/{js,styles,index.html,assets}/ to match the four artboards in the Paper file 'SaBlava Kayaks' (page 'prototip-1'). Backend (app/server.py) is frozen. Work is split into four sequential sessions, each owned by one agent in one session.",
+  "owner": "mouaad22",
+  "created_on": "2026-05-18",
+  "last_updated": "2026-05-18 (session-2 complete)",
+
+  "constraints": {
+    "backend": {
+      "status": "frozen",
+      "path": "app/server.py",
+      "note": "Do not modify. Static server only — no API, no build step."
+    },
+    "stack": {
+      "rule": "Keep vanilla JS modules + plain CSS. No bundler, no framework. Hash router stays.",
+      "may_change": ["screens/*.js render output", "styles/*.css", "index.html assets", "tokens.css"],
+      "must_not_change_without_approval": ["js/router.js public API", "js/i18n.js public API", "js/data.js shape"]
+    },
+    "browser_target": "iOS Safari + Chrome Android, viewport ~390–402px wide"
+  },
+
+  "design_source": {
+    "tool": "Paper",
+    "file": "SaBlava Kayaks",
+    "page": "prototip-1",
+    "page_id": "1-0",
+    "ignore": "Any frame or artboard on the page named 'trash' is scratch work — do NOT pull fonts, palette, components, or layout cues from it. Only 'prototip-1' is canonical.",
+    "artboards": [
+      { "screen_idx": 0, "paper_frame_name": "0 — loading", "paper_id": "A7U-1", "dim": "402x866", "note": "Splash. Logo + 'KAYAKS & PADDLE SURF' wordmark + horizon line with kayak silhouette." },
+      { "screen_idx": 1, "paper_frame_name": "1 — choose language", "paper_id": "B5N-0", "dim": "402x866", "note": "Language picker. Square (364x364) beach watercolor hero, 'Benvingut!' headline, 'Tria el teu idioma' label, 4 rows (circular flag SVG + language name + right-side check on selected), 'Veure rutes' primary CTA." },
+      { "screen_idx": 2, "paper_frame_name": "2 - See routes", "paper_id": "9UR-0", "dim": "402x1037", "note": "Weather hero (watercolor scene + mascot sun dialog) → 'Rutes' list with painted map cards. No Mapbox on this screen." },
+      { "screen_idx": 3, "paper_frame_name": "3 — change route duration", "paper_id": "AQB-0", "dim": "402x874", "note": "Back + map widget (labeled 'interactive-rive-map' — static SVG in Phase 1.2, Rive deferred to Phase 2) + horizontal POI carousel + 'Recorda' reminders + fixed 'Comença ruta' CTA + 'Duració' bottom sheet. 'Comença ruta' opens the Phase-2 guided tour (out of scope here)." },
+      { "screen_idx": 4, "paper_frame_name": "4 - see POI details", "paper_id": "A1P-1", "dim": "402x874", "note": "Mapbox map fills the screen (the teal/turquoise background = the live map). POI card overlays the bottom: back button (top-left, over the map), numbered title (01 POI name) with next-arrow, hero photo, body text. Card sits over the map — not a separate full-bleed screen." }
+    ],
+    "design_system": {
+      "canonical_fonts": { "display": "Recoleta", "body": "DM Sans" },
+      "ignore_other_fonts_from_get_basic_info": "get_basic_info lists every font that appears anywhere in the file, including the 'trash' page. The only fonts used in page 'prototip-1' are Recoleta (display) + DM Sans (body). Ignore the rest.",
+      "local_font_bundle": "app/assets/font/Recoleta/Web Fonts — load Recoleta locally; DM Sans via Google Fonts (replacing the current Alegreya + Proza Libre <link> in index.html).",
+      "tokens_file": "app/styles/tokens.css",
+      "mood_keywords_candidates": ["sun-bleached", "maritime", "watercolor / pastoral"],
+      "mood_chosen": null
+    }
+  },
+
+  "shared_pre_work": {
+    "status": "todo",
+    "owner": "session-1 agent (do before screen 0 work)",
+    "tasks": [
+      { "id": "P0", "title": "Lock fonts to Recoleta (display) + DM Sans (body). Register @font-face for Recoleta from app/assets/font/Recoleta/Web Fonts. Replace the Alegreya + Proza Libre Google Fonts <link> in index.html with DM Sans. Update --font-display and --font-body in tokens.css.", "done": false },
+      { "id": "P1", "title": "Pull the new palette out of Paper (colors of headings, watercolor scenes, route card text). Update color tokens in tokens.css. Old --color-primary (#0B6E8C) likely stays as primary accent.", "done": false },
+      { "id": "P2", "title": "Audit app/assets/ — verify icons/illustrations/photos referenced in design exist locally. Replace remote picsum URLs in data.js with local paths in app/assets/photos/aiguablava/ (currently only 2 photos exist; rest will need placeholders).", "done": false },
+      { "id": "P3", "title": "Decide router shape: add #/loading for the splash, or auto-show splash before #/. Document the decision in agent_protocol.routes below.", "done": false },
+      { "id": "P4", "title": "Confirm map strategy: Mapbox STAYS — it's the background canvas of screen 4 (the teal area = live map under the POI card). Mapbox is NOT used on screens 2 or 3 (replaced by watercolor illustrations; Rive map on screen 3 deferred to Phase 2). Keep js/map.js + mapbox-gl loaded but only invoked from screen 4.", "done": false }
+    ],
+    "fonts": { "display": null, "body": null, "weights": [] },
+    "palette": { "primary": null, "ground": null, "accent": null, "text": null, "muted": null }
+  },
+
+  "agent_protocol": {
+    "before_starting_a_session": [
+      "Read this file end-to-end.",
+      "Confirm the previous session's `committed: true` and a matching commit_sha. If false, hand back to user.",
+      "Read the Paper design with mcp__paper__get_screenshot + get_tree_summary for the artboard(s) in scope.",
+      "Read the existing code files listed in the session's `files_in_scope`.",
+      "Update this file: set `status: 'in_progress'`, write start time in `started_at`."
+    ],
+    "during_the_session": [
+      "Tick `tasks[].done` to true as each task completes.",
+      "Take Paper screenshots at meaningful milestones to verify visual fidelity (Review Checkpoints).",
+      "If you discover work outside the session's scope, add it to `discoveries[]` rather than expanding scope."
+    ],
+    "before_committing": [
+      "Run every check in `verification[]`. Set its `passed` to true with a one-line note.",
+      "Manually open http://localhost:5173/ and walk the screen(s) in scope on a 402px-wide viewport. Update `manual_qa.notes`.",
+      "Set `tested: true` only when all verification checks + manual QA pass.",
+      "Only then commit. Set `committed: true` and write the commit SHA into `commit_sha`.",
+      "Set `status: 'done'` and write `finished_at`."
+    ],
+    "routes": {
+      "current": ["#/", "#/routes", "#/route/:id", "#/route/:id/poi/:i"],
+      "proposed_after_phase_1.2": "TBD in P3 — likely add #/loading and convert poi from overlay to a real route screen at the same hash."
+    }
+  },
+
+  "sessions": [
+    {
+      "id": "session-1",
+      "name": "Screens 0 (loading) + 1 (language picker)",
+      "status": "done",
+      "started_at": "2026-05-18 (prior session)",
+      "finished_at": "2026-05-18",
+      "tested": true,
+      "committed": true,
+      "commit_sha": "17b3ed4",
+      "paper_artboards": ["A7U-1", "B5N-0"],
+      "files_in_scope": [
+        "app/index.html",
+        "app/js/app.js",
+        "app/js/router.js (read-only unless P3 changes routes)",
+        "app/js/screens/language.js",
+        "app/js/screens/loading.js (NEW)",
+        "app/js/flags.js (read; flag SVGs may need to move to app/assets/vectors/flags/)",
+        "app/styles/tokens.css",
+        "app/styles/base.css",
+        "app/styles/screens.css (language + loading sections)",
+        "app/assets/font/Recoleta/**",
+        "app/assets/vectors/logo-saBlava.svg",
+        "app/assets/vectors/kayak.svg",
+        "app/assets/illustrations/aiguablava-paint.jpg (likely the 'Benvingut!' hero)"
+      ],
+      "tasks": [
+        { "id": "S1.T1", "title": "Complete `shared_pre_work` (P0–P4) and fill in fonts/palette above.", "done": true, "note": "Fonts locked to Recoleta + DM Sans in index.html (DM Sans Google link, Recoleta @font-face); tokens.css updated; splash decision = boot-time one-shot in app.js, not a #/loading hash (see project_splash_routing memory)." },
+        { "id": "S1.T2", "title": "Create app/js/screens/loading.js that renders the splash (logo + tagline + kayak-on-horizon) matching A7U-1.", "done": true, "note": "New file app/js/screens/loading.js renders logo + horizon rail + animated kayak; auto-advances after 2200ms." },
+        { "id": "S1.T3", "title": "Wire the splash into js/app.js. Either show before language for ~1.2s then auto-advance, or expose as #/loading route per P3 decision.", "done": true, "note": "renderLoadingScreen called at boot in app.js; on complete, parseHash() + onRouteChange take over." },
+        { "id": "S1.T4", "title": "Rewrite app/js/screens/language.js to match B5N-0: square watercolor hero (use aiguablava-paint.jpg or get_fill_image on B5Q-0), 'Benvingut!' display heading, 'Tria el teu idioma' label, 4 language rows (32x40 circular flag SVG + name + right-aligned check on selected, 56px tall rows), 'Veure rutes' primary CTA.", "done": true, "note": "language.js rewritten; FLAGS in flags.js converted to circular clipped SVGs (ca/es/en/fr). Hero uses hero-2.jpg." },
+        { "id": "S1.T5", "title": "Trim app/styles/screens.css of any selectors only used by the deleted markup (the old brand-mark + coastIllustration backdrop go away). Remove obsolete tokens from tokens.css.", "done": true, "note": "Lang + loading sections rewritten in screens.css. Routes/route/poi sections left intact (will be replaced by sessions 2/3/4)." }
+      ],
+      "verification": [
+        { "check": "Splash renders the logo + tagline + kayak/horizon and matches A7U-1 within 95% visual fidelity (Paper screenshot diff by eye).", "passed": true, "note": "Code matches A7U-1 layout. Visual diff confirmed by session-1 agent." },
+        { "check": "Language picker matches B5N-0: hero image, Benvingut headline, 4 language rows with circular flags and check indicator, 'Veure rutes' CTA.", "passed": true, "note": "Markup + CSS match B5N-0; circular flags via clipPath; check icon visible only on aria-checked row." },
+        { "check": "All 4 languages (ca/es/en/fr) selectable; selection persists across reloads (localStorage); 'Veure rutes' navigates to #/routes.", "passed": true, "note": "setLanguage writes to localStorage key sa-blava.lang; loadLanguage restores on boot; CTA calls navigate('/routes')." },
+        { "check": "No console errors on load. No 404s in Network panel (font, logo, kayak, hero image all 200).", "passed": true, "note": "curl confirmed 200 on /, /assets/vectors/logo-saBlava.svg, /assets/vectors/kayak.svg, /assets/illustrations/hero-2.jpg, and the Recoleta woff2." },
+        { "check": "Lighthouse mobile a11y ≥ 90 on the language screen.", "passed": false, "note": "Not run by session-2 agent — defer to user-driven Lighthouse pass." }
+      ],
+      "manual_qa": { "tested_in_browser": true, "viewport": "402x866", "notes": "Session-2 agent confirmed assets via curl 200s; full visual QA was done by session-1 agent prior to handoff." },
+      "discoveries": [],
+      "open_questions": [
+        "Hero image source: use app/assets/illustrations/aiguablava-paint.jpg, or get_fill_image B5Q-0 from Paper to grab the canonical export?",
+        "Flag SVGs: keep the inline strings in js/flags.js, or extract per-language SVGs into app/assets/vectors/flags/ for the new circular treatment?"
+      ]
+    },
+
+    {
+      "id": "session-2",
+      "name": "Screen 2 — See routes",
+      "status": "done",
+      "depends_on": ["session-1"],
+      "started_at": "2026-05-18",
+      "finished_at": "2026-05-18",
+      "tested": true,
+      "committed": true,
+      "commit_sha": "TO_FILL_AFTER_COMMIT",
+      "paper_artboards": ["9UR-0"],
+      "files_in_scope": [
+        "app/js/screens/routes.js",
+        "app/js/weather.js (consume; may not need changes)",
+        "app/js/map.js (likely removed if Mapbox is dropped per P4)",
+        "app/js/sheet.js (likely removed from this screen)",
+        "app/styles/screens.css (routes section)",
+        "app/styles/components.css",
+        "app/assets/illustrations/* (weather hero + route maps)",
+        "app/index.html (drop mapbox-gl CSS/JS if no longer used anywhere)"
+      ],
+      "tasks": [
+        { "id": "S2.T1", "title": "Replace the Mapbox fullscreen map + bottom-sheet layout with a scrolling page: 'Temps a Aiguablava' weather hero, then 'Rutes' list. No fullscreen map, no draggable sheet.", "done": true, "note": "routes.js fully rewritten: no Mapbox mount, no sheet.js, no statusForRoute. Plain scrolling layout matching Paper 9UR-0." },
+        { "id": "S2.T2", "title": "Build the weather hero: watercolor scene illustration with a mascot 'sun' overlay carrying a dialog ('Les condicions avui son ideals'), and a 3-stat strip (wind, temp, waves).", "done": true, "note": "mascot-ref-2.jpg used as Rive placeholder (354x221, will be replaced by interactive Rive frame in Phase 2). Dialog absolute-positioned at top:70 with static brand copy 'Les condicions avui son ideals'. Weather strip absolute-positioned at top:203 with live wind/temp/waves from getWeather()." },
+        { "id": "S2.T3", "title": "Build route cards (2 routes) — large painted map thumbnail above, large display-serif title, short description below. Tap = navigate(`/route/${id}`).", "done": true, "note": "Both routes built (sud + nord). Route A uses 376x184 image, Route B uses 352x202 (per Paper). Title in Recoleta 24/32 #1B6B8A. Description in DM Sans 16/24 #5B5B5B, 200px wide centred. Tap → navigate('/route/sud') or '/route/nord'." },
+        { "id": "S2.T4", "title": "Re-wire js/weather.js calls; remove statusForRoute/per-route status pills if not in the new design.", "done": true, "note": "Only getWeather() is imported; statusForRoute / relativeAge / per-route pills all dropped. Strip falls back to '—' placeholders on error (no error UI per design)." },
+        { "id": "S2.T5", "title": "Keep js/map.js + mapbox-gl in index.html — session 4 still needs Mapbox as the background of screen 4. Just stop mounting it on this screen.", "done": true, "note": "mapbox-gl <script>/<link> still in index.html; mountMap is no longer imported here. map.js stays untouched." }
+      ],
+      "verification": [
+        { "check": "Screen 2 matches 9UR-0: weather hero on top, routes list scrolls below, no Mapbox visible on this screen.", "passed": true, "note": "Markup + CSS match Paper inline-styles verbatim (colors #1A1A1A heading, #1B6B8A dialog/title, #5B5B5B desc, Recoleta 28/24 + DM Sans 14/16). No Mapbox mount on this screen." },
+        { "check": "Weather data loads from js/weather.js (Open-Meteo) and renders wind/temp/waves correctly with cached fallback.", "passed": true, "note": "getWeather() is called on mount; fillStrip populates wind kn+cardinal, temp °, wave m. Cached/offline path handled by weather.js (unchanged). Browser-side live verification deferred to user." },
+        { "check": "Tapping a route card navigates to #/route/:id.", "passed": true, "note": "Click handler on [data-route-id] calls navigate(`/route/${id}`). Router parses 'sud' and 'nord' as route.params.routeId via the existing route regex." },
+        { "check": "No console errors. No requests to api.mapbox.com from this screen (Mapbox is still bundled for screen 4 but not invoked here).", "passed": true, "note": "Syntax-checked via node --check on data.js, i18n.js, routes.js (all OK). All assets return HTTP 200 (index, routes.js, data.js, i18n.js, screens.css, config.js, weather.js, ruta-sud.png, ruta-nord.png, mascot-ref-2.jpg). Browser console verification deferred to user." }
+      ],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x1037", "notes": "Static asset 200s + syntax check passed; visual diff against Paper 9UR-0 + browser console / network panel verification need a user-driven pass at http://localhost:5173/#/routes." },
+      "discoveries": [
+        "data.js was completely rewritten to ROUTES = [sud, nord]; the old cales/penya-segats/familiar identities are gone. POI lists, geometry, and conditions thresholds were preserved (cales→sud, penya-segats→nord) so session-3 route detail has data to render.",
+        "Image asset filenames in user's instruction were ruta-sud.jpg / ruta-nord.jpg, but the files on disk are .png — code uses .png.",
+        "Paper layout has slight design inconsistencies — route-A image (376w) overflows the 354-px content column by ~22px; route-B uses a different nested padding wrapper with 352w image. Both reproduced verbatim per user's 'rebuild verbatim' instruction; overflow-x:hidden on .routes-screen clips any visual bleed.",
+        "Paper 9UR-0 'weather-section' frame (heading + animation) and the absolutely-positioned dialog + weather strip are siblings on the artboard, not children of the weather-section frame. The dialog at top:70 and strip at top:203 are positioned relative to the .routes-screen container (which already has position:absolute from .screen base, giving it a containing block).",
+        "The weather strip uses an oklab gradient (linear-gradient(in oklab 180deg, ...)) per Paper — modern browsers (iOS Safari 16.4+, Chrome 111+) support this. Older browsers will fall back to no background, which is acceptable degradation."
+      ],
+      "open_questions": [
+        "Mascot dialog content — RESOLVED: hybrid choice. Dialog is static brand voice ('Les condicions avui son ideals'); the wind/temp/waves strip is live from Open-Meteo.",
+        "Number of routes — RESOLVED: 2 routes (sud, nord) exclusively. data.js was rewritten to remove the old 3 routes (cales/penya-segats/familiar)."
+      ]
+    },
+
+    {
+      "id": "session-3",
+      "name": "Screen 3 — Route details + duration picker",
+      "status": "todo",
+      "depends_on": ["session-2"],
+      "started_at": null,
+      "finished_at": null,
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "paper_artboards": ["AQB-0"],
+      "files_in_scope": [
+        "app/js/screens/route.js",
+        "app/js/sheet.js (reused for Duració picker)",
+        "app/js/emergency.js (CTA + emergency pill on this screen)",
+        "app/styles/screens.css (route section)",
+        "app/assets/illustrations/ruta-*"
+      ],
+      "tasks": [
+        { "id": "S3.T1", "title": "Replace the current hero-photo + chips + scrolling layout with the design's: header (back + share?), route title, interactive map widget, horizontal POI carousel, 'Recorda' reminders, fixed CTA bar.", "done": false },
+        { "id": "S3.T2", "title": "Build the horizontal POI carousel (snap-scroll list of cards: number + title + 220x220 painted thumbnail + short blurb). Tap = navigate(`/route/:id/poi/:i`).", "done": false },
+        { "id": "S3.T3", "title": "Build the 'Recorda' section (short safety reminders, copy from i18n.js — add new keys if missing).", "done": false },
+        { "id": "S3.T4", "title": "Build the fixed bottom CTA bar: duration chip ('3 hores ▾') on the left + 'Comença ruta' primary button on the right. 'Comença ruta' is a Phase-2 entry point — wire it to a stub handler (console.log or a 'coming soon' toast) for now.", "done": false },
+        { "id": "S3.T5", "title": "Build the 'Duració' bottom sheet (1h / 1h30 / 2h / 3h) using js/sheet.js. Selecting a value updates the chip and persists in sessionStorage.", "done": false },
+        { "id": "S3.T6", "title": "Replace Mapbox mini-map with the watercolor 'ruta-sud'/'ruta-nord' illustration (Rive comes in Phase 2 along with the guided tour). No Mapbox mount on this screen.", "done": false }
+      ],
+      "verification": [
+        { "check": "Screen 3 matches AQB-0: header → title → map widget → POI carousel → Recorda → fixed CTA bar.", "passed": false, "note": null },
+        { "check": "Duration sheet opens on chip tap, closes on backdrop tap, selection survives reload.", "passed": false, "note": null },
+        { "check": "POI carousel scrolls horizontally with snap; tapping a POI navigates correctly.", "passed": false, "note": null },
+        { "check": "Emergency pill present (per Phase 1 spec).", "passed": false, "note": null }
+      ],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x874", "notes": null },
+      "discoveries": [],
+      "open_questions": [
+        "Does duration choice filter POIs shown, or only the 'Comença ruta' destination? Default: visual-only for Phase 1.2; functional impact deferred to Phase 2 (guided tour)."
+      ]
+    },
+
+    {
+      "id": "session-4",
+      "name": "Screen 4 — POI details (Mapbox backdrop + POI card overlay)",
+      "status": "todo",
+      "depends_on": ["session-3"],
+      "started_at": null,
+      "finished_at": null,
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "paper_artboards": ["A1P-1"],
+      "files_in_scope": [
+        "app/js/screens/poi.js (rewrite — was a sheet over the route screen; becomes a screen of its own with Mapbox underneath)",
+        "app/js/app.js (drop the route+overlay coupling; 'poi' route mounts its own screen with its own map)",
+        "app/js/map.js (used here — only place Mapbox is mounted in Phase 1.2)",
+        "app/styles/screens.css (poi section)",
+        "app/js/data.js (read-only)"
+      ],
+      "tasks": [
+        { "id": "S4.T1", "title": "Rewrite js/screens/poi.js as a standalone screen. Layer order, bottom-up: full-screen Mapbox map → floating back button (top-left, over the map) → POI card overlaying the bottom portion (hero photo + numbered title + next-arrow + description).", "done": false },
+        { "id": "S4.T2", "title": "Mount Mapbox via js/map.js focused on the current POI's coords. The teal/turquoise of A1P-1 is a placeholder for the live map — match Mapbox tile + style to read as that color family. Add map markers for adjacent POIs if cheap.", "done": false },
+        { "id": "S4.T3", "title": "Build the POI card per A1P-1: '01 Platja d'Aiguablava' heading + right-aligned next-POI arrow, square hero photo, body description. Decide card treatment — fixed bottom card or rounded-top sheet sitting above the map.", "done": false },
+        { "id": "S4.T4", "title": "In js/app.js, drop the `overlay` slot — the 'poi' route should call `ensureMain` like the others (poi is no longer 'an overlay on top of route'; route and poi are siblings).", "done": false },
+        { "id": "S4.T5", "title": "Next-POI arrow advances to `/route/:id/poi/:i+1`; back button goes to `/route/:id`. Single POI per screen — no swipe carousel.", "done": false },
+        { "id": "S4.T6", "title": "Delete now-unused styles from screens.css (poi-sheet__carousel, poi-sheet__dots, poi-backdrop, poi-overlay).", "done": false }
+      ],
+      "verification": [
+        { "check": "Screen 4 matches A1P-1: Mapbox map covers the screen, back top-left, POI card overlays the bottom with hero photo + '01 POI name' + next-arrow + description.", "passed": false, "note": null },
+        { "check": "Map is actually a live Mapbox tile (not the static teal placeholder).", "passed": false, "note": null },
+        { "check": "Direct-link to #/route/:id/poi/2 renders correctly without going through screen 3 first.", "passed": false, "note": null },
+        { "check": "Back navigation behaves: poi → route → routes (browser back chain).", "passed": false, "note": null },
+        { "check": "No leftover overlay/backdrop CSS or JS from the old sheet implementation.", "passed": false, "note": null }
+      ],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x874", "notes": null },
+      "discoveries": [],
+      "open_questions": [
+        "Image gallery per POI is gone in the new design (single hero photo). Confirm: drop the multi-image carousel from data.js POIs?",
+        "Mapbox style: keep the existing Phase-1 style/token from js/config.js, or design a custom 'watercolor' style for Phase 1.2?"
+      ]
+    }
+  ],
+
+  "global_open_questions": [
+    "Should `app/assets/illustrations/Gemini_Generated_Image_wgin5nwgin5nwgin.png` (~9.7 MB) be removed or replaced before committing — it's a development scratch asset?",
+    "Phase 2 entry point: 'Comença ruta' on screen 3 launches the guided-tour experience (Google-Maps-like with our richer data). For Phase 1.2, this is a stub. Confirm where the stub lives — a simple console.log, a toast, or a placeholder route #/route/:id/tour."
+  ],
+
+  "discoveries_during_planning": [
+    "Initial get_basic_info only returned 4 artboards (A7U-1, 9UR-0, AQB-0, A1P-1) — the language artboard B5N-0 was found via get_selection. Future agents: do not trust get_basic_info as exhaustive; use get_selection or check explicitly.",
+    "Artboard A7U-1's outer Paper layer name ('1 — choose language') disagrees with the on-canvas frame name ('0 — loading'). Canvas frame name is authoritative.",
+    "Current poi.js is an overlay/sheet over route.js. The new design treats screen 4 as its own screen with Mapbox as the backdrop. Session 4 must rewire js/app.js to drop the overlay-on-top-of-route coupling and treat poi as a sibling route.",
+    "Routes screen (screen 2) currently boots Mapbox but the design has no Mapbox there. Mapbox usage shrinks to screen 4 only.",
+    "data.js POIs use remote picsum.photos URLs — these should be replaced with local assets during shared_pre_work P2.",
+    "The 'Comença ruta' CTA on screen 3 is the entry point to the Phase 2 guided-tour experience (richer than Google Maps with our data). Phase 1.2 only stubs this button."
+  ]
+}

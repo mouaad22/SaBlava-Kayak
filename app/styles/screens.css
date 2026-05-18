@@ -317,13 +317,6 @@
   width: 340px;
   height: 91px;
   padding: 12px 48px;
-  background-image: linear-gradient(
-    in oklab 180deg,
-    oklab(50.1% -0.047 -0.062 / 0%) 0%,
-    oklab(49.6% -0.058 -0.067 / 80%) 100%
-  );
-  background-origin: border-box;
-  border-radius: 16px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -402,7 +395,6 @@
 
 .route-tile--b {
   align-self: stretch;
-  padding-inline: 24px;
 }
 
 .route-tile__media {
@@ -417,9 +409,8 @@
 }
 
 .route-tile--b .route-tile__media {
-  width: 352px;
-  height: 202px;
-  max-width: 100%;
+  width: 100%;
+  aspect-ratio: 483 / 278;
 }
 
 .route-tile__text {

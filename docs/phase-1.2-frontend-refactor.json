@@ -188,8 +188,8 @@
       "started_at": "2026-05-18",
       "finished_at": "2026-05-18",
       "tested": true,
-      "committed": false,
-      "commit_sha": null,
+      "committed": true,
+      "commit_sha": "5d9ee95",
       "paper_artboards": ["AZH-0", "AQB-0"],
       "files_in_scope": [
         "app/js/screens/route.js",

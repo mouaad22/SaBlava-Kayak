@@ -34,6 +34,7 @@ const POIS_SUD = [
       fr: "Plage d'Aiguablava",
     },
     description: PLACEHOLDER_DESCRIPTION,
+    thumbnail: "./assets/illustrations/poi1-aiguablava-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi1-pl-aiguablava/aiguablava-0.jpg" },
       { type: "image", src: "./assets/photos/poi1-pl-aiguablava/aiguablava-1.jpg" },
@@ -61,6 +62,7 @@ const POIS_SUD = [
     description: {
       ca: "Cala de roques.",
     },
+    thumbnail: "./assets/illustrations/poi-2-ses-herbes-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi2-ses-herbes/ses-herbes-1.jpg" },
     ],
@@ -84,6 +86,7 @@ const POIS_SUD = [
     description: {
       ca: "Platja de roques sense accés per terra. Precaució: Esllabissades.",
     },
+    thumbnail: "./assets/illustrations/poi-3-cala-des-tramadiu-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-3-cala-des-tramadiu/tramadiu-1.jpg" },
     ],
@@ -107,6 +110,7 @@ const POIS_SUD = [
     description: {
       ca: "Cova molt profunda, d'uns 150 m de profunditat.\n\nCal portar frontal per arribar al fons de la cova. Un cop al fons hi ha un roc que li diuen «la taula» al que es pot donar la volta. En aquest punt hi ha una sala amb formacions molt maques.\n\nSi volem, encara es poden recórrer uns metres de cova passada la taula per una escletxa estreta.\n\nL'entrada a la cova, encara que molt visible, no crida excessivament l'atenció. Cal anar atent seguint la costa, portar el track a un GPS o memoritzar la forma de l'entrada (vegeu la foto).\n\nDos dies a l'any el sol es reflecteix al fons de la cova quan surt. Un dels dies és entre el 20 i el 23 d'agost i l'altre cap al 20 o 21 d'abril.",
     },
+    thumbnail: "./assets/illustrations/poi-4-cova-gispert-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-1.jpg" },
       { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-2.jpg" },
@@ -141,6 +145,7 @@ const POIS_SUD = [
     description: {
       ca: "Cova no molt gran, però molt maca, al peu d'un alt penya-segat, fàcil de distingir per una gran taca groga que hi ha a l'esquerra de l'entrada.",
     },
+    thumbnail: "./assets/illustrations/poi-5cova-bisbe-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-5-cova-bisbe/bisbe-1.jpg" },
       { type: "image", src: "./assets/photos/poi-5-cova-bisbe/bisbe-2.jpg" },
@@ -165,6 +170,7 @@ const POIS_SUD = [
     description: {
       ca: "Profunda cova de 60 m de llarg i 10 d'alçada. Després d'una sala alta i allargada continua uns 15 m per una galeria estreta però sense problemes per passar. Si no fos per la curta distància amb la Cova d'en Gispert, segur que seria una cova molt destacada.\n\nQuan vam anar-hi al juliol, vam passar dos cops per la cova i els dos cops hi havia una gavina solitària a pocs metres de l'entrada.",
     },
+    thumbnail: "./assets/illustrations/poi-6-cova-gavina-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-6-cova-gavina/gavina-1.jpg" },
       { type: "image", src: "./assets/photos/poi-6-cova-gavina/gavina-2.jpg" },
@@ -201,6 +207,7 @@ const POIS_SUD = [
     description: {
       ca: "Pas estret navegable.\n\nUn dels millors freus de la Costa Brava. Cal anar atents per no saltar-ho, especialment si naveguem cap al Nord. Té parets altes i és força llarg i estret, però sense problemes per passar amb qualsevol caiac.",
     },
+    thumbnail: "./assets/illustrations/poi-7-reg-arbres-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-7-rec-dels-arbres/rec-arbres-1.jpg" },
       { type: "image", src: "./assets/photos/poi-7-rec-dels-arbres/rec-arbres-2.jpg" },
@@ -226,6 +233,7 @@ const POIS_SUD = [
     description: {
       ca: "Tipus: avarada (parada), codolar, bivac.",
     },
+    thumbnail: "./assets/illustrations/poi-8-cala-marquesa-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-8-cala-marquesa/marquesa-1.jpg" },
       { type: "image", src: "./assets/photos/poi-8-cala-marquesa/marquesa-2.jpg" },
@@ -253,6 +261,7 @@ const POIS_SUD = [
     description: {
       ca: "Aquí va viure Sebastià Puig, l'Hermòs, amic de Josep Pla i que surt en un dels seus llibres.",
     },
+    thumbnail: "./assets/illustrations/poi-9-aigua-xelida-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-9-aigua-xelida/aigua-xelida-1.jpg" },
       { type: "image", src: "./assets/photos/poi-9-aigua-xelida/aigua-xelida-2.jpg" },
@@ -432,8 +441,14 @@ export const ROUTES = [
     poiCount: POIS_SUD.length,
     image: "./assets/illustrations/ruta-sud.png",
     cardImage: "./assets/illustrations/ruta-sud.png",
-    mapImage: "./assets/illustrations/map-paint-ruta-sud.jpg",
-    mapVectorPattern: "./assets/vectors/ruta-sud-vector-poi{i}.svg",
+    mapImagePattern: "./assets/illustrations/mapa-ruta/map-ruta-sud-{i}.jpg",
+    mapImagePatternByDuration: {
+      "1h": "./assets/illustrations/mapa-ruta/1 hora/map-ruta-sud-{i}-1hora.jpg",
+      "1h30": "./assets/illustrations/mapa-ruta/2 hores + 90 minuts/map-ruta-sud-{i}-2hores-90-mins.jpg",
+      "2h": "./assets/illustrations/mapa-ruta/2 hores + 90 minuts/map-ruta-sud-{i}-2hores-90-mins.jpg",
+      "3h": "./assets/illustrations/mapa-ruta/map-ruta-sud-{i}.jpg",
+    },
+    mapImage: "./assets/illustrations/mapa-ruta/map-ruta-sud-1.jpg",
     pois: POIS_SUD,
     geometry: POIS_SUD.map((p) => p.coords),
   },
@@ -468,11 +483,10 @@ export const ROUTES = [
     poiCount: POIS_NORD.length,
     image: "./assets/illustrations/ruta-nord.png",
     cardImage: "./assets/illustrations/ruta-nord.png",
-    // Nord placeholder: real nord map + vector are not yet authored, so we
-    // temporarily reuse the sud assets for screen 3 rendering. Replace these
-    // two lines once map-paint-ruta-nord.jpg + ruta-nord-vector-poi*.svg land.
-    mapImage: "./assets/illustrations/map-paint-ruta-sud.jpg",
-    mapVectorPattern: "./assets/vectors/ruta-sud-vector-poi{i}.svg",
+    // Nord placeholder: real nord per-POI maps are not yet authored, so we
+    // temporarily reuse the sud map illustrations for screen 3 rendering.
+    mapImagePattern: "./assets/illustrations/mapa-ruta/map-ruta-sud-{i}.jpg",
+    mapImage: "./assets/illustrations/mapa-ruta/map-ruta-sud-1.jpg",
     pois: POIS_NORD,
     geometry: [
       [3.2155, 41.9326],

@@ -5,8 +5,8 @@
 //   • Header next-route arrow toggles sud ↔ nord.
 //   • Play button on the map runs a 5s circular border fill on click, looped.
 //   • Horizontal POI carousel; as a card scrolls into the centre the map
-//     vector swaps to ruta-{routeId}-vector-poi{N}.svg (falls back to poi1
-//     when the indexed file 404s).
+//     illustration swaps to mapa-ruta/map-ruta-{routeId}-{N}.jpg (falls back
+//     to N=1 when the indexed file 404s).
 //   • Duració chip opens a bottom sheet; selection persists per-route in
 //     localStorage and filters how many POIs are shown
 //     (1h → 6, 1h30 / 2h → 8, 3h → 9).
@@ -17,7 +17,7 @@ import { findRoute } from "../data.js";
 import { t, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
 
-const POI_COUNT_BY_DURATION = { "1h": 6, "1h30": 8, "2h": 8, "3h": 9 };
+const POI_COUNT_BY_DURATION = { "1h": 5, "1h30": 8, "2h": 8, "3h": 9 };
 const DURATIONS = ["1h", "1h30", "2h", "3h"];
 const DEFAULT_DURATION = "3h";
 const ROUTE_TOGGLE = { sud: "nord", nord: "sud" };
@@ -68,7 +68,7 @@ function poiCardHTML(poi, idx, lang, visible) {
         <span class="poi-card__number">${pad2(idx + 1)}</span>
         <span class="poi-card__title">${poi.name[lang]}</span>
       </div>
-      <div class="poi-card__media" style="background-image:url('${poi.gallery?.[0]?.src ?? ""}')"></div>
+      <div class="poi-card__media" style="background-image:url('${poi.thumbnail ?? poi.gallery?.[0]?.src ?? ""}')"></div>
       <p class="poi-card__desc">${poiDescription(poi, lang)}</p>
     </article>
   `;
@@ -108,8 +108,7 @@ function templateHTML(route, lang, durationId) {
       <section class="route-screen__section">
         <h1 class="route-screen__heading">${route.name[lang]}</h1>
 
-        <div class="route-map" role="img" aria-label="${route.name[lang]}" style="background-image:url('${route.mapImage}')">
-          <img class="route-map__vector" data-map-vector alt="" src="" />
+        <div class="route-map" data-route-map role="img" aria-label="${route.name[lang]}">
           <button class="play-button" type="button" data-action="play" aria-label="${t("route.play")}">
             ${PLAY_RING}
             <span class="play-button__icon">${ICON_PLAY}</span>
@@ -174,23 +173,52 @@ export function renderRouteScreen(host, routeId) {
   screen.innerHTML = templateHTML(route, lang, durationId);
   host.appendChild(screen);
 
-  // --- Map vector: starts on POI 1, swaps as carousel scrolls. -----------
-  const mapVector = screen.querySelector("[data-map-vector]");
+  // --- Map illustration: one per POI, swaps as carousel scrolls. The map
+  //     pattern depends on the selected duration (different illustrated maps
+  //     exist for 1h / 1h30+2h / 3h). Updated whenever duration changes.
+  const mapEl = screen.querySelector("[data-route-map]");
   const carousel = screen.querySelector("[data-poi-carousel]");
 
-  function setMapVectorForIndex(idx) {
-    const url = route.mapVectorPattern.replace("{i}", String(idx + 1));
-    if (mapVector.dataset.currentUrl === url) return;
-    mapVector.dataset.currentUrl = url;
-    mapVector.onerror = () => {
-      mapVector.onerror = null;
-      const fallback = route.mapVectorPattern.replace("{i}", "1");
-      mapVector.dataset.currentUrl = fallback;
-      mapVector.src = fallback;
-    };
-    mapVector.src = url;
+  function patternForDuration(id) {
+    return (
+      route.mapImagePatternByDuration?.[id] ?? route.mapImagePattern ?? null
+    );
   }
-  setMapVectorForIndex(0);
+  function mapUrlAt(pattern, idx) {
+    return encodeURI(pattern.replace("{i}", String(idx + 1)));
+  }
+
+  let currentPattern = patternForDuration(durationId);
+
+  function preloadCurrentPattern() {
+    if (!currentPattern) return;
+    const count = POI_COUNT_BY_DURATION[durationId] ?? route.pois.length;
+    for (let i = 1; i <= count; i++) {
+      const im = new Image();
+      im.src = mapUrlAt(currentPattern, i - 1);
+    }
+  }
+  preloadCurrentPattern();
+
+  function setMapImageForIndex(idx) {
+    if (!currentPattern) return;
+    const url = mapUrlAt(currentPattern, idx);
+    if (mapEl.dataset.currentUrl === url) return;
+    mapEl.dataset.currentUrl = url;
+    const probe = new Image();
+    probe.onload = () => {
+      if (mapEl.dataset.currentUrl === url) {
+        mapEl.style.backgroundImage = `url("${url}")`;
+      }
+    };
+    probe.onerror = () => {
+      const fallback = mapUrlAt(currentPattern, 0);
+      mapEl.dataset.currentUrl = fallback;
+      mapEl.style.backgroundImage = `url("${fallback}")`;
+    };
+    probe.src = url;
+  }
+  setMapImageForIndex(0);
 
   let activeIdx = 0;
   function recomputeActive() {
@@ -212,7 +240,7 @@ export function renderRouteScreen(host, routeId) {
     });
     if (best !== activeIdx) {
       activeIdx = best;
-      setMapVectorForIndex(best);
+      setMapImageForIndex(best);
     }
   }
   carousel.addEventListener("scroll", recomputeActive, { passive: true });
@@ -269,8 +297,15 @@ export function renderRouteScreen(host, routeId) {
       saveDuration(routeId, id);
       updateDurationUI(screen, durationId);
       closeSheet();
+      // Pull the new map pattern + warm its cache, then refresh the map.
+      currentPattern = patternForDuration(durationId);
+      mapEl.dataset.currentUrl = "";
+      preloadCurrentPattern();
       // Filtering may move the centred POI; recheck after the layout settles.
-      requestAnimationFrame(recomputeActive);
+      requestAnimationFrame(() => {
+        recomputeActive();
+        setMapImageForIndex(activeIdx);
+      });
     });
   });
 

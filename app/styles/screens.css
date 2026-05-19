@@ -519,18 +519,6 @@
   overflow: hidden;
 }
 
-.route-map__vector {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  display: block;
-  object-fit: contain;
-  object-position: center;
-}
-
 .play-button {
   position: absolute;
   /* Paper places this flush to the bottom-right of the 354x185 map frame.
@@ -584,8 +572,9 @@
   }
 }
 
-/* Horizontal POI carousel */
-.poi-carousel {
+/* Horizontal POI carousel — scoped to .route-screen because screen 4
+   reuses .poi-card / .poi-carousel for its own (full-screen) card. */
+.route-screen .poi-carousel {
   display: flex;
   gap: 8px;
   overflow-x: auto;
@@ -596,12 +585,14 @@
   padding: 16px 0;
   margin: 0 -24px;
   padding-inline: 24px;
+  position: static;
+  inset: auto;
 }
-.poi-carousel::-webkit-scrollbar {
+.route-screen .poi-carousel::-webkit-scrollbar {
   display: none;
 }
 
-.poi-card {
+.route-screen .poi-card {
   flex: 0 0 260px;
   display: flex;
   flex-direction: column;
@@ -614,11 +605,11 @@
   padding: 0;
 }
 
-.poi-card.is-hidden {
+.route-screen .poi-card.is-hidden {
   display: none;
 }
 
-.poi-card__heading {
+.route-screen .poi-card__heading {
   display: flex;
   align-items: baseline;
   justify-content: center;
@@ -626,7 +617,7 @@
   align-self: stretch;
 }
 
-.poi-card__number {
+.route-screen .poi-card__number {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 20px;
@@ -634,7 +625,7 @@
   color: #1b6b8a;
 }
 
-.poi-card__title {
+.route-screen .poi-card__title {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 20px;
@@ -642,16 +633,21 @@
   color: #1a1a1a;
 }
 
-.poi-card__media {
+.route-screen .poi-card__media {
   width: 220px;
   height: 220px;
+  max-width: none;
+  align-self: auto;
+  position: static;
   border-radius: 12px;
   background-position: 50%;
   background-size: cover;
+  background-color: transparent;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
-.poi-card__desc {
+.route-screen .poi-card__desc {
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 24px;
@@ -659,6 +655,12 @@
   text-align: center;
   width: 200px;
   margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Recorda */

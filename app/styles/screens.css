@@ -23,45 +23,97 @@
   flex-shrink: 0;
 }
 
-.loading-screen__progress {
+/* Watercolor brush progress bar.
+   Three layered JPGs (white BG) share the same canvas; mix-blend-mode:
+   multiply makes the white invisible against the white splash so the
+   stroke + brush tip blob composite naturally. The painted fill sits on
+   top of the base and is revealed via a feathered horizontal mask whose
+   edge tracks the brush tip's position — so there's never a gap between
+   the blob and the ink under it. */
+
+@property --progress {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.loading-screen__brush {
   position: relative;
-  width: 238px;
-  height: 50px;
+  width: 254px;
+  isolation: isolate;
   --progress: 0;
+  /* Travel distance for the brush tip blob. Less than the bar width because
+     the blob has a natural left-inset in its source image and the stroke
+     ends a few pixels short of the right edge. Tune by eye. */
+  --brush-travel: 232px;
+  --brush-tip-overshoot: 4px;
+  /* On-screen X of the blob center (matches the brush-tip transform). */
+  --blob-x: calc(
+    var(--progress) * var(--brush-travel) + var(--brush-tip-overshoot) + 10px
+  );
+  /* Feathered painted edge: solid behind the blob, fading past it. The
+     fade extends a few px PAST the blob's right edge so the blob always
+     sits over ink — no inkless gap. */
+  --paint-solid-end: calc(var(--blob-x) - 12px);
+  --paint-fade-end: calc(var(--blob-x) + 16px);
+  transition: --progress 250ms ease-out;
 }
 
-.loading-screen__rail {
+.loading-screen__brush-layer {
+  display: block;
+  width: 100%;
+  height: auto;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  user-select: none;
+}
+
+.loading-screen__brush-base {
+  position: relative;
+}
+
+.loading-screen__brush-fill {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 14px;
-  height: 1px;
-  background: #e2e6dd;
+  inset: 0;
+  opacity: 0;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 var(--paint-solid-end),
+    rgba(0, 0, 0, 0.65) calc(var(--paint-solid-end) + 10px),
+    rgba(0, 0, 0, 0.25) calc(var(--paint-solid-end) + 20px),
+    transparent var(--paint-fade-end)
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 var(--paint-solid-end),
+    rgba(0, 0, 0, 0.65) calc(var(--paint-solid-end) + 10px),
+    rgba(0, 0, 0, 0.25) calc(var(--paint-solid-end) + 20px),
+    transparent var(--paint-fade-end)
+  );
+  transition: opacity 200ms ease-out;
 }
 
-.loading-screen__fill {
+.loading-screen.is-painting .loading-screen__brush-fill {
+  opacity: 1;
+}
+
+.loading-screen__brush-tip {
   position: absolute;
-  left: 0;
-  bottom: 14px;
-  height: 2px;
-  width: calc(238px * var(--progress));
-  background: #1b6b8a;
-  transition: width 2000ms linear;
+  inset: 0;
+  opacity: 0;
+  transform: translateX(
+    calc(var(--progress) * var(--brush-travel) + var(--brush-tip-overshoot))
+  );
+  transition: opacity 300ms ease-out, transform 250ms ease-out;
 }
 
-.loading-screen__kayak {
-  position: absolute;
-  bottom: 8px;
-  left: calc((238px - 56px) * var(--progress));
-  width: 56px;
-  height: 40px;
-  transform: rotate(-20.75deg);
-  transform-origin: 50% 50%;
-  transition: left 2000ms linear;
+.loading-screen.is-tip-visible .loading-screen__brush-tip {
+  opacity: 1;
 }
 
-.loading-screen.is-running .loading-screen__progress {
-  --progress: 1;
+.loading-screen.is-complete .loading-screen__brush-tip {
+  opacity: 0;
+  transition: opacity 400ms ease-out;
 }
 
 /* ============== SCREEN 1 — LANGUAGE ============== */

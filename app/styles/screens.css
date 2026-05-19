@@ -1078,9 +1078,13 @@
   flex-shrink: 0;
 }
 
+/* Match the frame exactly — the Paper export used a 386×386 inner inside
+   a 354×354 frame for a deliberate edge bleed on the Aiguablava painting,
+   but the other 8 POI images aren't composed for that ~9 % overshoot and
+   were getting their edges chopped off. */
 .poi-card__media-inner {
-  width: 386px;
-  height: 386px;
+  width: 100%;
+  height: 100%;
   background-position: 50%;
   background-size: cover;
   flex-shrink: 0;

@@ -6,14 +6,14 @@
 //
 // POI lists, geometry, and `conditions` thresholds are preserved from the
 // Phase-1 dataset so later screens (route detail, POI detail) still have
-// something to render. Coordinates are approximate hand-tuned around
-// Aiguablava.
+// something to render. Sud-route coordinates come from a hand-measured GPS
+// log (DMS converted to decimal degrees). Nord-route coords are still
+// approximate placeholders.
 
 // 9 POIs for the Sud route, matching Paper artboard AZH-0 / AQB-0.
-// Only POI 4 (Cova d'en Gispert) carries a rich description — the rest use
-// the Paper placeholder ("Això es una descripció del primer punt.") via the
-// "poi.description.placeholder" i18n key. `description: null` signals the
-// renderer to fall back to that key.
+// Descriptions are authored in Catalan only; the renderer falls back to the
+// "poi.description.placeholder" i18n key for any language that is missing.
+// `description: null` keeps the placeholder for POIs without a write-up yet.
 const PLACEHOLDER_DESCRIPTION = null;
 
 const POIS_SUD = [
@@ -22,7 +22,7 @@ const POIS_SUD = [
     type: "platja",
     typeIcon: "🏖",
     minutesFromStart: 0,
-    coords: [3.2155, 41.9326],
+    coords: [3.216217, 41.934067],
     depthM: 2,
     shade: "matí",
     snorkel: 3,
@@ -41,7 +41,7 @@ const POIS_SUD = [
     type: "cala",
     typeIcon: "🏖",
     minutesFromStart: 20,
-    coords: [3.2178, 41.9333],
+    coords: [3.218867, 41.932333],
     depthM: 3,
     shade: "matí",
     snorkel: 3,
@@ -52,7 +52,9 @@ const POIS_SUD = [
       en: "Ses Herbes Cove",
       fr: "Crique de Ses Herbes",
     },
-    description: PLACEHOLDER_DESCRIPTION,
+    description: {
+      ca: "Cala de roques.",
+    },
     images: ["./assets/illustrations/ses-herbes-paint.jpg"],
   },
   {
@@ -60,7 +62,7 @@ const POIS_SUD = [
     type: "cala",
     typeIcon: "🏖",
     minutesFromStart: 40,
-    coords: [3.219, 41.9335],
+    coords: [3.215333, 41.92925],
     depthM: 4,
     shade: "migdia",
     snorkel: 4,
@@ -71,7 +73,9 @@ const POIS_SUD = [
       en: "Tramadiu Cove",
       fr: "Crique du Tramadiu",
     },
-    description: PLACEHOLDER_DESCRIPTION,
+    description: {
+      ca: "Platja de roques sense accés per terra. Precaució: Esllabissades.",
+    },
     images: ["./assets/illustrations/cala-des-tramadiu-paint.jpg"],
   },
   {
@@ -79,7 +83,7 @@ const POIS_SUD = [
     type: "cova",
     typeIcon: "🕳",
     minutesFromStart: 60,
-    coords: [3.2208, 41.9337],
+    coords: [3.2175, 41.9276],
     depthM: 6,
     shade: "tot el dia",
     snorkel: 5,
@@ -91,10 +95,7 @@ const POIS_SUD = [
       fr: "Grotte d'en Gispert",
     },
     description: {
-      ca: "Una cova marina de 18 metres de fondària amb sostre baix i aigua maragda dins. Entra a poc a poc i mantén el caiac al centre del túnel. Vigila amb les onades a la boca de la cova.",
-      es: "Una cueva marina de 18 metros de profundidad con techo bajo y agua esmeralda. Entra despacio y mantén el kayak en el centro del túnel. Cuidado con el oleaje a la entrada.",
-      en: "An 18-metre sea cave with low ceiling and emerald water inside. Enter slowly and keep the kayak centered. Watch the swell at the entrance.",
-      fr: "Une grotte marine de 18 mètres au plafond bas et à l'eau émeraude. Entre doucement, garde le kayak au centre. Attention à la houle à l'entrée.",
+      ca: "Cova molt profunda, d'uns 150 m de profunditat.\n\nCal portar frontal per arribar al fons de la cova. Un cop al fons hi ha un roc que li diuen «la taula» al que es pot donar la volta. En aquest punt hi ha una sala amb formacions molt maques.\n\nSi volem, encara es poden recórrer uns metres de cova passada la taula per una escletxa estreta.\n\nL'entrada a la cova, encara que molt visible, no crida excessivament l'atenció. Cal anar atent seguint la costa, portar el track a un GPS o memoritzar la forma de l'entrada (vegeu la foto).\n\nDos dies a l'any el sol es reflecteix al fons de la cova quan surt. Un dels dies és entre el 20 i el 23 d'agost i l'altre cap al 20 o 21 d'abril.",
     },
     images: ["./assets/illustrations/cova-gispert-paint.jpg"],
   },
@@ -103,7 +104,7 @@ const POIS_SUD = [
     type: "cova",
     typeIcon: "🕳",
     minutesFromStart: 80,
-    coords: [3.2225, 41.9339],
+    coords: [3.2183, 41.927133],
     depthM: 7,
     shade: "tot el dia",
     snorkel: 4,
@@ -114,7 +115,9 @@ const POIS_SUD = [
       en: "Bishop's Cave",
       fr: "Grotte de l'Évêque",
     },
-    description: PLACEHOLDER_DESCRIPTION,
+    description: {
+      ca: "Cova no molt gran, però molt maca, al peu d'un alt penya-segat, fàcil de distingir per una gran taca groga que hi ha a l'esquerra de l'entrada.",
+    },
     images: ["./assets/illustrations/cova-bisbe-paint.jpg"],
   },
   {
@@ -122,18 +125,20 @@ const POIS_SUD = [
     type: "cova",
     typeIcon: "🕳",
     minutesFromStart: 100,
-    coords: [3.224, 41.9341],
+    coords: [3.217417, 41.925233],
     depthM: 6,
     shade: "tot el dia",
     snorkel: 4,
     accessibility: "kayak",
     name: {
-      ca: "Cova de la Gavina",
-      es: "Cueva de la Gaviota",
-      en: "Seagull Cave",
-      fr: "Grotte de la Mouette",
+      ca: "Cova de Sa Gavina",
+      es: "Cueva de Sa Gavina",
+      en: "Sa Gavina Cave",
+      fr: "Grotte de Sa Gavina",
     },
-    description: PLACEHOLDER_DESCRIPTION,
+    description: {
+      ca: "Profunda cova de 60 m de llarg i 10 d'alçada. Després d'una sala alta i allargada continua uns 15 m per una galeria estreta però sense problemes per passar. Si no fos per la curta distància amb la Cova d'en Gispert, segur que seria una cova molt destacada.\n\nQuan vam anar-hi al juliol, vam passar dos cops per la cova i els dos cops hi havia una gavina solitària a pocs metres de l'entrada.",
+    },
     images: ["./assets/illustrations/cova-gavina-paint.jpg"],
   },
   {
@@ -141,18 +146,20 @@ const POIS_SUD = [
     type: "snorkel",
     typeIcon: "🤿",
     minutesFromStart: 120,
-    coords: [3.2258, 41.9343],
+    coords: [3.21715, 41.92475],
     depthM: 8,
     shade: "tarda",
     snorkel: 5,
     accessibility: "kayak",
     name: {
-      ca: "Reg del Arbres",
-      es: "Reg del Arbres",
-      en: "Reg del Arbres",
-      fr: "Reg del Arbres",
+      ca: "Rec dels Arbres",
+      es: "Rec dels Arbres",
+      en: "Rec dels Arbres",
+      fr: "Rec dels Arbres",
     },
-    description: PLACEHOLDER_DESCRIPTION,
+    description: {
+      ca: "Pas estret navegable.\n\nUn dels millors freus de la Costa Brava. Cal anar atents per no saltar-ho, especialment si naveguem cap al Nord. Té parets altes i és força llarg i estret, però sense problemes per passar amb qualsevol caiac.",
+    },
     images: ["./assets/illustrations/reg-arbres-paint.jpg"],
   },
   {
@@ -160,7 +167,7 @@ const POIS_SUD = [
     type: "cala",
     typeIcon: "🏖",
     minutesFromStart: 140,
-    coords: [3.2275, 41.9346],
+    coords: [3.216317, 41.924133],
     depthM: 4,
     shade: "matí",
     snorkel: 4,
@@ -171,7 +178,9 @@ const POIS_SUD = [
       en: "Marquesa Cove",
       fr: "Crique Marquesa",
     },
-    description: PLACEHOLDER_DESCRIPTION,
+    description: {
+      ca: "Tipus: avarada (parada), codolar, bivac.",
+    },
     images: ["./assets/illustrations/cala-marquesa-paint.jpg"],
   },
   {
@@ -179,7 +188,7 @@ const POIS_SUD = [
     type: "cala",
     typeIcon: "🏖",
     minutesFromStart: 160,
-    coords: [3.229, 41.9349],
+    coords: [3.215683, 41.92145],
     depthM: 5,
     shade: "matí",
     snorkel: 4,
@@ -190,7 +199,9 @@ const POIS_SUD = [
       en: "Aigua Xelida",
       fr: "Aigua Xelida",
     },
-    description: PLACEHOLDER_DESCRIPTION,
+    description: {
+      ca: "Aquí va viure Sebastià Puig, l'Hermòs, amic de Josep Pla i que surt en un dels seus llibres.",
+    },
     images: ["./assets/illustrations/aigua-xelida-paint.jpg"],
   },
 ];

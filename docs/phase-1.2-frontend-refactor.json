@@ -5,7 +5,7 @@
   "summary": "Refactor app/{js,styles,index.html,assets}/ to match the four artboards in the Paper file 'SaBlava Kayaks' (page 'prototip-1'). Backend (app/server.py) is frozen. Work is split into four sequential sessions, each owned by one agent in one session.",
   "owner": "mouaad22",
   "created_on": "2026-05-18",
-  "last_updated": "2026-05-19 (session-4 code complete, pending user commit + manifest commit_sha fill)",
+  "last_updated": "2026-05-19 (session-4 committed as 54c9675 + post-session-4 carousel/gallery/squircle work; session-5 queued to fix screen-3 regression)",
 
   "constraints": {
     "backend": {
@@ -282,6 +282,92 @@
         "Mapbox style: kept the existing Phase-1 outdoors-v12 from config.js. Phase 2 may want a custom watercolor style — leaving as a Phase-2 task.",
         "Pulse / glow animation on the active POI marker: not in Paper, not added. Add if Phase 2 wants stronger visual emphasis.",
         "Should map.js + emergency.js be deleted now that they're unused? Both are out of strict session-4 scope; leaving for a cleanup pass."
+      ]
+    },
+
+    {
+      "id": "session-5",
+      "name": "Screen 3 rebuild: per-POI illustrated map + illustrated POI carousel",
+      "status": "todo",
+      "depends_on": ["session-4"],
+      "started_at": null,
+      "finished_at": null,
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "paper_artboards": ["AZH-0"],
+      "scope_note": "User reported screen 3 visually regressed after session-4 work — the POI carousel thumbnails are now showing the real photos (poi.gallery[0].src) introduced for the screen-4 gallery, when they should be the painted illustrations. The map widget also needs to swap between 9 per-POI illustrations instead of one shared satellite jpg + dashed SVG overlay. Scope is screen 3 BODY ONLY (header, map widget, POI carousel, Recorda, CTA bar). The Duració bottom sheet (AQB-0) was finished correctly in session-3 and is OUT OF SCOPE — do not touch it.",
+      "files_in_scope": [
+        "app/js/screens/route.js (POI carousel thumbnail src + map widget src driven by active POI)",
+        "app/js/data.js (add a `thumbnail` field per POI pointing at the illustration; `gallery` stays untouched — it powers screen 4/5)",
+        "app/styles/screens.css (SCREEN 3 section — only adjust if Paper AZH-0 demands it)"
+      ],
+      "out_of_scope": [
+        "Anything in app/js/screens/poi.js or gallery.js — session-4 wiring is final.",
+        "The Duración bottom sheet (AQB-0) — session-3 already matched Paper.",
+        "Mapbox in any screen — screen 3 stays Mapbox-free."
+      ],
+      "source_of_truth": {
+        "rule": "Use mcp__paper__get_jsx(AZH-0, format: 'inline-styles') as the authoritative markup. Pull subtrees via get_jsx and stitch them — do NOT translate, restyle, simplify, or invent classes, colors, copy, or structure. Use mcp__paper__get_computed_styles for any pixel values that look off in the JSX export.",
+        "paper_artboard_id": "AZH-0",
+        "paper_artboard_name": "3 — see route details",
+        "paper_file": "SaBlava Kayaks",
+        "paper_page": "prototip-1",
+        "design_was_authored_correctly_in_session_3": "git show 5d9ee95 -- app/js/screens/route.js app/styles/screens.css is the last known good shape. The regression was downstream (poi.images -> poi.gallery rename), not a Paper change."
+      },
+      "assets": {
+        "map_widget_per_poi": {
+          "directory": "app/assets/illustrations/mapa-ruta/",
+          "pattern": "map-ruta-sud-{i}.jpg",
+          "indexing": "1-based, one file per POI in the 3-hour sud route (i = 1..9). When the carousel-active POI index changes, swap the .route-map background to the matching map-ruta-sud-{currentIndex+1}.jpg.",
+          "files_present": [
+            "map-ruta-sud-1.jpg", "map-ruta-sud-2.jpg", "map-ruta-sud-3.jpg",
+            "map-ruta-sud-4.jpg", "map-ruta-sud-5.jpg", "map-ruta-sud-6.jpg",
+            "map-ruta-sud-7.jpg", "map-ruta-sud-8.jpg", "map-ruta-sud-9.jpg"
+          ],
+          "size_warning": "These are ~2 MB each (18 MB total). The next agent should run them through ffmpeg with the same recipe used in session-4 commit 54c9675 (max 1600 px long edge, -q:v 4) BEFORE committing — drop them to ~300–500 KB each. Recipe is in the session-4 task description and can be replayed from .media-backups history if needed.",
+          "nord_route": "No map-ruta-nord-{i}.jpg files exist yet. For nord POIs, fall back to one of the sud images or leave the map background blank — flag as a discovery for the user."
+        },
+        "poi_thumbnails": {
+          "directory": "app/assets/illustrations/",
+          "pattern": "poi-{N}-{slug}-paint.jpg",
+          "purpose": "Watercolor illustration shown in the horizontal POI carousel on screen 3 (one card per POI, 220×220 image per Paper AZH-0). NOT the photo gallery — that lives in poi.gallery for screen 4/5.",
+          "files_present_exact": [
+            "poi1-aiguablava-paint.jpg",
+            "poi-2-ses-herbes-paint.jpg",
+            "poi-3-cala-des-tramadiu-paint.jpg",
+            "poi-4-cova-gispert-paint.jpg",
+            "poi-5cova-bisbe-paint.jpg",
+            "poi-6-cova-gavina-paint.jpg",
+            "poi-7-reg-arbres-paint.jpg",
+            "poi-8-cala-marquesa-paint.jpg",
+            "poi-9-aigua-xelida-paint.jpg"
+          ],
+          "filename_inconsistencies": "Two filenames break the poi-{N}-{slug}-paint.jpg convention: 'poi1-aiguablava-paint.jpg' (missing hyphen between poi and 1) and 'poi-5cova-bisbe-paint.jpg' (missing hyphen between 5 and cova). The agent should either (a) rename both files to match (poi-1-aiguablava-paint.jpg, poi-5-cova-bisbe-paint.jpg) and update data.js accordingly, or (b) keep the inconsistent names and reference them verbatim in data.js. Recommend (a) for hygiene — flag the rename in discoveries[]."
+        }
+      },
+      "tasks": [
+        { "id": "S5.T1", "title": "Add a `thumbnail` field to each POI in app/js/data.js pointing at its illustration. SUD POIs use the poi-{N}-{slug}-paint.jpg files in app/assets/illustrations/; NORD POIs keep their existing illustration paths. Do NOT touch poi.gallery — that powers the photo carousel on screen 4 and the gallery on screen 5.", "done": false },
+        { "id": "S5.T2", "title": "In app/js/screens/route.js, change the POI card thumbnail src from `poi.gallery?.[0]?.src ?? ''` to `poi.thumbnail`. The carousel structure stays exactly as it is — only the image source changes.", "done": false },
+        { "id": "S5.T3", "title": "Rewire the map widget on screen 3 so its background image swaps based on the active carousel POI. Remove the dashed SVG vector overlay (route.mapVectorPattern) — Paper AZH-0 does not have it on the new map. The .route-map element's background-image becomes map-ruta-sud-{activeIndex+1}.jpg (1-based). Hook the existing carousel-scroll → recomputeActive callback to also call setMapImageForIndex. Preload neighbours to avoid flash.", "done": false },
+        { "id": "S5.T4", "title": "Compress the 9 map-ruta-sud-{i}.jpg files in place with ffmpeg, same recipe as session-4: `ffmpeg -y -i in.jpg -vf scale=w='min(1600,iw)':h='min(1600,ih)':force_original_aspect_ratio=decrease -q:v 4 tmp.jpg && mv tmp.jpg in.jpg`. Target: ≤ 500 KB each.", "done": false },
+        { "id": "S5.T5", "title": "Rename the two off-pattern illustration files (poi1-aiguablava-paint.jpg → poi-1-aiguablava-paint.jpg, poi-5cova-bisbe-paint.jpg → poi-5-cova-bisbe-paint.jpg) and update the data.js thumbnail paths. Or skip rename if (a) data.js uses the verbatim filenames and (b) the user prefers no file renames — confirm with user before deciding.", "done": false },
+        { "id": "S5.T6", "title": "Verify Paper AZH-0 vs the rebuilt screen 3 with mcp__paper__get_screenshot side-by-side. If anything else regressed (header, Recorda section, CTA bar, duration chip), pull the canonical JSX from Paper and reconcile.", "done": false }
+      ],
+      "verification": [
+        { "check": "POI carousel on /#/route/sud shows watercolor illustrations (poi-{N}-{slug}-paint.jpg), NOT the photos from app/assets/photos/poi*/.", "passed": false },
+        { "check": "Scrolling the POI carousel swaps the map illustration above to the matching mapa-ruta/map-ruta-sud-{i}.jpg.", "passed": false },
+        { "check": "No console errors. No 404s on any poi-*-paint.jpg or map-ruta-sud-*.jpg.", "passed": false },
+        { "check": "Screen 4 (POI sheet) and screen 5 (gallery) still show the photo carousel — session-4 work is untouched.", "passed": false },
+        { "check": "Duración bottom sheet still opens, snaps, and persists — session-3 work is untouched.", "passed": false },
+        { "check": "Paper AZH-0 visual diff: header chips (back + change-route), map widget proportions (354×185), play button at bottom-right of map, POI carousel card spec (260px wide, 220×220 image), Recorda section copy, CTA bar (duration chip + Comença ruta).", "passed": false }
+      ],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x874", "notes": null },
+      "discoveries": [],
+      "open_questions": [
+        "Should the route.mapVectorPattern field be removed from data.js + the dashed SVG files deleted from app/assets/vectors/? They were used by the old map widget but Paper AZH-0 no longer has them. Recommend yes — confirm with user.",
+        "Nord route map illustrations don't exist (no map-ruta-nord-*.jpg). What should /#/route/nord show in the map widget — a sud fallback, a placeholder, or hide the map until nord assets land?",
+        "Should poi.thumbnail be required (every POI must have one) or optional (nord POIs may still point at the old illustration paths)?"
       ]
     }
   ],

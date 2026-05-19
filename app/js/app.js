@@ -4,19 +4,22 @@ import { renderLoadingScreen } from "./screens/loading.js";
 import { renderLanguageScreen } from "./screens/language.js";
 import { renderRoutesScreen } from "./screens/routes.js";
 import { renderRouteScreen } from "./screens/route.js";
-import { renderPoiOverlay } from "./screens/poi.js";
+import { renderPoiScreen } from "./screens/poi.js";
+import { renderGalleryScreen } from "./screens/gallery.js";
 
 const host = document.getElementById("screen-stack");
 
-// Two layers: a main screen (lang/routes/route) and an optional POI overlay.
+// Single screen slot — every route mounts its own screen and tears down the
+// previous one. Screen 4 (POI) is no longer an overlay on top of screen 3;
+// it's a sibling that owns the full viewport with Mapbox underneath.
 let main = null;
-let overlay = null;
 
 function ensureMain(target) {
   if (
     main &&
     main.name === target.name &&
-    (target.routeId === undefined || main.routeId === target.routeId)
+    (target.routeId === undefined || main.routeId === target.routeId) &&
+    (target.poiIndex === undefined || main.poiIndex === target.poiIndex)
   ) {
     return;
   }
@@ -24,29 +27,21 @@ function ensureMain(target) {
   main = target.factory();
 }
 
-function tearDownOverlay() {
-  if (overlay?.teardown) overlay.teardown();
-  overlay = null;
-}
-
 function render(route) {
   switch (route.name) {
     case "language":
-      tearDownOverlay();
       ensureMain({
         name: "language",
         factory: () => renderLanguageScreen(host),
       });
       break;
     case "routes":
-      tearDownOverlay();
       ensureMain({
         name: "routes",
         factory: () => renderRoutesScreen(host),
       });
       break;
     case "route":
-      tearDownOverlay();
       ensureMain({
         name: "route",
         routeId: route.params.routeId,
@@ -55,19 +50,27 @@ function render(route) {
       break;
     case "poi":
       ensureMain({
-        name: "route",
+        name: "poi",
         routeId: route.params.routeId,
-        factory: () => renderRouteScreen(host, route.params.routeId),
+        poiIndex: route.params.poiIndex,
+        factory: () =>
+          renderPoiScreen(host, route.params.routeId, route.params.poiIndex),
       });
-      tearDownOverlay();
-      overlay = renderPoiOverlay(
-        host,
-        route.params.routeId,
-        route.params.poiIndex
-      );
+      break;
+    case "gallery":
+      ensureMain({
+        name: "gallery",
+        routeId: route.params.routeId,
+        poiIndex: route.params.poiIndex,
+        factory: () =>
+          renderGalleryScreen(
+            host,
+            route.params.routeId,
+            route.params.poiIndex
+          ),
+      });
       break;
     default:
-      tearDownOverlay();
       ensureMain({
         name: "language",
         factory: () => renderLanguageScreen(host),

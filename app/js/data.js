@@ -34,7 +34,13 @@ const POIS_SUD = [
       fr: "Plage d'Aiguablava",
     },
     description: PLACEHOLDER_DESCRIPTION,
-    images: ["./assets/illustrations/aiguablava-paint.jpg"],
+    gallery: [
+      { type: "image", src: "./assets/photos/poi1-pl-aiguablava/aiguablava-0.jpg" },
+      { type: "image", src: "./assets/photos/poi1-pl-aiguablava/aiguablava-1.jpg" },
+      { type: "image", src: "./assets/photos/poi1-pl-aiguablava/Aiguablava-2.jpg" },
+      { type: "image", src: "./assets/photos/poi1-pl-aiguablava/Aiguablava-25.jpg" },
+      { type: "image", src: "./assets/photos/poi1-pl-aiguablava/aiguablava-begur-4.jpg" },
+    ],
   },
   {
     id: "cala-ses-herbes",
@@ -55,7 +61,9 @@ const POIS_SUD = [
     description: {
       ca: "Cala de roques.",
     },
-    images: ["./assets/illustrations/ses-herbes-paint.jpg"],
+    gallery: [
+      { type: "image", src: "./assets/photos/poi2-ses-herbes/ses-herbes-1.jpg" },
+    ],
   },
   {
     id: "cala-des-tramadiu",
@@ -76,7 +84,9 @@ const POIS_SUD = [
     description: {
       ca: "Platja de roques sense accés per terra. Precaució: Esllabissades.",
     },
-    images: ["./assets/illustrations/cala-des-tramadiu-paint.jpg"],
+    gallery: [
+      { type: "image", src: "./assets/photos/poi-3-cala-des-tramadiu/tramadiu-1.jpg" },
+    ],
   },
   {
     id: "cova-gispert",
@@ -97,7 +107,20 @@ const POIS_SUD = [
     description: {
       ca: "Cova molt profunda, d'uns 150 m de profunditat.\n\nCal portar frontal per arribar al fons de la cova. Un cop al fons hi ha un roc que li diuen «la taula» al que es pot donar la volta. En aquest punt hi ha una sala amb formacions molt maques.\n\nSi volem, encara es poden recórrer uns metres de cova passada la taula per una escletxa estreta.\n\nL'entrada a la cova, encara que molt visible, no crida excessivament l'atenció. Cal anar atent seguint la costa, portar el track a un GPS o memoritzar la forma de l'entrada (vegeu la foto).\n\nDos dies a l'any el sol es reflecteix al fons de la cova quan surt. Un dels dies és entre el 20 i el 23 d'agost i l'altre cap al 20 o 21 d'abril.",
     },
-    images: ["./assets/illustrations/cova-gispert-paint.jpg"],
+    gallery: [
+      { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-1.jpg" },
+      { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-2.jpg" },
+      { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-3.jpg" },
+      { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-4.jpg" },
+      { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-5.jpg" },
+      { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-6.jpg" },
+      {
+        type: "video",
+        src: "./assets/photos/poi-4-cova-gispert/gispert-7.mp4",
+        poster: "./assets/photos/poi-4-cova-gispert/gispert-6.jpg",
+      },
+      { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-8.jpg" },
+    ],
   },
   {
     id: "cova-bisbe",
@@ -118,7 +141,10 @@ const POIS_SUD = [
     description: {
       ca: "Cova no molt gran, però molt maca, al peu d'un alt penya-segat, fàcil de distingir per una gran taca groga que hi ha a l'esquerra de l'entrada.",
     },
-    images: ["./assets/illustrations/cova-bisbe-paint.jpg"],
+    gallery: [
+      { type: "image", src: "./assets/photos/poi-5-cova-bisbe/bisbe-1.jpg" },
+      { type: "image", src: "./assets/photos/poi-5-cova-bisbe/bisbe-2.jpg" },
+    ],
   },
   {
     id: "cova-gavina",
@@ -139,7 +165,22 @@ const POIS_SUD = [
     description: {
       ca: "Profunda cova de 60 m de llarg i 10 d'alçada. Després d'una sala alta i allargada continua uns 15 m per una galeria estreta però sense problemes per passar. Si no fos per la curta distància amb la Cova d'en Gispert, segur que seria una cova molt destacada.\n\nQuan vam anar-hi al juliol, vam passar dos cops per la cova i els dos cops hi havia una gavina solitària a pocs metres de l'entrada.",
     },
-    images: ["./assets/illustrations/cova-gavina-paint.jpg"],
+    gallery: [
+      { type: "image", src: "./assets/photos/poi-6-cova-gavina/gavina-1.jpg" },
+      { type: "image", src: "./assets/photos/poi-6-cova-gavina/gavina-2.jpg" },
+      { type: "image", src: "./assets/photos/poi-6-cova-gavina/gavina-3.jpg" },
+      { type: "image", src: "./assets/photos/poi-6-cova-gavina/gavina-4.jpg" },
+      {
+        type: "video",
+        src: "./assets/photos/poi-6-cova-gavina/gavina-5.mp4",
+        poster: "./assets/photos/poi-6-cova-gavina/gavina-4.jpg",
+      },
+      {
+        type: "video",
+        src: "./assets/photos/poi-6-cova-gavina/gavina-6.mp4",
+        poster: "./assets/photos/poi-6-cova-gavina/gavina-4.jpg",
+      },
+    ],
   },
   {
     id: "reg-arbres",
@@ -160,7 +201,11 @@ const POIS_SUD = [
     description: {
       ca: "Pas estret navegable.\n\nUn dels millors freus de la Costa Brava. Cal anar atents per no saltar-ho, especialment si naveguem cap al Nord. Té parets altes i és força llarg i estret, però sense problemes per passar amb qualsevol caiac.",
     },
-    images: ["./assets/illustrations/reg-arbres-paint.jpg"],
+    gallery: [
+      { type: "image", src: "./assets/photos/poi-7-rec-dels-arbres/rec-arbres-1.jpg" },
+      { type: "image", src: "./assets/photos/poi-7-rec-dels-arbres/rec-arbres-2.jpg" },
+      { type: "image", src: "./assets/photos/poi-7-rec-dels-arbres/rec-arbres-3.jpg" },
+    ],
   },
   {
     id: "cala-marquesa",
@@ -181,7 +226,13 @@ const POIS_SUD = [
     description: {
       ca: "Tipus: avarada (parada), codolar, bivac.",
     },
-    images: ["./assets/illustrations/cala-marquesa-paint.jpg"],
+    gallery: [
+      { type: "image", src: "./assets/photos/poi-8-cala-marquesa/marquesa-1.jpg" },
+      { type: "image", src: "./assets/photos/poi-8-cala-marquesa/marquesa-2.jpg" },
+      { type: "image", src: "./assets/photos/poi-8-cala-marquesa/marquesa-3.jpg" },
+      { type: "image", src: "./assets/photos/poi-8-cala-marquesa/marquesa-4.jpg" },
+      { type: "image", src: "./assets/photos/poi-8-cala-marquesa/marquesa-5.jpg" },
+    ],
   },
   {
     id: "aigua-xelida",
@@ -202,7 +253,12 @@ const POIS_SUD = [
     description: {
       ca: "Aquí va viure Sebastià Puig, l'Hermòs, amic de Josep Pla i que surt en un dels seus llibres.",
     },
-    images: ["./assets/illustrations/aigua-xelida-paint.jpg"],
+    gallery: [
+      { type: "image", src: "./assets/photos/poi-9-aigua-xelida/aigua-xelida-1.jpg" },
+      { type: "image", src: "./assets/photos/poi-9-aigua-xelida/aigua-xelida-2.jpg" },
+      { type: "image", src: "./assets/photos/poi-9-aigua-xelida/aigua-xelida-3.jpg" },
+      { type: "image", src: "./assets/photos/poi-9-aigua-xelida/xelida-4.jpeg" },
+    ],
   },
 ];
 
@@ -229,9 +285,9 @@ const POIS_NORD = [
       en: "The lighthouse stands 35m above the cape. Dramatic view down to the kayak — prime photo moment.",
       fr: "Le phare domine le cap à 35m. Vue plongeante sur le kayak — moment photo idéal.",
     },
-    images: [
-      "./assets/illustrations/reg-arbres-paint.jpg",
-      "./assets/illustrations/cala-marquesa-paint.jpg",
+    gallery: [
+      { type: "image", src: "./assets/illustrations/reg-arbres-paint.jpg" },
+      { type: "image", src: "./assets/illustrations/cala-marquesa-paint.jpg" },
     ],
   },
   {
@@ -256,9 +312,9 @@ const POIS_NORD = [
       en: "The Cap Blanc cliffs drop 60m to the sea. Easy paddling, keep 8m off the wall — occasional rockfall.",
       fr: "Les falaises du Cap Blanc plongent à 60m. Pagaie souple, garde 8m de distance — chutes de pierres occasionnelles.",
     },
-    images: [
-      "./assets/illustrations/cala-marquesa-paint.jpg",
-      "./assets/illustrations/cova-bisbe-paint.jpg",
+    gallery: [
+      { type: "image", src: "./assets/illustrations/cala-marquesa-paint.jpg" },
+      { type: "image", src: "./assets/illustrations/cova-bisbe-paint.jpg" },
     ],
   },
   {
@@ -283,9 +339,9 @@ const POIS_NORD = [
       en: "Three natural openings light up a 12m chamber. Spectacular blue light around 11am. Only enter on flat sea.",
       fr: "Trois ouvertures naturelles illuminent une chambre de 12m. Lumière bleue spectaculaire vers 11h. Entrer uniquement par mer calme.",
     },
-    images: [
-      "./assets/illustrations/cova-gavina-paint.jpg",
-      "./assets/illustrations/cova-bisbe-paint.jpg",
+    gallery: [
+      { type: "image", src: "./assets/illustrations/cova-gavina-paint.jpg" },
+      { type: "image", src: "./assets/illustrations/cova-bisbe-paint.jpg" },
     ],
   },
   {
@@ -310,9 +366,9 @@ const POIS_NORD = [
       en: "Hidden cove with rounded pebbles and ice-cold water — hence the name. A must-stop midway. Freshwater spring on the eastern cliff.",
       fr: "Crique cachée aux galets ronds et eau glacée — d'où le nom. Halte obligatoire. Source d'eau douce sur la falaise est.",
     },
-    images: [
-      "./assets/illustrations/aigua-xelida-paint.jpg",
-      "./assets/illustrations/cala-des-tramadiu-paint.jpg",
+    gallery: [
+      { type: "image", src: "./assets/illustrations/aigua-xelida-paint.jpg" },
+      { type: "image", src: "./assets/illustrations/cala-des-tramadiu-paint.jpg" },
     ],
   },
   {
@@ -337,9 +393,9 @@ const POIS_NORD = [
       en: "The furthest point — the small harbour of Fornells. Open sea to the east. Turn back — the return leg usually has tailwind.",
       fr: "Le point le plus éloigné — le petit port de Fornells. Mer ouverte vers l'est. Demi-tour — le retour est généralement vent arrière.",
     },
-    images: [
-      "./assets/illustrations/reg-arbres-paint.jpg",
-      "./assets/illustrations/aiguablava-paint.jpg",
+    gallery: [
+      { type: "image", src: "./assets/illustrations/reg-arbres-paint.jpg" },
+      { type: "image", src: "./assets/illustrations/aiguablava-paint.jpg" },
     ],
   },
 ];

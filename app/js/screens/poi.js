@@ -86,6 +86,11 @@ export function renderPoiScreen(host, routeId, poiIndex) {
   let map = null;
   const markers = new Map(); // poiId -> mapboxgl.Marker
 
+  // Carousel state machine for the POI media slot. Replaced on every
+  // buildCard() (i.e. when navigating between POIs) — must be destroyed
+  // first so its timers and video pause handlers detach cleanly.
+  let carousel = null;
+
   function buildCard() {
     const poi = route.pois[currentIndex];
     const poiName = poi.name[lang] ?? poi.name.ca;
@@ -113,7 +118,38 @@ export function renderPoiScreen(host, routeId, poiIndex) {
       ? Math.max(0, (nextPoi.minutesFromStart ?? 0) - (poi.minutesFromStart ?? 0))
       : null;
 
-    const heroImage = poi.images?.[0] ?? "";
+    const gallery = poi.gallery ?? [];
+    const slidesHTML = gallery
+      .map((item, i) => {
+        const cls = `poi-carousel__slide${i === 0 ? " is-active" : ""}`;
+        if (item.type === "video") {
+          // muted+playsinline so iOS allows inline autoplay; preload metadata so
+          // the poster frame is available without downloading the full video
+          // until the slide actually becomes active.
+          const poster = item.poster ? ` poster="${item.poster}"` : "";
+          return `
+            <div class="${cls}" data-slide="${i}" data-type="video">
+              <video class="poi-carousel__video" src="${item.src}"${poster} muted playsinline preload="metadata"></video>
+            </div>
+          `;
+        }
+        return `
+          <div class="${cls}" data-slide="${i}" data-type="image">
+            <img class="poi-carousel__img" src="${item.src}" alt="" loading="${i === 0 ? "eager" : "lazy"}" />
+          </div>
+        `;
+      })
+      .join("");
+
+    const dotsHTML =
+      gallery.length > 1
+        ? `<div class="poi-carousel__dots" aria-hidden="true">${gallery
+            .map(
+              (_, i) =>
+                `<span class="poi-carousel__dot${i === 0 ? " is-active" : ""}" data-dot="${i}"></span>`
+            )
+            .join("")}</div>`
+        : "";
 
     cardEl.innerHTML = `
       <div class="poi-card__handle" role="button" tabindex="0" aria-label="Mostra o oculta el detall"></div>
@@ -138,9 +174,10 @@ export function renderPoiScreen(host, routeId, poiIndex) {
       </div>
 
       <div class="poi-card__scroll">
-        <div class="poi-card__media">
-          <div class="poi-card__media-inner" style="background-image:url('${heroImage}')"></div>
-        </div>
+        <button class="poi-card__media" type="button" aria-label="${t("poi.openGallery")}">
+          <div class="poi-carousel">${slidesHTML}</div>
+          ${dotsHTML}
+        </button>
 
         <div class="poi-card__description">${description}</div>
 
@@ -198,6 +235,15 @@ export function renderPoiScreen(host, routeId, poiIndex) {
     const titleRow = cardEl.querySelector(".poi-card__title-row");
     titleRow.addEventListener("click", () => {
       if (isCollapsed) toggleCollapse();
+    });
+
+    // Wire up the media carousel — autoplay every 3s for images, full-length
+    // playback for videos, then advance. Tap the frame to open the gallery.
+    if (carousel) carousel.destroy();
+    const mediaEl = cardEl.querySelector(".poi-card__media");
+    carousel = attachCarousel(mediaEl, gallery, (slideIndex) => {
+      sessionStorage.setItem("sa-blava.gallery.slide", String(slideIndex));
+      navigate(`/route/${routeId}/poi/${currentIndex}/gallery`);
     });
 
     recalcPeek();
@@ -374,7 +420,7 @@ export function renderPoiScreen(host, routeId, poiIndex) {
       route.pois.forEach((p, idx) => {
         const el = document.createElement("div");
         el.className = "poi-marker";
-        const img = p.images?.[0];
+        const img = p.gallery?.[0]?.src;
         if (img) el.style.backgroundImage = `url("${img}")`;
         if (p.id === route.pois[currentIndex].id) {
           el.classList.add("is-active");
@@ -399,6 +445,10 @@ export function renderPoiScreen(host, routeId, poiIndex) {
   }
 
   function teardown() {
+    if (carousel) {
+      carousel.destroy();
+      carousel = null;
+    }
     if (map) {
       try {
         map.remove();
@@ -414,6 +464,115 @@ export function renderPoiScreen(host, routeId, poiIndex) {
     routeId,
     poiIndex: currentIndex,
     teardown,
+  };
+}
+
+// Media carousel for the POI sheet. One slide per `gallery` item.
+//   • Images sit on the slide for 3 seconds, then advance.
+//   • Videos play to their natural end (muted+playsinline so iOS allows
+//     inline autoplay); on `ended` we advance. Failed autoplay falls back
+//     to the 3-second image timer so the carousel never gets stuck.
+//   • The wrapper button is tappable: a clean tap on the frame opens the
+//     full-screen gallery at the currently visible slide.
+//   • destroy() must be called whenever the parent rebuilds (POI nav, screen
+//     teardown). It clears the timer, pauses videos, and detaches listeners.
+const SLIDE_MS = 3000;
+
+function attachCarousel(rootEl, gallery, onTapGallery) {
+  if (!rootEl || gallery.length === 0) {
+    return { destroy() {}, current: () => 0 };
+  }
+
+  const slides = Array.from(rootEl.querySelectorAll(".poi-carousel__slide"));
+  const dots = Array.from(rootEl.querySelectorAll(".poi-carousel__dot"));
+  const videos = slides.map((s) => s.querySelector("video"));
+  let current = 0;
+  let timer = null;
+  let destroyed = false;
+
+  function clearTimer() {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  }
+
+  function setActive(i) {
+    if (destroyed) return;
+    const prev = current;
+    current = ((i % gallery.length) + gallery.length) % gallery.length;
+    slides.forEach((s, j) => s.classList.toggle("is-active", j === current));
+    dots.forEach((d, j) => d.classList.toggle("is-active", j === current));
+
+    if (prev !== current && videos[prev]) {
+      try {
+        videos[prev].pause();
+        videos[prev].currentTime = 0;
+      } catch {}
+    }
+
+    schedule();
+  }
+
+  function next() {
+    setActive(current + 1);
+  }
+
+  function schedule() {
+    clearTimer();
+    const item = gallery[current];
+    const v = videos[current];
+    if (item.type === "video" && v) {
+      try {
+        v.currentTime = 0;
+      } catch {}
+      const p = v.play();
+      if (p && typeof p.catch === "function") {
+        p.catch(() => {
+          // Autoplay refused (rare with muted+playsinline) — fall back to
+          // the image cadence so the carousel keeps moving.
+          if (!destroyed) timer = setTimeout(next, SLIDE_MS);
+        });
+      }
+    } else {
+      timer = setTimeout(next, SLIDE_MS);
+    }
+  }
+
+  videos.forEach((v, i) => {
+    if (!v) return;
+    v.addEventListener("ended", () => {
+      if (!destroyed && i === current) next();
+    });
+  });
+
+  dots.forEach((d, i) => {
+    d.addEventListener("click", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setActive(i);
+    });
+  });
+
+  rootEl.addEventListener("click", (e) => {
+    if (e.target.closest(".poi-carousel__dot")) return;
+    onTapGallery?.(current);
+  });
+
+  schedule();
+
+  return {
+    destroy() {
+      destroyed = true;
+      clearTimer();
+      videos.forEach((v) => {
+        if (!v) return;
+        try {
+          v.pause();
+        } catch {}
+      });
+    },
+    current: () => current,
   };
 }
 

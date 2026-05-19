@@ -68,7 +68,7 @@ function poiCardHTML(poi, idx, lang, visible) {
         <span class="poi-card__number">${pad2(idx + 1)}</span>
         <span class="poi-card__title">${poi.name[lang]}</span>
       </div>
-      <div class="poi-card__media" style="background-image:url('${poi.images[0]}')"></div>
+      <div class="poi-card__media" style="background-image:url('${poi.gallery?.[0]?.src ?? ""}')"></div>
       <p class="poi-card__desc">${poiDescription(poi, lang)}</p>
     </article>
   `;

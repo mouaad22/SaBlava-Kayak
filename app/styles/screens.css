@@ -198,6 +198,7 @@
   align-self: stretch;
   background: #1b6b8a;
   border-radius: 16px;
+  corner-shape: var(--corner-shape);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -289,6 +290,7 @@
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid #1b6b8a;
   border-radius: 16px 16px 16px 4px;
+  corner-shape: var(--corner-shape);
   box-shadow: 0 0 12px -5px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: flex-end;
@@ -475,6 +477,7 @@
   background: #f5f8f1;
   border: 2px solid #e2e6dd;
   border-radius: 16px;
+  corner-shape: var(--corner-shape);
   flex-shrink: 0;
   padding: 0;
 }
@@ -540,6 +543,7 @@
   background: #f5f8f1;
   border: 2px solid #e2e6dd;
   border-radius: 16px;
+  corner-shape: var(--corner-shape);
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -712,6 +716,7 @@
   padding: 12px 16px;
   background: #f5f8f1;
   border-radius: 16px;
+  corner-shape: var(--corner-shape);
   outline: 2px solid #e2e6dd;
   outline-offset: -1px;
   border: 0;
@@ -737,6 +742,7 @@
   padding: 12px 16px;
   background: #1b6b8a;
   border-radius: 16px;
+  corner-shape: var(--corner-shape);
   border: 0;
 }
 
@@ -777,6 +783,7 @@
   bottom: 128px;
   background: #ffffff;
   border-radius: 24px;
+  corner-shape: var(--corner-shape);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -890,6 +897,7 @@
   background: #f5f8f1;
   border: 2px solid #e2e6dd;
   border-radius: 16px;
+  corner-shape: var(--corner-shape);
   flex-shrink: 0;
   padding: 0;
 }
@@ -917,6 +925,7 @@
   background: #ffffff;
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
+  corner-shape: var(--corner-shape);
   box-sizing: border-box;
   box-shadow: 0 -8px 24px rgba(10, 30, 50, 0.18);
   transition: transform 320ms var(--ease-entrance);
@@ -1057,37 +1066,91 @@
   background: #f5f8f1;
   border: 2px solid #e2e6dd;
   border-radius: 16px;
+  corner-shape: var(--corner-shape);
   flex-shrink: 0;
   padding: 0;
   cursor: pointer;
 }
 
-/* Paper: 354x354 frame with overflow clip; inner 386x386 image cover.
-   Opts out of the scroll wrapper's stretch alignment so the photo stays
-   centered at its native size. */
+/* Paper: 354x354 frame with overflow clip. The frame is a button so a tap
+   opens the full-screen gallery. The inner stack swaps slides every 3s
+   (or on video `ended`); a dots row sits at the bottom edge per Paper F4O-0. */
 .poi-card__media {
   width: 354px;
   height: 354px;
   max-width: 100%;
   align-self: center;
+  position: relative;
   border-radius: 16px;
+  corner-shape: var(--corner-shape, round);
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: var(--color-surface-tinted, #ebf4f8);
+  cursor: pointer;
+  /* Drop the default touchscreen tap highlight — looks like a CSS bug on iOS */
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Match the frame exactly — the Paper export used a 386×386 inner inside
-   a 354×354 frame for a deliberate edge bleed on the Aiguablava painting,
-   but the other 8 POI images aren't composed for that ~9 % overshoot and
-   were getting their edges chopped off. */
-.poi-card__media-inner {
+.poi-carousel {
+  position: absolute;
+  inset: 0;
+}
+
+.poi-carousel__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 360ms var(--ease-entrance);
+  pointer-events: none;
+}
+
+.poi-carousel__slide.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.poi-carousel__img,
+.poi-carousel__video {
   width: 100%;
   height: 100%;
-  background-position: 50%;
-  background-size: cover;
-  flex-shrink: 0;
+  object-fit: cover;
+  display: block;
+  /* Prevent iOS double-tap-to-zoom turning the carousel into a magnifier */
+  pointer-events: none;
+}
+
+/* Paper F4O-0: 12×12 active dot, 8×8 inactive dots, 8 px gap, centred 15 px
+   above the frame's bottom edge. Subtle drop shadow so the dots read on
+   light photo regions. */
+.poi-carousel__dots {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.poi-carousel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e2e6dd;
+  box-shadow: 0 0 3px -1px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: width 220ms var(--ease-entrance),
+    height 220ms var(--ease-entrance),
+    background 220ms var(--ease-entrance);
+}
+
+.poi-carousel__dot.is-active {
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
 }
 
 /* Description — DM Sans 16/24, #5B5B5B. Spans the full scroll width so the
@@ -1166,4 +1229,121 @@
   height: 48px;
   box-shadow: 0 0 0 4px #ffffff, 0 14px 32px 2px rgba(10, 30, 50, 0.2);
   z-index: 1;
+}
+
+/* ============== SCREEN 5 — POI GALLERY (Paper A1P-1) ============== */
+
+/* Full-screen viewer over the POI sheet. White ground; X-close + POI name
+   header (16 top, 24 sides), large square image area (full-width, 1:1),
+   '1/N' counter row. Swipe between slides on the media area. */
+.gallery-screen {
+  background: #ffffff;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 24px 24px;
+  font-synthesis: none;
+}
+
+.gallery-screen__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.gallery-screen__close {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gallery-screen__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 30px;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0;
+}
+
+/* Gallery image frame — width fills the page gutter (max ~356), height fills
+   the remaining vertical space between header and counter. Inside each slide,
+   the <img> is sized by its natural aspect (width:100%, height:auto): if the
+   resulting height exceeds the frame the overflow is clipped center-aligned
+   via the flex `align-items: center`, so portrait shots show in full unless
+   the viewport runs out of vertical room — and only ever lose top/bottom,
+   never the center. Landscape shots letterbox naturally with empty bands. */
+.gallery-screen__media {
+  flex: 1;
+  min-height: 0;
+  align-self: center;
+  width: 100%;
+  max-width: 356px;
+  border-radius: 16px;
+  corner-shape: var(--corner-shape);
+  overflow: hidden;
+  position: relative;
+  background: #f3f4f1;
+  /* Touch swipes belong to the slide changer — prevent the browser from
+     stealing them for back-navigation gestures. */
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.gallery-screen__stack {
+  position: absolute;
+  inset: 0;
+}
+
+.gallery-screen__slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 280ms var(--ease-entrance);
+  pointer-events: none;
+}
+
+.gallery-screen__slide.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gallery-screen__img,
+.gallery-screen__video {
+  width: 100%;
+  height: auto;
+  max-height: none;
+  display: block;
+  /* No object-fit — the image sits at its natural aspect ratio (width 356,
+     height = 356/aspect). When taller than the slide, the parent's
+     overflow:hidden + align-items:center crops top and bottom equally. */
+}
+
+.gallery-screen__counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #1a1a1a;
+  flex-shrink: 0;
 }

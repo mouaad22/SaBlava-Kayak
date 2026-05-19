@@ -49,6 +49,13 @@
   --radius-sheet: 20px;
   --radius-pill: 9999px;
 
+  /* "100% squircle" — uses the CSS Borders 4 `corner-shape` property
+     (Safari 18.2+, 2024). On browsers that don't support it the property
+     is ignored and `border-radius` falls back to the default round corner.
+     Apply via `corner-shape: var(--corner-shape)` on any element that
+     already has a non-pill, non-circle border-radius. */
+  --corner-shape: squircle;
+
   --shadow-card: 0 2px 14px rgba(10, 77, 107, 0.09);
   --shadow-card-hover: 0 6px 22px rgba(10, 77, 107, 0.14);
   --shadow-sheet: 0 -4px 32px rgba(10, 77, 107, 0.12);

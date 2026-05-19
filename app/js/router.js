@@ -1,8 +1,9 @@
 // Lightweight hash router. Routes:
-//   #/        → language selection
-//   #/routes  → routes browser
-//   #/route/:id        (Phase 2)
-//   #/route/:id/poi/:i (Phase 2)
+//   #/                              → language selection
+//   #/routes                        → routes browser
+//   #/route/:id                     → route detail
+//   #/route/:id/poi/:i              → POI screen (Mapbox + sheet)
+//   #/route/:id/poi/:i/gallery      → full-screen gallery
 
 const listeners = [];
 
@@ -11,6 +12,18 @@ export function parseHash() {
   const parts = raw.split("/").filter(Boolean);
   if (parts.length === 0) return { name: "language", params: {} };
   if (parts[0] === "routes") return { name: "routes", params: {} };
+  if (
+    parts[0] === "route" &&
+    parts[1] &&
+    parts[2] === "poi" &&
+    parts[3] &&
+    parts[4] === "gallery"
+  ) {
+    return {
+      name: "gallery",
+      params: { routeId: parts[1], poiIndex: +parts[3] },
+    };
+  }
   if (parts[0] === "route" && parts[1] && parts[2] === "poi" && parts[3]) {
     return { name: "poi", params: { routeId: parts[1], poiIndex: +parts[3] } };
   }

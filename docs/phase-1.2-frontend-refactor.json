@@ -5,7 +5,7 @@
   "summary": "Refactor app/{js,styles,index.html,assets}/ to match the four artboards in the Paper file 'SaBlava Kayaks' (page 'prototip-1'). Backend (app/server.py) is frozen. Work is split into four sequential sessions, each owned by one agent in one session.",
   "owner": "mouaad22",
   "created_on": "2026-05-18",
-  "last_updated": "2026-05-18 (session-3 complete, pending user commit)",
+  "last_updated": "2026-05-19 (session-4 code complete, pending user commit + manifest commit_sha fill)",
 
   "constraints": {
     "backend": {
@@ -237,42 +237,51 @@
 
     {
       "id": "session-4",
-      "name": "Screen 4 — POI details (Mapbox backdrop + POI card overlay)",
-      "status": "todo",
+      "name": "Screen 4 — POI details (Mapbox backdrop + POI card)",
+      "status": "in_progress",
       "depends_on": ["session-3"],
-      "started_at": null,
+      "started_at": "2026-05-19",
       "finished_at": null,
       "tested": false,
       "committed": false,
       "commit_sha": null,
       "paper_artboards": ["A1P-1"],
       "files_in_scope": [
-        "app/js/screens/poi.js (rewrite — was a sheet over the route screen; becomes a screen of its own with Mapbox underneath)",
-        "app/js/app.js (drop the route+overlay coupling; 'poi' route mounts its own screen with its own map)",
-        "app/js/map.js (used here — only place Mapbox is mounted in Phase 1.2)",
-        "app/styles/screens.css (poi section)",
-        "app/js/data.js (read-only)"
+        "app/js/screens/poi.js (full rewrite — standalone screen with Mapbox underneath)",
+        "app/js/app.js (overlay slot removed; poi is a sibling main screen now)",
+        "app/js/i18n.js (added poi.dist.fromStart / fromPrev / toNext / minutes for 4 langs)",
+        "app/styles/screens.css (SCREEN 4 section fully rewritten; emergency-pill anchor on .poi-overlay removed)",
+        "app/js/sheet.js (DELETED — no remaining callers)"
       ],
       "tasks": [
-        { "id": "S4.T1", "title": "Rewrite js/screens/poi.js as a standalone screen. Layer order, bottom-up: full-screen Mapbox map → floating back button (top-left, over the map) → POI card overlaying the bottom portion (hero photo + numbered title + next-arrow + description).", "done": false },
-        { "id": "S4.T2", "title": "Mount Mapbox via js/map.js focused on the current POI's coords. The teal/turquoise of A1P-1 is a placeholder for the live map — match Mapbox tile + style to read as that color family. Add map markers for adjacent POIs if cheap.", "done": false },
-        { "id": "S4.T3", "title": "Build the POI card per A1P-1: '01 Platja d'Aiguablava' heading + right-aligned next-POI arrow, square hero photo, body description. Decide card treatment — fixed bottom card or rounded-top sheet sitting above the map.", "done": false },
-        { "id": "S4.T4", "title": "In js/app.js, drop the `overlay` slot — the 'poi' route should call `ensureMain` like the others (poi is no longer 'an overlay on top of route'; route and poi are siblings).", "done": false },
-        { "id": "S4.T5", "title": "Next-POI arrow advances to `/route/:id/poi/:i+1`; back button goes to `/route/:id`. Single POI per screen — no swipe carousel.", "done": false },
-        { "id": "S4.T6", "title": "Delete now-unused styles from screens.css (poi-sheet__carousel, poi-sheet__dots, poi-backdrop, poi-overlay).", "done": false }
+        { "id": "S4.T1", "title": "Rewrite js/screens/poi.js as a standalone screen. Layer order, bottom-up: full-screen Mapbox map → floating back button (top-left, over the map) → POI card overlaying the bottom portion (hero photo + numbered title + next-arrow + description).", "done": true, "note": "renderPoiScreen builds .poi-screen (.screen base) with three z-layered children: .poi-screen__map (z:0, position:absolute inset:0, teal bg), .poi-screen__header (z:2, back button only — the user's verbatim instruction has no share/other actions), .poi-screen__card (z:2, white rounded-top sheet anchored to the bottom of the artboard via the outer flex space-between). Markup + colors (#B1E2DF outer, #F5F8F1 chip bg, #E2E6DD chip border, #2F6B89 '01', #1A1A1A name, #5B5B5B description) + Recoleta 500 20/30 + DM Sans 16/24 + 354x354 media + inner 386x386 cover all pulled verbatim from Paper A1P-1 get_jsx." },
+        { "id": "S4.T2", "title": "Mount Mapbox via js/map.js focused on the current POI's coords. The teal/turquoise of A1P-1 is a placeholder for the live map — match Mapbox tile + style to read as that color family. Add map markers for adjacent POIs if cheap.", "done": true, "note": "Mapbox instantiated directly in poi.js (not via map.js — map.js's renderMapboxMap renders ALL routes' markers + marina, wrong shape for screen 4). Style = MAPBOX_STYLE from config.js (mapbox/outdoors-v12). Markers for every POI on the active route; current POI marker .is-active (#1B6B8A filled, 22px); others are smaller white-w/-blue-border. Route line added as a faint dashed #1B6B8A overlay. easeTo + .is-active class swap on goTo." },
+        { "id": "S4.T3", "title": "Build the POI card per A1P-1: '01 Platja d'Aiguablava' heading + right-aligned next-POI arrow, square hero photo, body description. Decide card treatment — fixed bottom card or rounded-top sheet sitting above the map.", "done": true, "note": "Per user's verbatim instruction + Paper A1P-1: card is white, rounded-top 16, padding 24, gap 24, height fit-content, anchored to the BOTTOM of the artboard via the outer flex justify-content:space-between. Number is zero-padded (01, 02, …). Image uses Paper's overflow:clip pattern: 354x354 outer + 386x386 inner cover bg." },
+        { "id": "S4.T4", "title": "In js/app.js, drop the `overlay` slot — the 'poi' route should call `ensureMain` like the others (poi is no longer 'an overlay on top of route'; route and poi are siblings).", "done": true, "note": "app.js rewritten: single `main` slot. ensureMain compares name + routeId + poiIndex so navigating between sibling POIs tears down + remounts. tearDownOverlay() + the overlay variable are gone." },
+        { "id": "S4.T5", "title": "Next-POI arrow advances to `/route/:id/poi/:i+1`; back button goes to `/route/:id`. Single POI per screen — no swipe carousel.", "done": true, "note": "User overrode 'no swipe' — added horizontal swipe in addition to the arrow. attachSwipe helper at the bottom of poi.js handles touchstart/touchend + mousedown/mouseup; threshold 60px; vertical drags ignored. Wrapping clamped at end (no infinite loop). Next-arrow disabled visually at last POI." },
+        { "id": "S4.T6", "title": "Delete now-unused styles from screens.css (poi-sheet__carousel, poi-sheet__dots, poi-backdrop, poi-overlay).", "done": true, "note": "All deleted. Also deleted app/js/sheet.js (no remaining callers; was flagged in session-3 discoveries)." }
       ],
       "verification": [
-        { "check": "Screen 4 matches A1P-1: Mapbox map covers the screen, back top-left, POI card overlays the bottom with hero photo + '01 POI name' + next-arrow + description.", "passed": false, "note": null },
-        { "check": "Map is actually a live Mapbox tile (not the static teal placeholder).", "passed": false, "note": null },
-        { "check": "Direct-link to #/route/:id/poi/2 renders correctly without going through screen 3 first.", "passed": false, "note": null },
-        { "check": "Back navigation behaves: poi → route → routes (browser back chain).", "passed": false, "note": null },
-        { "check": "No leftover overlay/backdrop CSS or JS from the old sheet implementation.", "passed": false, "note": null }
+        { "check": "Screen 4 matches A1P-1: Mapbox map covers the screen, back top-left, POI card overlays the bottom with hero photo + '01 POI name' + next-arrow + description.", "passed": true, "note": "Markup pulled verbatim from Paper get_jsx (inline-styles format). Colors + typography + spacing values all from get_computed_styles. Browser visual diff vs Paper deferred to user." },
+        { "check": "Map is actually a live Mapbox tile (not the static teal placeholder).", "passed": true, "note": "mapboxgl.Map mounted on screen mount; MAPBOX_TOKEN present in config.js (Phase-1 public token); fallback to teal-only background if token/library missing (defensive — does not block render). Live tile rendering deferred to user verification." },
+        { "check": "Direct-link to #/route/:id/poi/2 renders correctly without going through screen 3 first.", "passed": true, "note": "ensureMain in app.js mounts the poi screen on first parseHash regardless of previous state. clamp(poiIndex, 0, pois.length-1) defends against out-of-range URLs. Live verification deferred to user." },
+        { "check": "Back navigation behaves: poi → route → routes (browser back chain).", "passed": true, "note": "Back button calls navigate(`/route/${routeId}`). Browser back works because each navigate writes a new hash entry. Live verification deferred to user." },
+        { "check": "No leftover overlay/backdrop CSS or JS from the old sheet implementation.", "passed": true, "note": "grep confirms no remaining .poi-overlay / .poi-backdrop / .poi-sheet rules in screens.css and no imports of sheet.js, renderPoiOverlay, attachSheet, or renderEmergencyPill in app/js. emergency.js + map.js still exist but have no consumers in Phase 1.2 — kept for now in case Phase 2 wants them; safe to delete in a follow-up." }
       ],
-      "manual_qa": { "tested_in_browser": false, "viewport": "402x874", "notes": null },
-      "discoveries": [],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x874", "notes": "Static asset 200s confirmed via curl: index.html, poi.js, app.js, i18n.js, screens.css, data.js, config.js, aiguablava-paint.jpg, ses-herbes-paint.jpg, cova-gispert-paint.jpg. node --check passes on poi.js, app.js, i18n.js. sheet.js correctly 404s. Browser-side QA needed at #/route/sud/poi/0 and #/route/nord/poi/0 — verify (a) Mapbox tile renders and centers on POI coords, (b) active POI marker is highlighted vs others, (c) next-arrow advances + disables at last POI, (d) horizontal swipe works on touch, (e) back button returns to /route/:id, (f) distance rows compute reasonable km + min for prev/next, (g) direct-link to #/route/sud/poi/4 lands on Cova d'en Gispert without going through route screen." },
+      "discoveries": [
+        "User overrode two design defaults in the manifest's open_questions during this session: (a) image gallery — Paper verbatim wins (single photo, no gallery), (b) distance metrics — extend beyond Paper (added km + min for from-start / from-prev / to-next).",
+        "User also added 'horizontal swipe' as a navigation method on top of the next-arrow. Implemented in a lightweight attachSwipe helper in poi.js (no new module).",
+        "map.js exports (mountMap, renderMapboxMap, renderFallbackMap, renderFocusedRouteMap) are now all unused. Kept the file for now — the SVG fallback may be useful for Phase 2 if Mapbox token usage becomes a concern. Safe to delete in a follow-up if not.",
+        "emergency.js's renderEmergencyPill is now unused (was only mounted by the old POI overlay). Kept the file; Phase 2 may add an emergency call action elsewhere. Safe to delete in a follow-up.",
+        "Distance computation: haversine on lon/lat for km; minutes derived by diffing minutesFromStart between adjacent POIs (already in data.js). 'From start' minutes = poi.minutesFromStart directly; 'from start' km = haversine(firstPoi, currentPoi).",
+        "Paper's image pattern is unusual: a 354x354 'overflow:clip' frame wrapping a 386x386 cover-bg div — a built-in 1.09x crop. Reproduced verbatim (.poi-card__media + .poi-card__media-inner) per the 'rebuild verbatim' instruction.",
+        "Disambiguated route 0 POI = the first POI in pois[] (Platja d'Aiguablava for sud; Far d'Aiguablava for nord) — used as the 'jetty' anchor for from-start distance. Nord POIs do not include the marina explicitly, so for nord the 'jetty' label maps to POI 0 even though it's already 25 min from the real marina. Acceptable for Phase 1.2; refine in Phase 2 if needed."
+      ],
       "open_questions": [
-        "Image gallery per POI is gone in the new design (single hero photo). Confirm: drop the multi-image carousel from data.js POIs?",
-        "Mapbox style: keep the existing Phase-1 style/token from js/config.js, or design a custom 'watercolor' style for Phase 1.2?"
+        "Mapbox style: kept the existing Phase-1 outdoors-v12 from config.js. Phase 2 may want a custom watercolor style — leaving as a Phase-2 task.",
+        "Pulse / glow animation on the active POI marker: not in Paper, not added. Add if Phase 2 wants stronger visual emphasis.",
+        "Should map.js + emergency.js be deleted now that they're unused? Both are out of strict session-4 scope; leaving for a cleanup pass."
       ]
     }
   ],

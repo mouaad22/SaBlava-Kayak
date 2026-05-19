@@ -6,6 +6,7 @@ import { renderRoutesScreen } from "./screens/routes.js";
 import { renderRouteScreen } from "./screens/route.js";
 import { renderPoiScreen } from "./screens/poi.js";
 import { renderGalleryScreen } from "./screens/gallery.js";
+import { renderMapScreen } from "./screens/map.js";
 
 const host = document.getElementById("screen-stack");
 
@@ -46,6 +47,13 @@ function render(route) {
         name: "route",
         routeId: route.params.routeId,
         factory: () => renderRouteScreen(host, route.params.routeId),
+      });
+      break;
+    case "map":
+      ensureMain({
+        name: "map",
+        routeId: route.params.routeId,
+        factory: () => renderMapScreen(host, route.params.routeId),
       });
       break;
     case "poi":

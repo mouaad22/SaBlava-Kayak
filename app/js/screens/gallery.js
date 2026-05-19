@@ -53,8 +53,10 @@ export function renderGalleryScreen(host, routeId, poiIndex) {
       <h1 class="gallery-screen__title">${poiName}</h1>
     </header>
 
-    <div class="gallery-screen__media" role="region" aria-label="${poiName}">
-      <div class="gallery-screen__stack"></div>
+    <div class="gallery-screen__media-wrap">
+      <div class="gallery-screen__media" role="region" aria-label="${poiName}">
+        <div class="gallery-screen__stack"></div>
+      </div>
     </div>
 
     <div class="gallery-screen__counter">

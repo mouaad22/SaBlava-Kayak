@@ -459,13 +459,15 @@
 }
 
 .route-screen__back {
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   background: transparent;
+  border: 0;
+  flex-shrink: 0;
 }
 
 .route-screen__change {
@@ -506,7 +508,7 @@
   font-size: 28px;
   line-height: 32px;
   color: #1a1a1a;
-  margin: 0 0 8px;
+  margin: 32px 0 8px;
 }
 
 /* Map widget — satellite illustration + dashed SVG route overlay + play btn */
@@ -517,6 +519,40 @@
   background-position: 50%;
   background-size: cover;
   overflow: hidden;
+}
+
+/* "Mapa" pill — sits immediately to the left of the play-button on the
+   bottom-right edge of the map widget. Same 40 px height as the play button;
+   8 px gap between the two. Pill-shaped because it carries text + icon. */
+.map-button {
+  position: absolute;
+  right: 48px;
+  bottom: 0;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px 0 8px;
+  background: #f5f8f1;
+  border: 2px solid #e2e6dd;
+  border-radius: 16px;
+  corner-shape: var(--corner-shape);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.map-button__icon {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+}
+
+.map-button__label {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #1a1a1a;
 }
 
 .play-button {
@@ -537,6 +573,9 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  /* Pseudo-element ring sits on top of the button border — keep the icon
+     above it via stacking context. */
+  isolation: isolate;
 }
 
 .play-button__icon {
@@ -544,31 +583,53 @@
   display: inline-flex;
   width: 24px;
   height: 24px;
+  z-index: 1;
 }
 
-.play-button__ring {
+/* Animated border. A pseudo-element sized exactly like the button (matching
+   border-radius + corner-shape so it traces the same squircle) gets its
+   `border` redrawn from invisible → teal via a conic-gradient mask. While
+   `.is-playing` we sweep the gradient angle around 360° in 3s, matching the
+   POI carousel cadence. The element is purely visual: pointer-events:none so
+   clicks pass through to the button. */
+.play-button::after {
+  content: "";
   position: absolute;
   inset: -2px;
-  width: 44px;
-  height: 44px;
+  border-radius: 16px;
+  corner-shape: var(--corner-shape);
   pointer-events: none;
+  padding: 2px;
+  background: conic-gradient(from -90deg, #1b6b8a var(--play-ring, 0deg), transparent 0deg);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 200ms var(--ease-exit);
 }
 
-.play-button__ring rect {
-  stroke-dashoffset: 100;
-  transition: stroke-dashoffset 200ms var(--ease-exit);
+.play-button.is-playing::after {
+  opacity: 1;
+  animation: play-ring-fill 3s linear infinite;
 }
 
-.play-button.is-playing .play-button__ring rect {
-  animation: play-ring-fill 5s linear infinite;
+@property --play-ring {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
 }
 
 @keyframes play-ring-fill {
   from {
-    stroke-dashoffset: 100;
+    --play-ring: 0deg;
   }
   to {
-    stroke-dashoffset: 0;
+    --play-ring: 360deg;
   }
 }
 
@@ -1247,6 +1308,18 @@
   font-synthesis: none;
 }
 
+/* A flex spacer wrapping the media so the header pins to the top and the
+   counter pins to the bottom while the media block stays vertically centred
+   without stretching past its natural height. */
+.gallery-screen__media-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+}
+
 .gallery-screen__header {
   display: flex;
   align-items: center;
@@ -1288,11 +1361,10 @@
    the viewport runs out of vertical room — and only ever lose top/bottom,
    never the center. Landscape shots letterbox naturally with empty bands. */
 .gallery-screen__media {
-  flex: 1;
-  min-height: 0;
   align-self: center;
   width: 100%;
   max-width: 356px;
+  max-height: 100%;
   border-radius: 16px;
   corner-shape: var(--corner-shape);
   overflow: hidden;
@@ -1303,16 +1375,20 @@
   touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
   cursor: pointer;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
 }
 
 .gallery-screen__stack {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
+  /* The active slide owns the height: an image at width:100% sets it via its
+     natural aspect ratio, and inactive slides are absolutely-positioned so
+     they don't stretch the container. */
 }
 
 .gallery-screen__slide {
-  position: absolute;
-  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1320,9 +1396,13 @@
   opacity: 0;
   transition: opacity 280ms var(--ease-entrance);
   pointer-events: none;
+  position: absolute;
+  inset: 0;
 }
 
 .gallery-screen__slide.is-active {
+  position: relative;
+  inset: auto;
   opacity: 1;
   pointer-events: auto;
 }

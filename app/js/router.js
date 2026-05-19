@@ -2,6 +2,7 @@
 //   #/                              → language selection
 //   #/routes                        → routes browser
 //   #/route/:id                     → route detail
+//   #/route/:id/map                 → full-screen map (markers only)
 //   #/route/:id/poi/:i              → POI screen (Mapbox + sheet)
 //   #/route/:id/poi/:i/gallery      → full-screen gallery
 
@@ -26,6 +27,9 @@ export function parseHash() {
   }
   if (parts[0] === "route" && parts[1] && parts[2] === "poi" && parts[3]) {
     return { name: "poi", params: { routeId: parts[1], poiIndex: +parts[3] } };
+  }
+  if (parts[0] === "route" && parts[1] && parts[2] === "map") {
+    return { name: "map", params: { routeId: parts[1] } };
   }
   if (parts[0] === "route" && parts[1]) {
     return { name: "route", params: { routeId: parts[1] } };

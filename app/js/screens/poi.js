@@ -15,7 +15,7 @@
 import { findRoute } from "../data.js";
 import { t, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
-import { MAPBOX_TOKEN, MAPBOX_STYLE } from "../config.js";
+import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE } from "../config.js";
 import { addRouteTrack } from "./map.js";
 
 const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
@@ -23,6 +23,10 @@ const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" he
 const ICON_NEXT = `<img src="./assets/icons/regular/ArrowRight.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
 const ICON_PREV = `<img src="./assets/icons/regular/ArrowLeft.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
+
+const ICON_STACK = `<img src="./assets/icons/regular/Stack.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
+
+const ICON_STACK_FILLED = `<img src="./assets/icons/regular/Stack-filled.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -53,6 +57,7 @@ export function renderPoiScreen(host, routeId, poiIndex) {
   }
   let currentIndex = clamp(poiIndex, 0, route.pois.length - 1);
   let isCollapsed = false;
+  let isSatellite = false;
   const lang = getLanguage();
 
   const screen = document.createElement("section");
@@ -153,6 +158,10 @@ export function renderPoiScreen(host, routeId, poiIndex) {
     cardEl.innerHTML = `
       <div class="poi-card__handle" role="button" tabindex="0" aria-label="Mostra o oculta el detall"></div>
 
+      <button class="poi-screen__map-toggle" type="button" aria-label="${t("map.toggleLayer")}" aria-pressed="${isSatellite}">
+        ${isSatellite ? ICON_STACK_FILLED : ICON_STACK}
+      </button>
+
       <div class="poi-card-row poi-card__title-row">
         <div class="poi-card__heading">
           <span class="poi-card__number">${numberLabel}</span>
@@ -219,6 +228,19 @@ export function renderPoiScreen(host, routeId, poiIndex) {
         goTo(currentIndex + 1);
       });
     }
+
+    const layerToggleEl = cardEl.querySelector(".poi-screen__map-toggle");
+    layerToggleEl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleSatellite();
+    });
+    // Prevent the surrounding card from interpreting a tap on this button as
+    // a swipe-start or a collapsed-title tap-to-expand.
+    layerToggleEl.addEventListener("pointerdown", (e) => e.stopPropagation());
+    layerToggleEl.addEventListener("touchstart", (e) => e.stopPropagation(), {
+      passive: true,
+    });
+    layerToggleEl.addEventListener("mousedown", (e) => e.stopPropagation());
 
     const handleEl = cardEl.querySelector(".poi-card__handle");
     attachSheetDrag(handleEl);
@@ -295,6 +317,21 @@ export function renderPoiScreen(host, routeId, poiIndex) {
     cardEl.classList.toggle("is-collapsed", isCollapsed);
     // Visible band changed — re-frame the map for the new center.
     focusMapOnCurrentPoi();
+  }
+
+  // Swap between the outdoor base map and the satellite-streets style.
+  // setStyle wipes user-added sources/layers (the GPX track lives in those),
+  // but mapboxgl.Marker instances are DOM and persist — the `style.load`
+  // listener below re-adds the track every time a new style finishes loading.
+  function toggleSatellite() {
+    if (!map) return;
+    isSatellite = !isSatellite;
+    const btn = cardEl.querySelector(".poi-screen__map-toggle");
+    if (btn) {
+      btn.innerHTML = isSatellite ? ICON_STACK_FILLED : ICON_STACK;
+      btn.setAttribute("aria-pressed", String(isSatellite));
+    }
+    map.setStyle(isSatellite ? MAPBOX_SATELLITE_STYLE : MAPBOX_STYLE);
   }
 
   // Measure the header strip (handle + title row) and stash it on the card
@@ -412,11 +449,16 @@ export function renderPoiScreen(host, routeId, poiIndex) {
       interactive: true,
     });
 
-    map.on("load", () => {
+    // Track lives in user-added sources/layers, which setStyle wipes — so
+    // re-add it on every style.load (fires for the initial style AND for
+    // every setStyle call from the layer toggle).
+    map.on("style.load", () => {
       if (route.track && route.track.length > 1) {
         addRouteTrack(map, route);
       }
+    });
 
+    map.on("load", () => {
       // Markers — thumbnails using each POI's first image. The active POI
       // is styled in CSS via `.is-active` (grows to 40×40). Tapping any
       // marker jumps to that POI.

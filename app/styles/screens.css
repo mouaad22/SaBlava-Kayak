@@ -1113,6 +1113,38 @@
   padding: 0;
 }
 
+/* Map-layer toggle — Paper map-stack-layer, same chip as the back button.
+   On the POI screen it lives inside the card so it transforms with the sheet
+   (drag and collapse alike), sitting 12px above the card's top edge. On the
+   standalone map screen it has no sheet to hug, so it anchors 24px above the
+   viewport bottom instead. */
+.poi-screen__map-toggle {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f8f1;
+  border: 2px solid #e2e6dd;
+  border-radius: 16px;
+  corner-shape: var(--corner-shape);
+  flex-shrink: 0;
+  padding: 0;
+  z-index: 3;
+}
+
+.poi-screen__card .poi-screen__map-toggle {
+  position: absolute;
+  top: -52px;
+  right: 24px;
+}
+
+.poi-screen.map-screen > .poi-screen__map-toggle {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+}
+
 /* Layer 3 — POI card. iOS-style bottom sheet:
    - Fixed at 60vh so the map always keeps the top 40%-ish band visible.
    - Internal content scrolls; only the handle + title row stay pinned.

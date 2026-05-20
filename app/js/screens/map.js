@@ -7,9 +7,13 @@
 import { findRoute } from "../data.js";
 import { t } from "../i18n.js";
 import { navigate } from "../router.js";
-import { MAPBOX_TOKEN, MAPBOX_STYLE } from "../config.js";
+import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE } from "../config.js";
 
 const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
+
+const ICON_STACK = `<img src="./assets/icons/regular/Stack.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
+
+const ICON_STACK_FILLED = `<img src="./assets/icons/regular/Stack-filled.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
 export function renderMapScreen(host, routeId) {
   const route = findRoute(routeId);
@@ -41,6 +45,25 @@ export function renderMapScreen(host, routeId) {
     .querySelector(".poi-screen__back")
     .addEventListener("click", () => navigate(`/route/${routeId}`));
 
+  // Layer toggle — Paper map-stack-layer. No bottom sheet on this screen, so
+  // the CSS pins it 24px above the viewport bottom (see screens.css).
+  const layerToggleEl = document.createElement("button");
+  layerToggleEl.className = "poi-screen__map-toggle";
+  layerToggleEl.type = "button";
+  layerToggleEl.setAttribute("aria-label", t("map.toggleLayer"));
+  layerToggleEl.setAttribute("aria-pressed", "false");
+  layerToggleEl.innerHTML = ICON_STACK;
+  screen.appendChild(layerToggleEl);
+
+  let isSatellite = false;
+  layerToggleEl.addEventListener("click", () => {
+    if (!map) return;
+    isSatellite = !isSatellite;
+    layerToggleEl.innerHTML = isSatellite ? ICON_STACK_FILLED : ICON_STACK;
+    layerToggleEl.setAttribute("aria-pressed", String(isSatellite));
+    map.setStyle(isSatellite ? MAPBOX_SATELLITE_STYLE : MAPBOX_STYLE);
+  });
+
   let map = null;
   if (typeof mapboxgl !== "undefined" && MAPBOX_TOKEN) {
     mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -65,11 +88,16 @@ export function renderMapScreen(host, routeId) {
       interactive: true,
     });
 
-    map.on("load", () => {
+    // Track lives in user-added sources/layers, which setStyle wipes — so
+    // re-add it on every style.load (fires for the initial style AND for
+    // every setStyle call from the layer toggle).
+    map.on("style.load", () => {
       if (route.track && route.track.length > 1) {
         addRouteTrack(map, route);
       }
+    });
 
+    map.on("load", () => {
       route.pois.forEach((p, idx) => {
         const el = document.createElement("div");
         el.className = "poi-marker";

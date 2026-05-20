@@ -8,6 +8,12 @@ import { renderPoiScreen } from "./screens/poi.js";
 import { renderGalleryScreen } from "./screens/gallery.js";
 import { renderMapScreen } from "./screens/map.js";
 
+// Native-app feel: never let the browser restore a previous scroll position
+// when navigating between hash routes — every screen lands at the top.
+if ("scrollRestoration" in history) {
+  history.scrollRestoration = "manual";
+}
+
 const host = document.getElementById("screen-stack");
 
 // Single screen slot — every route mounts its own screen and tears down the

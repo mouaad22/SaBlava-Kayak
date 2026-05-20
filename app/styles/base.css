@@ -18,7 +18,13 @@ html,
 body {
   margin: 0;
   padding: 0;
-  height: 100%;
+  /* The whole app is a phone-shaped non-scrolling surface; the page itself
+     never scrolls. Inner screens own their scrollers. Locking html/body to
+     the dynamic viewport (100dvh) means mobile-browser chrome resizing can
+     never push content under the URL bar. */
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
   background: #e8ece4;
   color: var(--color-text-primary);
   font-family: var(--font-body);
@@ -32,8 +38,6 @@ body {
 body {
   display: flex;
   justify-content: center;
-  min-height: 100dvh;
-  min-height: 100vh;
 }
 
 img,
@@ -83,8 +87,7 @@ p {
   background: var(--color-background);
   position: relative;
   overflow: hidden;
-  min-height: 100dvh;
-  min-height: 100vh;
+  height: 100dvh;
   box-shadow: 0 0 0 1px rgba(10, 77, 107, 0.06),
     0 30px 80px rgba(10, 77, 107, 0.18);
 }
@@ -92,8 +95,7 @@ p {
 .screen-stack {
   position: relative;
   width: 100%;
-  min-height: 100dvh;
-  min-height: 100vh;
+  height: 100%;
 }
 
 .screen {
@@ -141,8 +143,14 @@ p {
 @media (min-width: 480px) {
   body {
     padding: 24px 0;
+    align-items: center;
   }
   .app-frame {
+    /* Phone-shaped frame on desktop. Cap height so the device-frame doesn't
+       stretch into a ribbon on tall monitors. 100dvh - 48px reserves the
+       body's 24px top/bottom padding; 900 keeps the chrome plausibly
+       phone-tall on 4K screens. */
+    height: min(900px, calc(100dvh - 48px));
     border-radius: 32px;
     corner-shape: var(--corner-shape);
   }

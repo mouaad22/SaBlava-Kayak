@@ -377,7 +377,13 @@ export function renderRouteScreen(host, routeId) {
     });
   });
 
-  requestAnimationFrame(() => screen.classList.add("is-active"));
+  requestAnimationFrame(() => {
+    screen.classList.add("is-active");
+    // Always land at the top of the scrollable section, never wherever a
+    // previous mount left it.
+    const scroller = screen.querySelector(".route-screen__scroll");
+    if (scroller) scroller.scrollTop = 0;
+  });
 
   return {
     name: "route",

@@ -81,7 +81,13 @@ export function renderRoutesScreen(host) {
   `;
 
   host.appendChild(screen);
-  requestAnimationFrame(() => screen.classList.add("is-active"));
+  requestAnimationFrame(() => {
+    screen.classList.add("is-active");
+    // .routes-screen is itself the scroller — make sure we land at the top
+    // (browser hash navigation otherwise preserves the previous y-offset,
+    // hiding the weather heading under mobile browser chrome).
+    screen.scrollTop = 0;
+  });
 
   // Tap a card → route detail
   screen.querySelectorAll("[data-route-id]").forEach((card) => {

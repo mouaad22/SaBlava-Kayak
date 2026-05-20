@@ -18,8 +18,9 @@
 }
 
 .loading-screen__logo {
-  width: 329px;
-  height: 179px;
+  width: min(329px, calc(100% - 48px));
+  height: auto;
+  aspect-ratio: 329 / 179;
   flex-shrink: 0;
 }
 
@@ -98,23 +99,52 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding-block: 24px;
+  /* env() honours the device's safe areas (iOS home-indicator, Android nav
+     bar). The 24 px floor preserves the original visual rhythm when no
+     inset is present (desktop, older browsers). */
+  padding-top: max(env(safe-area-inset-top), 24px);
+  padding-bottom: max(env(safe-area-inset-bottom), 24px);
   font-synthesis: none;
+  /* The bottom CTA + lang list are anchored to the bottom via space-between;
+     we never want the hero to push the CTA out of view, so clip if a tiny
+     viewport really can't fit everything. */
+  overflow: hidden;
 }
 
 .lang-screen__top {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* welcome on top, hero claims the rest of the column — see hero `flex: 1 1 0`.
+     justify-content stays at the default (`flex-start`) so the hero hugs the
+     gap below the welcome line; vertical centring would just leave dead space
+     above the hero on a tall viewport. */
   gap: 24px;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
 }
 
 .lang-screen__hero-img {
-  width: 364px;
-  height: 364px;
+  /* Height-driven sizing. The hero takes whatever vertical room the top
+     section has after the welcome heading + gap, capped at Paper's 364 px.
+     `aspect-ratio: 1` maps height → width so it stays a square, and
+     `max-width` keeps it inside the page gutters when the frame is narrower
+     than 412 px. Width must be `auto` for aspect-ratio to drive it. */
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 364px;
+  width: auto;
+  max-width: calc(100% - 48px);
+  aspect-ratio: 1 / 1;
+  align-self: center;
   background-position: 50%;
   background-size: cover;
+}
+
+.lang-screen__bottom {
+  /* The bottom block is rigid — CTA + lang list never shrink. Any vertical
+     pressure (small phones, browser chrome up) is absorbed by the hero. */
   flex-shrink: 0;
 }
 
@@ -255,7 +285,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 24px;
+  padding-bottom: max(env(safe-area-inset-bottom), 24px);
 }
 
 .routes-screen__weather {
@@ -273,7 +303,7 @@
   display: flex;
   align-items: baseline;
   gap: 16px;
-  padding-top: 24px;
+  padding-top: max(env(safe-area-inset-top), 24px);
   padding-bottom: 8px;
 }
 
@@ -479,8 +509,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px 0;
-  height: 56px;
+  padding: max(env(safe-area-inset-top), 16px) 24px 0;
+  min-height: 56px;
 }
 
 .route-screen__back {
@@ -971,7 +1001,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px 0;
+  padding: max(env(safe-area-inset-top), 16px) 24px 0;
   box-sizing: border-box;
 }
 
@@ -1329,7 +1359,8 @@
   align-items: stretch;
   justify-content: space-between;
   gap: 24px;
-  padding: 16px 24px 24px;
+  padding: max(env(safe-area-inset-top), 16px) 24px
+    max(env(safe-area-inset-bottom), 24px);
   font-synthesis: none;
 }
 

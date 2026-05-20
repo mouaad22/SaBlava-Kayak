@@ -10,6 +10,8 @@
 // log (DMS converted to decimal degrees). Nord-route coords are still
 // approximate placeholders.
 
+import { TRACK_SUD } from "./track-sud.js";
+
 // 9 POIs for the Sud route, matching Paper artboard AZH-0 / AQB-0.
 // Descriptions are authored in Catalan only; the renderer falls back to the
 // "poi.description.placeholder" i18n key for any language that is missing.
@@ -451,6 +453,7 @@ export const ROUTES = [
     mapImage: "./assets/illustrations/mapa-ruta/map-ruta-sud-1.jpg",
     pois: POIS_SUD,
     geometry: POIS_SUD.map((p) => p.coords),
+    track: TRACK_SUD,
   },
   {
     id: "nord",

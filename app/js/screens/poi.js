@@ -16,6 +16,7 @@ import { findRoute } from "../data.js";
 import { t, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE } from "../config.js";
+import { addRouteTrack } from "./map.js";
 
 const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
@@ -412,6 +413,10 @@ export function renderPoiScreen(host, routeId, poiIndex) {
     });
 
     map.on("load", () => {
+      if (route.track && route.track.length > 1) {
+        addRouteTrack(map, route);
+      }
+
       // Markers — thumbnails using each POI's first image. The active POI
       // is styled in CSS via `.is-active` (grows to 40×40). Tapping any
       // marker jumps to that POI.

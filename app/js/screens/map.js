@@ -50,6 +50,12 @@ export function renderMapScreen(host, routeId) {
       new mapboxgl.LngLatBounds(lonLats[0], lonLats[0])
     );
 
+    // If the route ships a precise GPX-derived track, frame the map around
+     // the track (which extends past the POIs) rather than the POIs alone.
+    if (route.track && route.track.length > 1) {
+      route.track.forEach((c) => bounds.extend(c));
+    }
+
     map = new mapboxgl.Map({
       container: mapEl,
       style: MAPBOX_STYLE,
@@ -60,6 +66,10 @@ export function renderMapScreen(host, routeId) {
     });
 
     map.on("load", () => {
+      if (route.track && route.track.length > 1) {
+        addRouteTrack(map, route);
+      }
+
       route.pois.forEach((p, idx) => {
         const el = document.createElement("div");
         el.className = "poi-marker";
@@ -92,4 +102,51 @@ export function renderMapScreen(host, routeId) {
     routeId,
     teardown,
   };
+}
+
+// Draws the GPX-derived paddle track as a dashed line. Two layers: a soft
+// white halo underneath, then the dashed teal line on top so it stays legible
+// over both light land and dark water.
+export function addRouteTrack(map, route) {
+  const sourceId = "route-track";
+  const geojson = {
+    type: "Feature",
+    properties: {},
+    geometry: { type: "LineString", coordinates: route.track },
+  };
+
+  if (map.getSource(sourceId)) {
+    map.getSource(sourceId).setData(geojson);
+  } else {
+    map.addSource(sourceId, { type: "geojson", data: geojson });
+  }
+
+  if (!map.getLayer("route-track-halo")) {
+    map.addLayer({
+      id: "route-track-halo",
+      type: "line",
+      source: sourceId,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": "#ffffff",
+        "line-width": 5,
+        "line-opacity": 0.7,
+      },
+    });
+  }
+
+  if (!map.getLayer("route-track-line")) {
+    map.addLayer({
+      id: "route-track-line",
+      type: "line",
+      source: sourceId,
+      layout: { "line-cap": "butt", "line-join": "round" },
+      paint: {
+        "line-color": route.color || "#1B6B8A",
+        "line-width": 2.5,
+        "line-dasharray": [2, 1.5],
+        "line-opacity": 0.95,
+      },
+    });
+  }
 }

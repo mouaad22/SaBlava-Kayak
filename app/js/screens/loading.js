@@ -4,15 +4,14 @@
 // the animation visible even when everything is cached.
 
 const PHASE_IDLE_MS = 1000;
-const PHASE_FADE_IN_MS = 300;
-const PHASE_FADE_OUT_MS = 400;
+const CHUNK_TRANSITION_MS = 250; // must match --progress transition in CSS
+const PHASE_HOLD_MS = 1000; // bar held fully filled before tearing down
 const MIN_CHUNK_GAP_MS = 180;
 const TEARDOWN_FADE_MS = 280;
 const MAX_WAIT_MS = 8000;
 
 const BRUSH_BASE = "./assets/illustrations/progress-bar/base.jpg";
 const BRUSH_FILL = "./assets/illustrations/progress-bar/full.jpg";
-const BRUSH_TIP = "./assets/illustrations/progress-bar/first-stroke.jpg";
 
 // Assets whose loading drives the progress bar. Brush images go first so the
 // bar is paintable before phase 3 starts; the hero is the heaviest asset on
@@ -20,7 +19,6 @@ const BRUSH_TIP = "./assets/illustrations/progress-bar/first-stroke.jpg";
 const ASSETS_TO_PRELOAD = [
   BRUSH_BASE,
   BRUSH_FILL,
-  BRUSH_TIP,
   "./assets/illustrations/hero-2.jpg",
 ];
 
@@ -50,7 +48,6 @@ export function renderLoadingScreen(host, onComplete) {
       <div class="loading-screen__brush" aria-hidden="true">
         <img class="loading-screen__brush-layer loading-screen__brush-base" src="${BRUSH_BASE}" alt="" />
         <img class="loading-screen__brush-layer loading-screen__brush-fill" src="${BRUSH_FILL}" alt="" />
-        <img class="loading-screen__brush-layer loading-screen__brush-tip" src="${BRUSH_TIP}" alt="" />
       </div>
     </div>
   `;
@@ -118,8 +115,12 @@ export function renderLoadingScreen(host, onComplete) {
   function finish() {
     if (completed) return;
     completed = true;
-    screen.classList.add("is-complete");
-    setTimeout(advance, PHASE_FADE_OUT_MS);
+    // Let the last chunk's --progress transition land, then unmask the fill
+    // so the bar appears 100% painted, and hold before advancing.
+    setTimeout(() => {
+      screen.classList.add("is-complete");
+      setTimeout(advance, PHASE_HOLD_MS);
+    }, CHUNK_TRANSITION_MS);
   }
 
   function advance() {
@@ -139,13 +140,9 @@ export function renderLoadingScreen(host, onComplete) {
     });
   });
 
-  const fadeInTimer = setTimeout(() => {
-    screen.classList.add("is-tip-visible");
-  }, PHASE_IDLE_MS);
-
   const paintStartTimer = setTimeout(() => {
     startPainting();
-  }, PHASE_IDLE_MS + PHASE_FADE_IN_MS);
+  }, PHASE_IDLE_MS);
 
   // Safety net: if something stalls forever, force-complete after the cap.
   const maxTimer = setTimeout(() => {
@@ -157,7 +154,6 @@ export function renderLoadingScreen(host, onComplete) {
 
   return {
     teardown() {
-      clearTimeout(fadeInTimer);
       clearTimeout(paintStartTimer);
       clearTimeout(maxTimer);
       if (teardownInProgress) return;

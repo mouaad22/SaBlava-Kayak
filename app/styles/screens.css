@@ -24,12 +24,11 @@
 }
 
 /* Watercolor brush progress bar.
-   Three layered JPGs (white BG) share the same canvas; mix-blend-mode:
-   multiply makes the white invisible against the white splash so the
-   stroke + brush tip blob composite naturally. The painted fill sits on
-   top of the base and is revealed via a feathered horizontal mask whose
-   edge tracks the brush tip's position — so there's never a gap between
-   the blob and the ink under it. */
+   Two layered JPGs (white BG) share the same canvas; mix-blend-mode:
+   multiply makes the white invisible against the white splash. The
+   painted fill sits on top of the base and is revealed via a horizontal
+   mask whose leading edge sweeps left-to-right as --progress goes 0 → 1,
+   with a soft 4px feather at the edge. */
 
 @property --progress {
   syntax: "<number>";
@@ -42,20 +41,10 @@
   width: 254px;
   isolation: isolate;
   --progress: 0;
-  /* Travel distance for the brush tip blob. Less than the bar width because
-     the blob has a natural left-inset in its source image and the stroke
-     ends a few pixels short of the right edge. Tune by eye. */
-  --brush-travel: 232px;
-  --brush-tip-overshoot: 4px;
-  /* On-screen X of the blob center (matches the brush-tip transform). */
-  --blob-x: calc(
-    var(--progress) * var(--brush-travel) + var(--brush-tip-overshoot) + 10px
-  );
-  /* Feathered painted edge: solid behind the blob, fading past it. The
-     fade extends a few px PAST the blob's right edge so the blob always
-     sits over ink — no inkless gap. */
-  --paint-solid-end: calc(var(--blob-x) - 12px);
-  --paint-fade-end: calc(var(--blob-x) + 16px);
+  /* Painted edge: leading edge sweeps from 0 to bar-width + feather (258px)
+     so the bar is fully empty at progress=0 and fully covered at progress=1. */
+  --paint-fade-end: calc(var(--progress) * 258px);
+  --paint-solid-end: calc(var(--paint-fade-end) - 4px);
   transition: --progress 250ms ease-out;
 }
 
@@ -79,15 +68,11 @@
   -webkit-mask-image: linear-gradient(
     to right,
     #000 var(--paint-solid-end),
-    rgba(0, 0, 0, 0.65) calc(var(--paint-solid-end) + 10px),
-    rgba(0, 0, 0, 0.25) calc(var(--paint-solid-end) + 20px),
     transparent var(--paint-fade-end)
   );
   mask-image: linear-gradient(
     to right,
     #000 var(--paint-solid-end),
-    rgba(0, 0, 0, 0.65) calc(var(--paint-solid-end) + 10px),
-    rgba(0, 0, 0, 0.25) calc(var(--paint-solid-end) + 20px),
     transparent var(--paint-fade-end)
   );
   transition: opacity 200ms ease-out;
@@ -97,23 +82,11 @@
   opacity: 1;
 }
 
-.loading-screen__brush-tip {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transform: translateX(
-    calc(var(--progress) * var(--brush-travel) + var(--brush-tip-overshoot))
-  );
-  transition: opacity 300ms ease-out, transform 250ms ease-out;
-}
-
-.loading-screen.is-tip-visible .loading-screen__brush-tip {
-  opacity: 1;
-}
-
-.loading-screen.is-complete .loading-screen__brush-tip {
-  opacity: 0;
-  transition: opacity 400ms ease-out;
+/* End of animation: drop the mask so the fill image is fully visible
+   (no painted-edge feather), then JS holds for 1s before advancing. */
+.loading-screen.is-complete .loading-screen__brush-fill {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 /* ============== SCREEN 1 — LANGUAGE ============== */

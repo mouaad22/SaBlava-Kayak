@@ -83,7 +83,10 @@ p {
 
 .app-frame {
   width: 100%;
-  max-width: var(--canvas-max);
+  /* No max-width on mobile — the frame fills whatever the device gives us
+     (iPhone Pro Max 430, Pixel 7 412, …) so the page-body grey never bleeds
+     through on the sides. The 402-px Paper cap is applied only on desktop
+     in the `min-width: 480px` block below. */
   background: var(--color-background);
   position: relative;
   overflow: hidden;
@@ -146,10 +149,11 @@ p {
     align-items: center;
   }
   .app-frame {
-    /* Phone-shaped frame on desktop. Cap height so the device-frame doesn't
-       stretch into a ribbon on tall monitors. 100dvh - 48px reserves the
-       body's 24px top/bottom padding; 900 keeps the chrome plausibly
+    /* Phone-shaped frame on desktop. Cap both width and height so the
+       device-frame doesn't sprawl on big monitors. 100dvh - 48px reserves
+       the body's 24px top/bottom padding; 900 keeps the chrome plausibly
        phone-tall on 4K screens. */
+    max-width: var(--canvas-max);
     height: min(900px, calc(100dvh - 48px));
     border-radius: 32px;
     corner-shape: var(--corner-shape);

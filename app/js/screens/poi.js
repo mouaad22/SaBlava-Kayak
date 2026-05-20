@@ -17,13 +17,11 @@ import { t, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE } from "../config.js";
 
-const ICON_BACK = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px;flex-shrink:0" aria-hidden="true"><path d="M10 3L5 8L10 13" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round"/></svg>`;
+const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.png" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
-const ICON_NEXT = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0" aria-hidden="true"><path d="M21.046 12.796L14.296 19.546C14.085 19.757 13.798 19.876 13.499 19.876C13.2 19.876 12.914 19.757 12.702 19.546C12.491 19.334 12.372 19.048 12.372 18.749C12.372 18.45 12.491 18.163 12.702 17.952L17.531 13.125H3.75C3.452 13.125 3.165 13.006 2.954 12.795C2.744 12.584 2.625 12.298 2.625 12C2.625 11.702 2.744 11.415 2.954 11.204C3.165 10.993 3.452 10.875 3.75 10.875H17.531L12.704 6.045C12.493 5.834 12.374 5.547 12.374 5.248C12.374 4.949 12.493 4.663 12.704 4.451C12.915 4.24 13.202 4.121 13.501 4.121C13.8 4.121 14.086 4.24 14.298 4.451L21.048 11.201C21.153 11.306 21.236 11.43 21.293 11.567C21.349 11.704 21.378 11.851 21.378 11.999C21.378 12.147 21.349 12.294 21.292 12.431C21.235 12.567 21.151 12.691 21.046 12.796Z" fill="#1A1A1A"/></svg>`;
+const ICON_NEXT = `<img src="./assets/icons/regular/ArrowRight.png" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
-// Mirrored ICON_NEXT — same chunky arrow glyph, scaled horizontally so it
-// reads as a left-pointing twin of the "next" button.
-const ICON_PREV = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;transform:scaleX(-1)" aria-hidden="true"><path d="M21.046 12.796L14.296 19.546C14.085 19.757 13.798 19.876 13.499 19.876C13.2 19.876 12.914 19.757 12.702 19.546C12.491 19.334 12.372 19.048 12.372 18.749C12.372 18.45 12.491 18.163 12.702 17.952L17.531 13.125H3.75C3.452 13.125 3.165 13.006 2.954 12.795C2.744 12.584 2.625 12.298 2.625 12C2.625 11.702 2.744 11.415 2.954 11.204C3.165 10.993 3.452 10.875 3.75 10.875H17.531L12.704 6.045C12.493 5.834 12.374 5.547 12.374 5.248C12.374 4.949 12.493 4.663 12.704 4.451C12.915 4.24 13.202 4.121 13.501 4.121C13.8 4.121 14.086 4.24 14.298 4.451L21.048 11.201C21.153 11.306 21.236 11.43 21.293 11.567C21.349 11.704 21.378 11.851 21.378 11.999C21.378 12.147 21.349 12.294 21.292 12.431C21.235 12.567 21.151 12.691 21.046 12.796Z" fill="#1A1A1A"/></svg>`;
+const ICON_PREV = `<img src="./assets/icons/regular/ArrowLeft.png" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));

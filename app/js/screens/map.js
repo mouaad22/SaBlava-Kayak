@@ -9,7 +9,7 @@ import { t } from "../i18n.js";
 import { navigate } from "../router.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE } from "../config.js";
 
-const ICON_BACK = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px;flex-shrink:0" aria-hidden="true"><path d="M10 3L5 8L10 13" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round"/></svg>`;
+const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.png" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
 export function renderMapScreen(host, routeId) {
   const route = findRoute(routeId);

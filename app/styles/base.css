@@ -114,18 +114,48 @@ p {
   will-change: opacity, transform;
 }
 
-.screen.is-active {
-  opacity: 1;
-  pointer-events: auto;
-  z-index: 2;
-}
-
 .screen.is-entering-from-right {
   transform: translateX(24px);
 }
 
+.screen.is-entering-from-left {
+  transform: translateX(-24px);
+}
+
 .screen.is-entering-from-bottom {
   transform: translateY(24px);
+}
+
+/* Declared after the entering classes so that, at equal specificity, the
+   active state's transform:none wins and the screen settles at translateX(0).
+   The exit classes that follow override this back to a translated position. */
+.screen.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
+  transform: none;
+}
+
+.screen.is-exiting-right {
+  opacity: 0;
+  transform: translateX(24px);
+  transition: opacity 200ms var(--ease-exit),
+    transform 280ms var(--ease-exit);
+}
+
+.screen.is-exiting-left {
+  opacity: 0;
+  transform: translateX(-24px);
+  transition: opacity 200ms var(--ease-exit),
+    transform 280ms var(--ease-exit);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen,
+  .screen.is-exiting-right,
+  .screen.is-exiting-left {
+    transition: opacity 1ms, transform 1ms;
+  }
 }
 
 .label-up {

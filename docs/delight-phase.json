@@ -1,0 +1,557 @@
+{
+  "phase": "delight-phase",
+  "description": "Add motion delight to SaBlava Kayak — screen transitions, interaction feedback, staggered entrances, direction-aware slides, scroll-linked effects. Vanilla JS + CSS custom properties, no framework. 7 independent sessions.",
+  "created": "2026-05-20",
+  "status": "in_progress",
+
+  "shared_context": {
+    "stack": "Vanilla JS (ES modules) + plain CSS. No build step. No animation library.",
+    "dev_server": "python app/server.py  →  http://localhost:5173",
+    "scope": "app/js/, app/styles/, app/index.html only. app/server.py is frozen.",
+    "key_files": {
+      "tokens":      "app/styles/tokens.css      — design tokens (colors, spacing, easing, shadows)",
+      "base":        "app/styles/base.css         — .screen, .screen.is-active, .app-frame, global resets",
+      "components":  "app/styles/components.css   — .btn, .card, .sheet, .emergency-pill, .skeleton-shimmer",
+      "screens_css": "app/styles/screens.css      — per-screen layout and component styles",
+      "app_js":      "app/js/app.js               — top-level router wiring, ensureMain()",
+      "router_js":   "app/js/router.js            — hash router, navigate(), onRouteChange()",
+      "routes_js":   "app/js/screens/routes.js    — Screen 2: weather + route tile list",
+      "route_js":    "app/js/screens/route.js     — Screen 3: route detail (map widget, POI carousel, CTA)",
+      "poi_js":      "app/js/screens/poi.js       — Screen 4: POI map + bottom sheet",
+      "gallery_js":  "app/js/screens/gallery.js   — Screen 5: full-screen photo gallery"
+    },
+    "existing_easing_tokens": {
+      "--ease-entrance": "cubic-bezier(0.22, 1, 0.36, 1)   — fast-start ease-out, used for enter transitions",
+      "--ease-exit":     "cubic-bezier(0.32, 0.72, 0.35, 1) — decelerate-to-stop, used for exit and hover"
+    },
+    "new_easing_token_to_add": {
+      "--ease-spring": "cubic-bezier(0.34, 1.4, 0.64, 1)   — slight overshoot/bounce, for physical drag snaps. Add to tokens.css :root in S-01."
+    },
+    "screen_enter_pattern": "Each screen renderer does: host.appendChild(screen) then requestAnimationFrame(() => screen.classList.add('is-active')). Opacity animates 0→1 via the transition on .screen.",
+    "screen_exit_pattern": "Each teardown does: screen.classList.remove('is-active'); setTimeout(() => screen.remove(), 320). This fades it out over 280ms then removes.",
+    "existing_enter_classes_in_base_css": [
+      ".screen.is-entering-from-right  { transform: translateX(24px) }  — declared but NOT yet wired in JS",
+      ".screen.is-entering-from-bottom { transform: translateY(24px) }  — declared but NOT yet wired in JS"
+    ],
+    "brand_animation_feel": "Calm, natural, unhurried. Not as snappy as Vercel. Closer to Family app — fluid and physical. Default to no bounce; spring only on drag-gesture snaps.",
+    "guiding_principles": [
+      "Ease-out for enter (responsive), ease-in-out for in-place repositioning, ease for hover/color.",
+      "150ms hover, 200ms enter, 150ms exit — scale up for bigger visual changes.",
+      "Animate with purpose: every animation should add context or confirm state change.",
+      "Never animate frequent/keyboard interactions — they should feel instant.",
+      "Blur during motion → sharp on landing (sense of speed, masks imperfections).",
+      "Stagger list items with small delays (0, 60, 120ms) for a wave-like entrance.",
+      "Spring snap (--ease-spring) only after drag gestures; all other snaps use --ease-entrance.",
+      "respect prefers-reduced-motion: all transitions/animations should be wrapped or use the media query."
+    ]
+  },
+
+  "agent_protocol": {
+    "start": "1. Read this file end-to-end. 2. Confirm prior session's 'committed' is true (or this is S-01). 3. Read every file listed in your session's 'files_to_touch'. 4. Run dev server and verify baseline before touching code.",
+    "finish": "1. Test every verification step in your session. 2. Flip 'tested' to true. 3. Commit all changed files together with this JSON (update commit_sha, committed, finished_at). 4. Update 'status' to 'done'."
+  },
+
+  "sessions": [
+    {
+      "id": "S-01",
+      "title": "Screen transitions + spring token",
+      "status": "done",
+      "tested": true,
+      "committed": false,
+      "commit_sha": null,
+      "started_at": "2026-05-20",
+      "finished_at": "2026-05-20",
+      "priority": 1,
+      "effort_estimate": "60 min",
+
+      "goal": "Make navigating between screens feel like a native mobile app: new screens slide in from the right (forward) or left (backward), old screens fade-slide out in the opposite direction. Also add the --ease-spring token for use in later sessions.",
+
+      "files_to_touch": [
+        "app/styles/tokens.css",
+        "app/styles/base.css",
+        "app/js/app.js"
+      ],
+
+      "step_1_add_spring_token": {
+        "file": "app/styles/tokens.css",
+        "where": "Inside :root {}, after --ease-exit line",
+        "add": "--ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);"
+      },
+
+      "step_2_update_base_css": {
+        "file": "app/styles/base.css",
+        "changes": [
+          {
+            "what": "Add transform:none to .screen.is-active so entering classes are overridden when .is-active is applied — this triggers the CSS transition from the translated starting position to the resting position.",
+            "selector": ".screen.is-active",
+            "add_property": "transform: none;"
+          },
+          {
+            "what": "Add a mirror entering class for backward navigation (coming from the left). The existing .is-entering-from-right already exists; add this sibling.",
+            "add_rule": ".screen.is-entering-from-left { transform: translateX(-24px); }"
+          },
+          {
+            "what": "Add exit classes for the outgoing screen. These are applied by teardown() before removing .is-active, so the screen slides out while fading.",
+            "add_rules": [
+              ".screen.is-exiting-right { transform: translateX(24px);  opacity: 0; transition: opacity 200ms var(--ease-exit), transform 280ms var(--ease-exit); }",
+              ".screen.is-exiting-left  { transform: translateX(-24px); opacity: 0; transition: opacity 200ms var(--ease-exit), transform 280ms var(--ease-exit); }"
+            ]
+          }
+        ]
+      },
+
+      "step_3_update_app_js": {
+        "file": "app/js/app.js",
+        "changes": [
+          {
+            "what": "Add a SCREEN_DEPTH map above ensureMain(). Used to determine navigation direction (deeper index = forward, shallower = backward, same level = forward as a default).",
+            "add_const": "const SCREEN_DEPTH = { language: 0, routes: 1, route: 2, map: 2, poi: 3, gallery: 4 };"
+          },
+          {
+            "what": "Track the previous route name so direction can be computed on each navigation.",
+            "add_var": "let prevRouteName = null;"
+          },
+          {
+            "what": "Refactor ensureMain() to accept a direction ('forward'|'backward') and apply the entering class to the new screen right after it is appended to the DOM (before the RAF fires in the renderer). The trick: query host.lastElementChild immediately after factory() returns — it is the newly-appended screen. Then update prevRouteName.",
+            "new_ensureMain_logic": [
+              "Compute direction: if SCREEN_DEPTH[target.name] >= SCREEN_DEPTH[prevRouteName ?? 'language'] then 'forward' else 'backward'.",
+              "Apply exit class to old main's screen element before calling teardown: if direction === 'forward' add .is-exiting-left; else add .is-exiting-right. Then call main.teardown() which removes .is-active and schedules removal — the exit class overrides the opacity/transform so the two animate together.",
+              "Call target.factory() — this appends the new screen to host.",
+              "Immediately after: const newScreen = host.lastElementChild; if (newScreen) { newScreen.classList.add(direction === 'forward' ? 'is-entering-from-right' : 'is-entering-from-left'); }",
+              "The renderer's own RAF will then add .is-active, which sets transform:none + opacity:1, triggering the slide-in transition.",
+              "Update prevRouteName = target.name."
+            ]
+          },
+          {
+            "what": "Pass the current route name to ensureMain via the target object so direction can be computed. Each case in render() should set target.name before calling ensureMain.",
+            "note": "target.name is already set in all cases (e.g. name: 'routes'). Just make sure ensureMain reads it."
+          }
+        ]
+      },
+
+      "important_notes": [
+        "The gallery screen uses host.appendChild(screen) then screen.innerHTML = ..., so the screen exists in the DOM before the RAF. The entering class must be added after appendChild but the RAF adds .is-active — this ordering is fine.",
+        "The teardown setTimeout is 320ms. The new screen's enter transition is 380ms (transform) / 280ms (opacity). There will be brief overlap — this is intentional and looks like a crossfade-slide.",
+        "Do NOT add entering classes on the very first navigation (from loading screen to language). The loading screen has its own teardown; the language screen should just fade in normally. Detect by checking prevRouteName === null."
+      ],
+
+      "verification": [
+        "Navigate language → routes: new screen slides in from right.",
+        "Navigate routes → route detail: slides in from right.",
+        "Navigate route detail → back (browser back or back button): slides in from left.",
+        "Navigate route → POI: slides in from right.",
+        "POI → gallery: slides in from right.",
+        "Gallery → back: slides in from left.",
+        "First load (loading → language): no slide, just fade in.",
+        "Check prefers-reduced-motion: transitions should be instant."
+      ],
+
+      "reduced_motion": "Add to base.css: @media (prefers-reduced-motion: reduce) { .screen { transition: opacity 1ms; } }"
+    },
+
+    {
+      "id": "S-02",
+      "title": "Route tile hover/active + staggered entrance",
+      "status": "pending",
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "started_at": null,
+      "finished_at": null,
+      "priority": 2,
+      "effort_estimate": "30 min",
+
+      "goal": "Make the two route tile cards feel tappable and alive. On desktop hover: card lifts with a shadow. On press: card presses in slightly. On screen enter: tiles cascade in with a stagger so the list feels like a wave landing.",
+
+      "files_to_touch": [
+        "app/styles/screens.css",
+        "app/js/screens/routes.js"
+      ],
+
+      "step_1_hover_active_states": {
+        "file": "app/styles/screens.css",
+        "where": "After the existing .route-tile rules (around line 487–549)",
+        "add_rules": [
+          ".route-tile { transition: transform 150ms var(--ease-exit), opacity 150ms var(--ease-exit); will-change: transform; }",
+          ".route-tile:hover { transform: translateY(-2px); }",
+          ".route-tile:hover .route-tile__media { box-shadow: var(--shadow-card-hover); }",
+          ".route-tile__media { transition: box-shadow 150ms var(--ease-exit); }",
+          ".route-tile:active { transform: scale(0.98); opacity: 0.92; transition-duration: 80ms; }"
+        ]
+      },
+
+      "step_2_staggered_entrance": {
+        "file": "app/styles/screens.css",
+        "where": "After the hover/active rules just added",
+        "add_rule": ".route-tile { opacity: 0; animation: tile-enter 380ms var(--ease-entrance) forwards; }",
+        "add_keyframe": "@keyframes tile-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }",
+        "note": "The animation starts from opacity:0 + translateY(12px) → opacity:1 + translateY(0). The hover transform uses a separate CSS transition on top of this, so they don't conflict once the animation is done."
+      },
+
+      "step_3_stagger_delays_in_js": {
+        "file": "app/js/screens/routes.js",
+        "where": "In the routeCard() function, or right after the tiles are rendered in renderRoutesScreen()",
+        "change": "After appending the screen, query all .route-tile elements and set their animation-delay inline: tiles[0].style.animationDelay = '0ms'; tiles[1].style.animationDelay = '80ms'. (Only 2 tiles currently, so delays are 0 and 80ms.)",
+        "implementation_hint": "In renderRoutesScreen, after host.appendChild(screen), do: screen.querySelectorAll('.route-tile').forEach((tile, i) => { tile.style.animationDelay = `${i * 80}ms`; });"
+      },
+
+      "important_notes": [
+        "The route-tile--a uses a fixed 376px width that can overflow narrow viewports — no change needed there, just make sure transform doesn't clip at the .routes-screen overflow boundary. The screen already has overflow-x: hidden so translateY(-2px) is fine.",
+        "The animation forwards fill-mode keeps opacity:1 after the animation ends, so hover transitions work normally afterwards.",
+        "Do NOT add border-radius to .route-tile__media in this session — that's a design decision. The hover shadow is enough lift."
+      ],
+
+      "verification": [
+        "Load routes screen: tiles fade up in sequence, second tile is slightly delayed.",
+        "Hover (desktop): tile lifts 2px with shadow.",
+        "Press (mobile/desktop): tile scales to 0.98.",
+        "Tap a tile: navigates to route detail (existing behavior preserved).",
+        "No overflow / clipping artifacts on mobile width."
+      ]
+    },
+
+    {
+      "id": "S-03",
+      "title": "Language row selection feedback + button hover states",
+      "status": "pending",
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "started_at": null,
+      "finished_at": null,
+      "priority": 3,
+      "effort_estimate": "30 min",
+
+      "goal": "When a language is selected, the check icon fades in smoothly and the row briefly highlights. All primary CTA buttons get a hover state for desktop users.",
+
+      "files_to_touch": [
+        "app/styles/screens.css"
+      ],
+
+      "step_1_lang_row_check_animation": {
+        "file": "app/styles/screens.css",
+        "where": "After the .lang-row__check rules (around line 241)",
+        "changes": [
+          "Change .lang-row__check from display:none / display:block to use opacity + scale for a smooth appear. Replace the display:none rule with: .lang-row__check { width: 24px; height: 24px; flex-shrink: 0; opacity: 0; transform: scale(0.6); transition: opacity 180ms var(--ease-entrance), transform 180ms var(--ease-entrance); pointer-events: none; }",
+          "Replace .lang-row[aria-checked=true] .lang-row__check { display: block; } with: .lang-row[aria-checked='true'] .lang-row__check { opacity: 1; transform: scale(1); pointer-events: auto; }"
+        ]
+      },
+
+      "step_2_lang_row_tap_highlight": {
+        "file": "app/styles/screens.css",
+        "where": "After .lang-row rules",
+        "add_rules": [
+          ".lang-row { transition: background 100ms var(--ease-exit); border-radius: 8px; }",
+          ".lang-row:active { background: var(--color-surface-tinted); }"
+        ]
+      },
+
+      "step_3_cta_hover_states": {
+        "file": "app/styles/screens.css",
+        "where": "After the existing .lang-screen__cta:active rule",
+        "add_rules": [
+          ".lang-screen__cta { transition: background 150ms var(--ease-exit), filter 150ms var(--ease-exit); }",
+          ".lang-screen__cta:hover { filter: brightness(1.08); }",
+          ".start-button { transition: background 150ms var(--ease-exit), filter 150ms var(--ease-exit); }",
+          ".start-button:hover { filter: brightness(1.08); }"
+        ],
+        "note": "Also check components.css .btn--primary — add the same hover filter there if not already present. The .btn class already has transitions defined."
+      },
+
+      "step_4_btn_primary_hover": {
+        "file": "app/styles/components.css",
+        "where": "After .btn--primary:active rule",
+        "add_rule": ".btn--primary:hover { filter: brightness(1.07); }"
+      },
+
+      "important_notes": [
+        "The language screen JS (app/js/screens/language.js) sets aria-checked via JS. The CSS [aria-checked='true'] selector drives the visual state — no JS changes needed.",
+        "The border-radius on .lang-row must not conflict with the separator lines between rows if any exist. Check visually.",
+        "filter: brightness() on :hover should only fire on non-touch devices. On mobile, :hover fires on tap and immediately goes away — that's acceptable behaviour."
+      ],
+
+      "verification": [
+        "Tap a language row: check icon fades/scales in smoothly.",
+        "Tap another language: previous check fades out, new check fades in.",
+        "On desktop: hover over CTA button shows a slight brighten.",
+        "Press CTA: existing :active state still works (dark background).",
+        "No layout shift when check appears (it was previously display:none which collapses space — with opacity it keeps its space, which is better)."
+      ]
+    },
+
+    {
+      "id": "S-04",
+      "title": "Gallery direction-aware slide transitions",
+      "status": "pending",
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "started_at": null,
+      "finished_at": null,
+      "priority": 4,
+      "effort_estimate": "45 min",
+
+      "goal": "When swiping or tapping through the gallery, slides should animate in/out with a directional translateX so it feels physical — swiping left brings the next slide in from the right, swiping right brings the previous from the left.",
+
+      "files_to_touch": [
+        "app/styles/screens.css",
+        "app/js/screens/gallery.js"
+      ],
+
+      "step_1_slide_css": {
+        "file": "app/styles/screens.css",
+        "where": "After .gallery-screen__slide.is-active rule (around line 1552)",
+        "changes": [
+          "Add enter classes — the active slide animates from these positions to its default (translateX(0)):",
+          "  .gallery-screen__slide.is-entering-from-right { transform: translateX(40px); opacity: 0; }",
+          "  .gallery-screen__slide.is-entering-from-left  { transform: translateX(-40px); opacity: 0; }",
+          "Add exit classes — the leaving slide animates to these positions:",
+          "  .gallery-screen__slide.is-exiting-left  { transform: translateX(-40px); opacity: 0; pointer-events: none; }",
+          "  .gallery-screen__slide.is-exiting-right { transform: translateX(40px);  opacity: 0; pointer-events: none; }",
+          "Update .gallery-screen__slide to include transform in transition: transition: opacity 280ms var(--ease-entrance), transform 280ms var(--ease-entrance);"
+        ]
+      },
+
+      "step_2_gallery_js_direction_tracking": {
+        "file": "app/js/screens/gallery.js",
+        "where": "Find the goToSlide() function (or equivalent function that changes currentSlide and swaps .is-active)",
+        "changes": [
+          "Add a direction parameter to the slide change logic: goToSlide(nextIndex, direction) where direction is 'forward' (next) or 'backward' (prev).",
+          "Before changing active state: add .is-exiting-left (forward) or .is-exiting-right (backward) to the currently active slide. Remove .is-active. After the transition duration (300ms), remove the exiting class and the slide entirely hides via opacity:0.",
+          "For the incoming slide: add .is-entering-from-right (forward) or .is-entering-from-left (backward). Then in the next RAF, add .is-active and remove the entering class — .is-active sets transform:none (if base.css pattern is followed) via a selector or by just removing the class.",
+          "NOTE: The gallery slides are NOT .screen elements so they don't get transform:none from .screen.is-active. The pattern here is: set entering class → RAF → add .is-active AND remove entering class in the same RAF callback.",
+          "Swipe detection already exists in gallery.js via pointer events. Read the existing swipeDir variable and pass it as direction to goToSlide().",
+          "Dot-click navigation: clicking a dot forward of current = 'forward', behind = 'backward'.",
+          "Edge clicks (left half = backward, right half = forward) — check if this logic exists and wire direction accordingly."
+        ]
+      },
+
+      "step_3_blur_during_motion": {
+        "description": "Optional but recommended: add a brief blur to outgoing slides for a cinematic feel.",
+        "file": "app/styles/screens.css",
+        "add_to_exiting_rules": "filter: blur(3px); to both .is-exiting-left and .is-exiting-right",
+        "add_to_entering_rules": "filter: blur(2px); to both .is-entering-from-right and .is-entering-from-left; let the transition clear it to filter:blur(0) on .is-active"
+      },
+
+      "important_notes": [
+        "The gallery slide container (.gallery-screen__media) has overflow:hidden — the entering slide will be clipped while it is outside the frame, which gives a nice contained feel.",
+        "Do not animate the counter number — it should update instantly to avoid confusion about which image is showing.",
+        "If gallery has only 1 slide, skip the transition entirely.",
+        "The sessionStorage slide index (sa-blava.gallery.slide) should still be updated on each navigation."
+      ],
+
+      "verification": [
+        "Swipe left: current slide exits left, next slide enters from right.",
+        "Swipe right: current slide exits right, previous slide enters from left.",
+        "Dot click (forward): directional slide.",
+        "Dot click (backward): directional slide.",
+        "Counter updates instantly.",
+        "No slides visible outside the .gallery-screen__media frame at any point.",
+        "Single-slide gallery: no animation, just static."
+      ]
+    },
+
+    {
+      "id": "S-05",
+      "title": "POI interaction polish — nav buttons, marker pop, sheet easing",
+      "status": "pending",
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "started_at": null,
+      "finished_at": null,
+      "priority": 5,
+      "effort_estimate": "30 min",
+
+      "goal": "Three small but high-quality POI polish items: (1) nav buttons get press feedback, (2) the active map marker pops with a micro-overshoot when activated, (3) the bottom sheet snaps with a spring feel after a drag-to-expand gesture.",
+
+      "files_to_touch": [
+        "app/styles/screens.css"
+      ],
+
+      "step_1_nav_button_press": {
+        "file": "app/styles/screens.css",
+        "where": "After .poi-card__nav-btn rule (around line 1271)",
+        "add_rules": [
+          ".poi-card__nav-btn { transition: transform 120ms var(--ease-exit), background 120ms var(--ease-exit); }",
+          ".poi-card__nav-btn:active { transform: scale(0.92); background: var(--color-surface-tinted); }",
+          ".poi-screen__back { transition: transform 120ms var(--ease-exit); }",
+          ".poi-screen__back:active { transform: scale(0.92); }"
+        ]
+      },
+
+      "step_2_marker_pop": {
+        "file": "app/styles/screens.css",
+        "where": "After .poi-marker.is-active rule (around line 1438)",
+        "description": "When a marker becomes .is-active it grows from 24px to 48px. Replace the plain size transition with a keyframe animation that overshoots slightly before settling — makes it feel like it pops to attention.",
+        "changes": [
+          "Remove the transition for width/height/box-shadow from .poi-marker (keep the transition for box-shadow only, or remove transitions entirely from .poi-marker).",
+          "Add a CSS animation to .poi-marker.is-active for the size change:",
+          "  @keyframes marker-pop { 0% { width: 24px; height: 24px; } 60% { width: 54px; height: 54px; } 100% { width: 48px; height: 48px; } }",
+          "  .poi-marker.is-active { animation: marker-pop 280ms var(--ease-entrance) forwards; box-shadow: 0 0 0 4px #ffffff, 0 14px 32px 2px rgba(10, 30, 50, 0.2); }",
+          "Keep the transition on .poi-marker for the box-shadow deactivation (when .is-active is removed)."
+        ]
+      },
+
+      "step_3_sheet_spring_easing": {
+        "file": "app/styles/screens.css",
+        "where": ".poi-screen__card rule (around line 1128)",
+        "description": "The sheet currently snaps with --ease-entrance (smooth ease-out). After a drag-to-expand gesture, use --ease-spring (slight overshoot) for the snap. This is the only place in the app where --ease-spring is appropriate per the brand principles.",
+        "change": "Replace the transition value: transition: transform 320ms var(--ease-entrance) → transition: transform 360ms var(--ease-spring); in the base .poi-screen__card rule.",
+        "note": "The .poi-screen__card.is-dragging rule already sets transition:none during the drag itself, so the spring only fires on release — exactly correct.",
+        "caveat": "If the spring feels too bouncy after review, dial it back to: cubic-bezier(0.34, 1.2, 0.64, 1) (lighter overshoot)."
+      },
+
+      "verification": [
+        "Tap POI prev/next nav buttons: visible scale-down press feedback.",
+        "Tap POI back button on poi-screen: scale-down feedback.",
+        "Activate a map marker (tap it): it pops with a brief overshoot before settling at 48px.",
+        "Drag the bottom sheet up and release: it snaps to expanded with a subtle spring.",
+        "Drag sheet down and release: snaps to collapsed (same spring feel).",
+        "No jitter or jump when sheet transitions from is-dragging to snapped."
+      ]
+    },
+
+    {
+      "id": "S-06",
+      "title": "Scroll-linked header blur on route detail",
+      "status": "pending",
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "started_at": null,
+      "finished_at": null,
+      "priority": 6,
+      "effort_estimate": "45 min",
+
+      "goal": "On the route detail screen, the floating header already has a backdrop blur, but it's static. As the user scrolls, the header should intensify its background opacity (0 → white) and blur (4px → 10px), making the 'glass over content' effect feel dynamic and alive.",
+
+      "files_to_touch": [
+        "app/styles/screens.css",
+        "app/js/screens/route.js"
+      ],
+
+      "step_1_css_custom_properties": {
+        "file": "app/styles/screens.css",
+        "where": ".route-screen__header::before rule (around line 579)",
+        "description": "Replace the static backdrop-filter and background-image values with CSS custom properties driven by JS.",
+        "changes": [
+          "Add to .route-screen__header: --header-blur: 0px; --header-opacity: 0; (initial state: transparent when scrolled to top)",
+          "Update .route-screen__header::before: replace backdrop-filter: blur(10px) with backdrop-filter: blur(var(--header-blur)); -webkit-backdrop-filter: blur(var(--header-blur));",
+          "Update the background-image gradient in ::before: replace the static rgba(255,255,255,1) with rgba(255,255,255,var(--header-opacity)) so the white veil fades in as the user scrolls.",
+          "Add transition to .route-screen__header: transition: --header-blur 60ms linear, --header-opacity 60ms linear; — short so it tracks scroll closely.",
+          "Register the custom property for blur (optional, for smooth transition): @property --header-blur { syntax: '<length>'; inherits: false; initial-value: 0px; }"
+        ]
+      },
+
+      "step_2_scroll_listener_in_js": {
+        "file": "app/js/screens/route.js",
+        "where": "Inside renderRouteScreen(), after the screen is mounted",
+        "description": "Drive --header-blur and --header-opacity from the scroll position of .route-screen__scroll.",
+        "implementation": [
+          "Get a reference to the scroll container: const scrollEl = screen.querySelector('.route-screen__scroll');",
+          "Get a reference to the header: const headerEl = screen.querySelector('.route-screen__header');",
+          "Attach a 'scroll' listener to scrollEl (not window). Use passive: true.",
+          "In the handler: const progress = Math.min(1, scrollEl.scrollTop / 64); — 64px of scroll maps 0→1.",
+          "Set: headerEl.style.setProperty('--header-blur', `${progress * 10}px`); headerEl.style.setProperty('--header-opacity', progress.toString());",
+          "Remove the listener in the teardown() function to avoid memory leaks."
+        ]
+      },
+
+      "important_notes": [
+        "The 64px scroll threshold means the header is fully opaque by the time the user has scrolled past the first section heading. Tune this value if it feels too abrupt or too slow.",
+        "backdrop-filter is GPU-accelerated on modern browsers. The scroll listener updates a CSS custom property (not a computed style directly), which keeps it off the main thread as much as possible.",
+        "The ::before pseudo-element already has mask-image for a feathered bottom edge — keep that intact.",
+        "On iOS Safari, -webkit-backdrop-filter is required and must be updated alongside backdrop-filter."
+      ],
+
+      "verification": [
+        "Open a route detail screen. Header starts fully transparent (no white veil, no blur).",
+        "Scroll down slowly: header fades in and blur increases smoothly.",
+        "Scroll past ~64px: header is fully opaque with full blur.",
+        "Scroll back to top: header fades back to transparent.",
+        "Content visibly slides 'under the glass' — text/images visible through the blur mid-scroll.",
+        "No jank or dropped frames during scroll on a mid-range mobile device (test at 60fps)."
+      ]
+    },
+
+    {
+      "id": "S-07",
+      "title": "Start button confirm pulse + POI carousel slide blur",
+      "status": "pending",
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "started_at": null,
+      "finished_at": null,
+      "priority": 7,
+      "effort_estimate": "30 min",
+
+      "goal": "Two finishing details: (1) the 'Start' button on the route detail screen pulses with a spring-like scale when pressed to kinetically confirm the action before navigating. (2) The POI photo carousel cross-fades now, but adding a brief blur on the outgoing slide makes it feel more cinematic.",
+
+      "files_to_touch": [
+        "app/styles/screens.css",
+        "app/js/screens/route.js"
+      ],
+
+      "step_1_start_button_pulse": {
+        "description": "When the user taps Start (which opens the duration picker or navigates), the button plays a quick scale pulse before the navigation fires.",
+        "css_changes": {
+          "file": "app/styles/screens.css",
+          "where": "After .start-button:active rule (around line 960)",
+          "add_keyframe": "@keyframes btn-confirm { 0% { transform: scale(1); } 40% { transform: scale(0.94); } 75% { transform: scale(1.04); } 100% { transform: scale(1); } }",
+          "add_class": ".start-button.is-confirming { animation: btn-confirm 320ms var(--ease-entrance); pointer-events: none; }"
+        },
+        "js_changes": {
+          "file": "app/js/screens/route.js",
+          "where": "Find the click handler for .start-button",
+          "change": "Before executing the button's action (opening duration sheet or navigating), add .is-confirming to the button. Listen for animationend and remove it. If the button's action fires synchronously (e.g., opens the duration sheet), wrap it in a short setTimeout(action, 160) so the pulse is visible before the sheet appears.",
+          "example": "startBtn.addEventListener('click', () => { startBtn.classList.add('is-confirming'); startBtn.addEventListener('animationend', () => startBtn.classList.remove('is-confirming'), { once: true }); setTimeout(() => openDurationSheet(), 160); });"
+        }
+      },
+
+      "step_2_poi_carousel_blur": {
+        "description": "The POI photo carousel in the route detail (not the gallery screen) cross-fades between slides. Adding blur during the transition gives a sense of motion.",
+        "css_changes": {
+          "file": "app/styles/screens.css",
+          "where": ".poi-carousel__slide rule (around line 1312)",
+          "changes": [
+            "Add filter: blur(0) to .poi-carousel__slide base state.",
+            "Add: .poi-carousel__slide.is-leaving { opacity: 0; filter: blur(6px); transition: opacity 360ms var(--ease-exit), filter 360ms var(--ease-exit); }",
+            "The entering slide (.is-active) should unblur as it fades in. But since slides are positioned absolutely and we just toggle .is-active, a simpler approach: .poi-carousel__slide.is-active animates from a blurred state.",
+            "Add: @keyframes slide-reveal { from { opacity: 0; filter: blur(6px); } to { opacity: 1; filter: blur(0); } }",
+            "Replace the .poi-carousel__slide.is-active { opacity: 1 } rule with: .poi-carousel__slide.is-active { opacity: 1; animation: slide-reveal 400ms var(--ease-entrance) forwards; }"
+          ]
+        },
+        "js_changes": {
+          "file": "app/js/screens/route.js",
+          "where": "Find where the POI carousel auto-advances (the setInterval or play-button logic)",
+          "change": "When changing the active slide: add .is-leaving to the current active slide, remove .is-active from it. Add .is-active to the next slide (triggers the CSS animation). After 400ms, remove .is-leaving from the old slide. This ensures the blur+fade-out and the blur+fade-in happen simultaneously."
+        }
+      },
+
+      "important_notes": [
+        "The .start-button.is-confirming adds pointer-events:none to prevent double-taps during the animation.",
+        "The 160ms delay before the sheet opens is just long enough for the user to see the pulse. If the navigation is a direct navigate() call (not the sheet), the delay should match the animation duration (320ms).",
+        "The POI carousel blur animation on .is-active will replay every time the slide auto-advances — this is intentional and desirable.",
+        "Do not add the blur to the gallery screen slides — S-04 handles the gallery with a translateX approach instead."
+      ],
+
+      "verification": [
+        "Tap Start button: button quickly pulses (scale down then up) before the duration sheet opens.",
+        "The sheet still opens and functions correctly after the pulse.",
+        "POI carousel (in route detail): auto-advance between slides shows blur→sharp cross-fade.",
+        "Manual POI navigation (prev/next dots in carousel): same blur transition.",
+        "No flash or jump when the slide changes.",
+        "Start button double-tap during animation: second tap is ignored."
+      ]
+    }
+  ],
+
+  "global_open_questions": [
+    "S-01: The app currently has no route history stack — back navigation is driven by the browser's built-in hash history. Confirm that the direction detection (SCREEN_DEPTH comparison) correctly handles the case where the user uses the browser back button (hashchange fires with the previous hash, which will have a lower depth). If not, a separate lastRoute tracking approach may be needed.",
+    "S-04: The gallery swipe detection code in gallery.js needs to be read carefully before implementation. The direction variable name may differ — read the file fully before starting.",
+    "S-06: backdrop-filter: blur() with an animated CSS custom property may not transition smoothly in all browsers (Firefox especially). Test cross-browser and fall back to a static blur if needed.",
+    "General: Check all new :hover states work correctly on touch-only devices (hover should not persist after tap). Add @media (hover: hover) guards if hover states cause sticky highlighting on mobile."
+  ]
+}

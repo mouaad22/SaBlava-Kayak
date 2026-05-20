@@ -16,10 +16,23 @@ if ("scrollRestoration" in history) {
 
 const host = document.getElementById("screen-stack");
 
+// Depth of each named route in the conceptual navigation tree. Used to pick
+// a direction (forward / backward) for screen transitions: deeper or equal
+// depth = forward (slide in from right), shallower = backward (from left).
+const SCREEN_DEPTH = {
+  language: 0,
+  routes: 1,
+  route: 2,
+  map: 2,
+  poi: 3,
+  gallery: 4,
+};
+
 // Single screen slot — every route mounts its own screen and tears down the
 // previous one. Screen 4 (POI) is no longer an overlay on top of screen 3;
 // it's a sibling that owns the full viewport with Mapbox underneath.
 let main = null;
+let prevRouteName = null;
 
 function ensureMain(target) {
   if (
@@ -30,8 +43,46 @@ function ensureMain(target) {
   ) {
     return;
   }
-  if (main?.teardown) main.teardown();
+
+  // First navigation (from the loading splash) is a pure fade — no slide.
+  const isFirstNav = prevRouteName === null;
+  const direction =
+    isFirstNav ||
+    (SCREEN_DEPTH[target.name] ?? 0) >= (SCREEN_DEPTH[prevRouteName] ?? 0)
+      ? "forward"
+      : "backward";
+
+  if (main?.teardown) {
+    if (!isFirstNav) {
+      const outgoing = host.querySelector(".screen.is-active");
+      if (outgoing) {
+        outgoing.classList.add(
+          direction === "forward" ? "is-exiting-left" : "is-exiting-right"
+        );
+      }
+    }
+    main.teardown();
+  }
+
   main = target.factory();
+
+  if (!isFirstNav) {
+    const incoming = host.lastElementChild;
+    if (incoming && incoming.classList.contains("screen")) {
+      incoming.classList.add(
+        direction === "forward"
+          ? "is-entering-from-right"
+          : "is-entering-from-left"
+      );
+      // Force a reflow so the entering style (translated + opacity:0) is
+      // committed before the renderer's RAF adds .is-active. Without this
+      // the browser collapses both class additions into one style cycle and
+      // the transform transition never fires — the screen just appears.
+      void incoming.offsetWidth;
+    }
+  }
+
+  prevRouteName = target.name;
 }
 
 function render(route) {

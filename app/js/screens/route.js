@@ -38,17 +38,17 @@ function saveDuration(routeId, id) {
   } catch {}
 }
 
-const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.png" width="24" height="24" alt="" aria-hidden="true" />`;
+const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
-const ICON_NEXT = `<img src="./assets/icons/regular/ArrowRight.png" width="24" height="24" alt="" aria-hidden="true" />`;
+const ICON_NEXT = `<img src="./assets/icons/regular/ArrowRight.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
-const ICON_PLAY = `<img src="./assets/icons/regular/Play.png" width="24" height="24" alt="" aria-hidden="true" />`;
+const ICON_PLAY = `<img src="./assets/icons/regular/Play.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
-const ICON_PAUSE = `<img src="./assets/icons/regular/Pause.png" width="24" height="24" alt="" aria-hidden="true" />`;
+const ICON_PAUSE = `<img src="./assets/icons/regular/Pause.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
-const ICON_MAP = `<img src="./assets/icons/regular/MapTrifold.png" width="24" height="24" alt="" aria-hidden="true" />`;
+const ICON_MAP = `<img src="./assets/icons/regular/MapTrifold.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
-const ICON_CHEVRON_DOWN = `<img src="./assets/icons/regular/CaretDown.png" width="24" height="24" alt="" aria-hidden="true" />`;
+const ICON_CHEVRON_DOWN = `<img src="./assets/icons/regular/CaretDown.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
 const ICON_KITE = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true"><path d="M0.75 11.398C0.752 11.715 0.856 12.023 1.047 12.276C1.237 12.529 1.504 12.714 1.808 12.804L1.827 12.81L9.139 14.857L11.187 22.17L11.192 22.189C11.282 22.493 11.468 22.759 11.721 22.95C11.974 23.141 12.282 23.245 12.599 23.247H12.627C12.938 23.25 13.241 23.155 13.495 22.976C13.748 22.796 13.939 22.541 14.04 22.247L20.156 5.757C20.158 5.752 20.159 5.747 20.16 5.742C20.252 5.477 20.267 5.191 20.204 4.917C20.141 4.644 20.002 4.393 19.804 4.195C19.606 3.996 19.356 3.857 19.082 3.793C18.809 3.729 18.523 3.744 18.257 3.834L18.242 3.839L1.75 9.957C1.451 10.059 1.193 10.254 1.013 10.514C0.833 10.773 0.741 11.083 0.75 11.398Z" fill="#FFFFFF"/></svg>`;
 

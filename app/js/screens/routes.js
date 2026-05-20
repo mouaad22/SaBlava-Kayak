@@ -13,11 +13,11 @@ import { getWeather } from "../weather.js";
 // the same cached/offline fallback used elsewhere; placeholders show "—" until
 // the first reading lands.
 
-const WIND_SVG = `<img class="weather-strip__icon" src="./assets/icons/regular/Wind.png" width="24" height="24" alt="" aria-hidden="true" />`;
+const WIND_SVG = `<img class="weather-strip__icon" src="./assets/icons/regular/Wind.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
-const TEMP_SVG = `<img class="weather-strip__icon" src="./assets/icons/regular/ThermometerSimple.png" width="24" height="24" alt="" aria-hidden="true" />`;
+const TEMP_SVG = `<img class="weather-strip__icon" src="./assets/icons/regular/ThermometerSimple.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
-const WAVE_SVG = `<img class="weather-strip__icon" src="./assets/icons/regular/Waves.png" width="24" height="24" alt="" aria-hidden="true" />`;
+const WAVE_SVG = `<img class="weather-strip__icon" src="./assets/icons/regular/Waves.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
 export function renderRoutesScreen(host) {
   const screen = document.createElement("section");

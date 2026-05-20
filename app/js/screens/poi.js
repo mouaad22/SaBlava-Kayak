@@ -17,11 +17,11 @@ import { t, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE } from "../config.js";
 
-const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.png" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
+const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
-const ICON_NEXT = `<img src="./assets/icons/regular/ArrowRight.png" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
+const ICON_NEXT = `<img src="./assets/icons/regular/ArrowRight.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
-const ICON_PREV = `<img src="./assets/icons/regular/ArrowLeft.png" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
+const ICON_PREV = `<img src="./assets/icons/regular/ArrowLeft.svg" width="24" height="24" style="flex-shrink:0" alt="" aria-hidden="true" />`;
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));

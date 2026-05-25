@@ -70,9 +70,11 @@ export function mountWindRose(canvas) {
       else (pending ||= {}).angle = deg;
     },
     setName(name) {
-      if (!name) return;
-      if (nameProp) nameProp.value = name;
-      else (pending ||= {}).name = name;
+      // Accept any string (including empty) so the prop is always written and
+      // stale values from a previous load don't linger on screen.
+      const val = name ?? "";
+      if (nameProp) nameProp.value = val;
+      else (pending ||= {}).name = val;
     },
     fireStart() {
       if (startTrigger) startTrigger.trigger();

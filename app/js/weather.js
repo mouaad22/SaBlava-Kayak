@@ -47,7 +47,8 @@ async function fetchOpenMeteo() {
       gusts: round(f.current?.wind_gusts_10m, 0),
       direction: f.current?.wind_direction_10m,
       cardinal: cardinalDirection(f.current?.wind_direction_10m),
-      named: namedWind(f.current?.wind_direction_10m, f.current?.wind_speed_10m),
+      named: namedWind(f.current?.wind_direction_10m),
+      strength: windStrength(f.current?.wind_speed_10m),
       hourly: f.hourly?.wind_speed_10m || [],
       hourlyTimes: f.hourly?.time || [],
     },
@@ -108,18 +109,35 @@ export function cardinalDirection(deg) {
   return dirs[Math.round(deg / 45) % 8];
 }
 
-// Costa Brava / Empordà local wind names. We only flag a name when there
-// is enough wind to feel it (>8 kn) — gentle breezes don't carry the local
-// connotation.
-export function namedWind(deg, speed) {
-  if (typeof deg !== "number" || (speed ?? 0) < 8) return null;
+// Costa Brava / Empordà local wind names. Always returns a name based on
+// direction alone — intensity is a separate concern handled by windStrength().
+// Full 8-sector compass: xaloc (SE) and mestral (NW) fill the previously
+// missing sectors so every direction resolves to a local name.
+export function namedWind(deg) {
+  if (typeof deg !== "number" || isNaN(deg)) return null;
   if (deg >= 337.5 || deg < 22.5) return "tramuntana"; // N — locally feared
-  if (deg >= 22.5 && deg < 67.5) return "gregal"; // NE — brings swell
-  if (deg >= 67.5 && deg < 112.5) return "llevant"; // E — brings swell
-  if (deg >= 157.5 && deg < 202.5) return "migjorn"; // S
-  if (deg >= 202.5 && deg < 247.5) return "garbí"; // SW — afternoon thermal
-  if (deg >= 247.5 && deg < 292.5) return "ponent"; // W
+  if (deg >= 22.5 && deg < 67.5) return "gregal";      // NE — brings swell
+  if (deg >= 67.5 && deg < 112.5) return "llevant";    // E — brings swell
+  if (deg >= 112.5 && deg < 157.5) return "xaloc";     // SE
+  if (deg >= 157.5 && deg < 202.5) return "migjorn";   // S
+  if (deg >= 202.5 && deg < 247.5) return "garbí";     // SW — afternoon thermal
+  if (deg >= 247.5 && deg < 292.5) return "ponent";    // W
+  if (deg >= 292.5 && deg < 337.5) return "mestral";   // NW
   return null;
+}
+
+// Speed tier in knots — mirrors the speedTiers defined in
+// docs/aiguablava-winds.json (the authoritative source for all copy and
+// design decisions on this project). Keep thresholds in sync with that file.
+//   suau     — 0–4 kn
+//   moderat  — 5–11 kn
+//   fort     — 12–17 kn
+//   moltFort — ≥18 kn  (also triggers safetyOverride in the banner)
+export function windStrength(speed) {
+  if (typeof speed !== "number" || isNaN(speed) || speed < 5) return "suau";
+  if (speed < 12) return "moderat";
+  if (speed < 18) return "fort";
+  return "moltFort";
 }
 
 // Decide GO / CAUTION / NO-GO for a given route given current weather.

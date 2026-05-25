@@ -1,0 +1,326 @@
+{
+  "$schema": "aiguablava-winds-v1",
+  "_meta": {
+    "version": "1.0.0",
+    "location": "Cala d'Aiguablava, Begur, Costa Brava",
+    "orientation": "SSE-facing cove, protected from north by headland",
+    "lastUpdated": "2026-05-25",
+    "primaryLanguage": "ca",
+    "notes": "Copy is calibrated to Aiguablava's specific geography. Do not reuse for other calas without rewriting the chip and recommendation fields — what's safe at Aiguablava may be dangerous elsewhere."
+  },
+
+  "speedTiers": {
+    "suau":      { "minKnots": 0,   "maxKnots": 5,  "label": { "ca": "suau",      "es": "suave",    "en": "gentle",     "fr": "léger" } },
+    "moderat":   { "minKnots": 5,   "maxKnots": 12, "label": { "ca": "moderat",   "es": "moderado", "en": "moderate",   "fr": "modéré" } },
+    "fort":      { "minKnots": 12,  "maxKnots": 18, "label": { "ca": "fort",      "es": "fuerte",   "en": "strong",     "fr": "fort" } },
+    "moltFort":  { "minKnots": 18,  "maxKnots": 999,"label": { "ca": "molt fort", "es": "muy fuerte","en": "very strong","fr": "très fort" } }
+  },
+
+  "speedTiersFeminine": {
+    "_comment": "Use these labels when the wind name is grammatically feminine (Tramuntana / Tramontane only). All other winds use the masculine forms above.",
+    "suau":      { "ca": "suau",       "es": "suave",     "en": "gentle",     "fr": "légère" },
+    "moderat":   { "ca": "moderada",   "es": "moderada",  "en": "moderate",   "fr": "modérée" },
+    "fort":      { "ca": "forta",      "es": "fuerte",    "en": "strong",     "fr": "forte" },
+    "moltFort":  { "ca": "molt forta", "es": "muy fuerte","en": "very strong","fr": "très forte" }
+  },
+
+  "safetyOverride": {
+    "_comment": "When wind speed exceeds this threshold from any direction, override the per-wind chip and recommendation with the values below. The wind name and origin remain visible so the user still understands which wind is blowing.",
+    "triggerKnots": 18,
+    "chip": {
+      "ca": "MILLOR NO SORTIR AVUI",
+      "es": "MEJOR NO SALIR HOY",
+      "en": "BETTER NOT TO PADDLE TODAY",
+      "fr": "MIEUX VAUT NE PAS SORTIR"
+    },
+    "chipColor": "danger",
+    "recommendation": {
+      "ca": "condicions massa fortes per a llogar caiac",
+      "es": "condiciones demasiado fuertes para alquilar kayak",
+      "en": "conditions too strong for kayak rental",
+      "fr": "conditions trop fortes pour louer un kayak"
+    }
+  },
+
+  "chipColors": {
+    "_comment": "Visual semantic colors for the chip pill. The agent should map these to design tokens.",
+    "safe":    "green  — favorable conditions, beginner-friendly",
+    "caution": "amber  — manageable but requires attention",
+    "warning": "red-amber — experienced paddlers only, stay close to shore",
+    "danger":  "red — used only by safetyOverride"
+  },
+
+  "winds": {
+    "tramuntana": {
+      "name": "Tramuntana",
+      "gender": "f",
+      "angleRange": [337.5, 22.5],
+      "primaryAngle": 0,
+      "origin": {
+        "ca": "del nord",
+        "es": "del norte",
+        "en": "from the north",
+        "fr": "du nord"
+      },
+      "chip": {
+        "ca": "BUFA DE TERRA",
+        "es": "SOPLA DE TIERRA",
+        "en": "OFFSHORE WIND",
+        "fr": "VENT DE TERRE"
+      },
+      "chipColor": "warning",
+      "recommendation": {
+        "ca": "no t'allunyis de la costa",
+        "es": "no te alejes de la costa",
+        "en": "stay close to the shore",
+        "fr": "ne t'éloigne pas de la côte"
+      },
+      "wisdom": {
+        "ca": "La cala et protegeix, però el vent t'empeny mar endins. Sembla calmat dins l'aigua, no ho és.",
+        "es": "La cala te protege, pero el viento te empuja mar adentro. Parece calmado dentro del agua, no lo es.",
+        "en": "The cove shelters you, but the wind pushes you out to sea. The water looks calm — it isn't.",
+        "fr": "La crique te protège, mais le vent te pousse vers le large. L'eau paraît calme, elle ne l'est pas."
+      }
+    },
+
+    "gregal": {
+      "name": "Gregal",
+      "gender": "m",
+      "angleRange": [22.5, 67.5],
+      "primaryAngle": 45,
+      "origin": {
+        "ca": "del nord-est",
+        "es": "del nordeste",
+        "en": "from the northeast",
+        "fr": "du nord-est"
+      },
+      "chip": {
+        "ca": "MAR PICADA",
+        "es": "MAR PICADA",
+        "en": "CHOPPY SEA",
+        "fr": "MER AGITÉE"
+      },
+      "chipColor": "caution",
+      "recommendation": {
+        "ca": "evita sortir si bufa fort",
+        "es": "evita salir si sopla fuerte",
+        "en": "avoid paddling if it blows strong",
+        "fr": "évite de sortir s'il souffle fort"
+      },
+      "wisdom": {
+        "ca": "Vent fred i sec del nord-est. Aixeca onatge a l'entrada de la cala.",
+        "es": "Viento frío y seco del nordeste. Levanta oleaje en la entrada de la cala.",
+        "en": "Cold, dry wind from the northeast. Builds waves at the mouth of the cove.",
+        "fr": "Vent froid et sec du nord-est. Lève la houle à l'entrée de la crique."
+      }
+    },
+
+    "llevant": {
+      "name": "Llevant",
+      "gender": "m",
+      "angleRange": [67.5, 112.5],
+      "primaryAngle": 90,
+      "origin": {
+        "ca": "de l'est",
+        "es": "del este",
+        "en": "from the east",
+        "fr": "de l'est"
+      },
+      "chip": {
+        "ca": "ONATGE A L'ENTRADA",
+        "es": "OLEAJE EN LA ENTRADA",
+        "en": "SWELL AT THE ENTRANCE",
+        "fr": "HOULE À L'ENTRÉE"
+      },
+      "chipColor": "caution",
+      "recommendation": {
+        "ca": "sortida i tornada amb compte",
+        "es": "salida y regreso con cuidado",
+        "en": "launch and return with care",
+        "fr": "départ et retour avec prudence"
+      },
+      "wisdom": {
+        "ca": "El vent de mar entra directament a Aiguablava. L'aigua de la cala es manté tranquil·la, però l'entrada s'embraveix.",
+        "es": "El viento de mar entra directamente en Aiguablava. El agua de la cala se mantiene tranquila, pero la entrada se embravece.",
+        "en": "The sea breeze blows straight into Aiguablava. Inside the cove stays calm, but the entrance gets rough.",
+        "fr": "Le vent de mer entre directement dans Aiguablava. L'eau de la crique reste calme, mais l'entrée devient agitée."
+      }
+    },
+
+    "xaloc": {
+      "name": "Xaloc",
+      "gender": "m",
+      "angleRange": [112.5, 157.5],
+      "primaryAngle": 135,
+      "origin": {
+        "ca": "del sud-est",
+        "es": "del sudeste",
+        "en": "from the southeast",
+        "fr": "du sud-est"
+      },
+      "chip": {
+        "ca": "CÀLID I HUMIT",
+        "es": "CÁLIDO Y HÚMEDO",
+        "en": "WARM AND HUMID",
+        "fr": "CHAUD ET HUMIDE"
+      },
+      "chipColor": "safe",
+      "recommendation": {
+        "ca": "bo per passejar, vigila la calor",
+        "es": "bueno para pasear, vigila el calor",
+        "en": "good for a relaxed paddle, watch the heat",
+        "fr": "bon pour une balade, attention à la chaleur"
+      },
+      "wisdom": {
+        "ca": "Vent del Sàhara. Porta aire calent i de vegades pols fina. L'aigua queda agradable.",
+        "es": "Viento del Sáhara. Trae aire cálido y a veces polvo fino. El agua queda agradable.",
+        "en": "Wind from the Sahara. Brings warm air and sometimes fine dust. The water stays pleasant.",
+        "fr": "Vent du Sahara. Apporte de l'air chaud et parfois de la poussière fine. L'eau reste agréable."
+      }
+    },
+
+    "migjorn": {
+      "name": "Migjorn",
+      "gender": "m",
+      "angleRange": [157.5, 202.5],
+      "primaryAngle": 180,
+      "origin": {
+        "ca": "del sud",
+        "es": "del sur",
+        "en": "from the south",
+        "fr": "du sud"
+      },
+      "chip": {
+        "ca": "EMPENY CAP A TERRA",
+        "es": "EMPUJA HACIA TIERRA",
+        "en": "PUSHES YOU HOME",
+        "fr": "POUSSE VERS LA TERRE"
+      },
+      "chipColor": "safe",
+      "recommendation": {
+        "ca": "ideal per principiants",
+        "es": "ideal para principiantes",
+        "en": "ideal for beginners",
+        "fr": "idéal pour les débutants"
+      },
+      "wisdom": {
+        "ca": "Vent del sud, suau i constant. Si et canses, et porta de tornada a la platja.",
+        "es": "Viento del sur, suave y constante. Si te cansas, te lleva de vuelta a la playa.",
+        "en": "Southern wind, gentle and steady. If you get tired, it carries you back to the beach.",
+        "fr": "Vent du sud, doux et constant. Si tu te fatigues, il te ramène jusqu'à la plage."
+      }
+    },
+
+    "garbi": {
+      "name": "Garbí",
+      "gender": "m",
+      "angleRange": [202.5, 247.5],
+      "primaryAngle": 225,
+      "origin": {
+        "ca": "del sud-oest",
+        "es": "del sudoeste",
+        "en": "from the southwest",
+        "fr": "du sud-ouest"
+      },
+      "chip": {
+        "ca": "VENT DE TARDA",
+        "es": "VIENTO DE TARDE",
+        "en": "AFTERNOON WIND",
+        "fr": "VENT D'APRÈS-MIDI"
+      },
+      "chipColor": "caution",
+      "recommendation": {
+        "ca": "surt al matí si vols tranquil·litat",
+        "es": "sal por la mañana si quieres tranquilidad",
+        "en": "paddle in the morning for calmer water",
+        "fr": "sors le matin pour une eau plus calme"
+      },
+      "wisdom": {
+        "ca": "Brisa tèrmica que es lleva a partir del migdia. Refresca, però pot agafar força a la tarda.",
+        "es": "Brisa térmica que se levanta a partir del mediodía. Refresca, pero puede ganar fuerza por la tarde.",
+        "en": "Thermal breeze that builds from midday. Refreshing, but can pick up strength in the afternoon.",
+        "fr": "Brise thermique qui se lève à partir de midi. Rafraîchissante, mais peut forcir l'après-midi."
+      }
+    },
+
+    "ponent": {
+      "name": "Ponent",
+      "gender": "m",
+      "angleRange": [247.5, 292.5],
+      "primaryAngle": 270,
+      "origin": {
+        "ca": "de l'oest",
+        "es": "del oeste",
+        "en": "from the west",
+        "fr": "de l'ouest"
+      },
+      "chip": {
+        "ca": "BUFA DE TERRA",
+        "es": "SOPLA DE TIERRA",
+        "en": "OFFSHORE WIND",
+        "fr": "VENT DE TERRE"
+      },
+      "chipColor": "warning",
+      "recommendation": {
+        "ca": "queda't a prop de la costa",
+        "es": "quédate cerca de la costa",
+        "en": "stay close to the shore",
+        "fr": "reste près de la côte"
+      },
+      "wisdom": {
+        "ca": "Vent sec de l'interior. La cala sembla un mirall, però mar endins el vent et porta lluny.",
+        "es": "Viento seco del interior. La cala parece un espejo, pero mar adentro el viento te lleva lejos.",
+        "en": "Dry inland wind. The cove looks like a mirror, but offshore it carries you far.",
+        "fr": "Vent sec de l'intérieur. La crique ressemble à un miroir, mais au large le vent t'emporte loin."
+      }
+    },
+
+    "mestral": {
+      "name": "Mestral",
+      "gender": "m",
+      "angleRange": [292.5, 337.5],
+      "primaryAngle": 315,
+      "origin": {
+        "ca": "del nord-oest",
+        "es": "del noroeste",
+        "en": "from the northwest",
+        "fr": "du nord-ouest"
+      },
+      "chip": {
+        "ca": "RATXES FORTES",
+        "es": "RACHAS FUERTES",
+        "en": "STRONG GUSTS",
+        "fr": "RAFALES FORTES"
+      },
+      "chipColor": "warning",
+      "recommendation": {
+        "ca": "millor un altre dia si bufa fort",
+        "es": "mejor otro día si sopla fuerte",
+        "en": "better another day if it blows strong",
+        "fr": "mieux vaut un autre jour s'il souffle fort"
+      },
+      "wisdom": {
+        "ca": "Vent sec i ratxejat. La cala et protegeix una mica, però fora és imprevisible.",
+        "es": "Viento seco y racheado. La cala te protege un poco, pero fuera es impredecible.",
+        "en": "Dry, gusty wind. The cove gives some shelter, but conditions outside are unpredictable.",
+        "fr": "Vent sec et rafaleux. La crique offre un peu d'abri, mais au-dehors c'est imprévisible."
+      }
+    }
+  },
+
+  "displayTemplate": {
+    "_comment": "Pseudo-template for the readout component. The agent should implement this in the framework being used (React, etc.).",
+    "headline":      "{wind.name} {speedTierLabel}",
+    "originLine":    "{speed} nusos {wind.origin}",
+    "chipText":      "{wind.chip} OR safetyOverride.chip if speed > 18kn",
+    "chipColor":     "{wind.chipColor} OR 'danger' if speed > 18kn",
+    "recommendation":"{wind.recommendation} OR safetyOverride.recommendation if speed > 18kn",
+    "wisdom":        "{wind.wisdom}"
+  },
+
+  "angleToWindKey": {
+    "_comment": "Helper logic for the agent: given wind degrees from the API (direction wind is coming FROM), resolve to a wind key.",
+    "logic": "Find the wind whose angleRange contains the degrees. Special case: tramuntana wraps around 0° (337.5° to 22.5°). All other ranges are continuous.",
+    "pseudocode": "if (deg >= 337.5 || deg < 22.5) return 'tramuntana'; if (deg >= 22.5 && deg < 67.5) return 'gregal'; ... etc."
+  }
+}

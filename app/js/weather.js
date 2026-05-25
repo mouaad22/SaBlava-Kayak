@@ -177,3 +177,124 @@ function round(n, decimals = 0) {
   const p = Math.pow(10, decimals);
   return Math.round(n * p) / p;
 }
+
+// ─── Wind banner data ────────────────────────────────────────────────────────
+// Mirrors docs/wind-simple.json. Given a weather payload and a language code,
+// returns everything needed to render the Vent panel banner:
+//   speedKmh      — speed converted from knots for display
+//   cardinalLetter — N / NE / E / … (null when calm)
+//   windName      — local wind name e.g. "Tramuntana" (null when unknown)
+//   tier          — suau | moderat | fort | moltFort
+//   tierLabel     — localised full label e.g. "Vent suau" / "Vent molt fort"
+//   tierCss       — BEM modifier e.g. "wind-tag--suau"
+//   recommendation — localised sentence
+//   flourish      — localised flavour sentence (may be null)
+//   isCalm        — true when speed < 1 km/h
+//   isSafetyOverride — true when speed ≥ 38 km/h
+
+const _CALM = {
+  tierLabel:     { ca: "Mar de mirall",       es: "Mar de espejo",          en: "Mirror sea",                  fr: "Mer d'huile" },
+  recommendation:{ ca: "Qualsevol ruta és bona opció.", es: "Cualquier ruta es una buena opción.", en: "Any route is a good choice.", fr: "N'importe quel itinéraire est une bonne option." },
+  flourish:      { ca: "Dia rar a Aiguablava.",          es: "Día raro en Aiguablava.",              en: "Rare day at Aiguablava.",      fr: "Journée rare à Aiguablava." },
+};
+
+const _SAFETY = {
+  recommendation:{ ca: "Condicions massa fortes per sortir avui.", es: "Condiciones demasiado fuertes para salir hoy.", en: "Conditions too strong to paddle today.", fr: "Conditions trop fortes pour sortir aujourd'hui." },
+  flourish:      { ca: "Millor esperar.", es: "Mejor esperar.", en: "Better to wait.", fr: "Mieux vaut attendre." },
+};
+
+const _TIERS_M = {
+  suau:     { ca: "suau",      es: "suave",     en: "gentle",      fr: "léger" },
+  moderat:  { ca: "moderat",   es: "moderado",  en: "moderate",    fr: "modéré" },
+  fort:     { ca: "fort",      es: "fuerte",    en: "strong",      fr: "fort" },
+  moltFort: { ca: "molt fort", es: "muy fuerte",en: "very strong", fr: "très fort" },
+};
+
+const _TIERS_F = {
+  suau:     { ca: "suau",       es: "suave",      en: "gentle",      fr: "légère" },
+  moderat:  { ca: "moderada",   es: "moderada",   en: "moderate",    fr: "modérée" },
+  fort:     { ca: "forta",      es: "fuerte",     en: "strong",      fr: "forte" },
+  moltFort: { ca: "molt forta", es: "muy fuerte", en: "very strong", fr: "très forte" },
+};
+
+const _WINDS = {
+  tramuntana: { name: "Tramuntana", gender: "f",
+    recommendation: { ca: "Ruta nord recomanada.",                  es: "Ruta norte recomendada.",             en: "North route recommended.",             fr: "Itinéraire nord recommandé." },
+    flourish:       { ca: "El vent t'empeny mar endins, no t'allunyis.", es: "El viento te empuja mar adentro, no te alejes.", en: "The wind pushes you out to sea, stay close.", fr: "Le vent te pousse vers le large, ne t'éloigne pas." } },
+  gregal: { name: "Gregal", gender: "m",
+    recommendation: { ca: "Ruta nord recomanada.",                  es: "Ruta norte recomendada.",             en: "North route recommended.",             fr: "Itinéraire nord recommandé." },
+    flourish:       { ca: "Aixeca onatge a l'entrada de la cala.",  es: "Levanta oleaje en la entrada de la cala.", en: "Builds waves at the cove entrance.", fr: "Lève la houle à l'entrée de la crique." } },
+  llevant: { name: "Llevant", gender: "m",
+    recommendation: { ca: "Qualsevol ruta, queda't a prop de la costa.", es: "Cualquier ruta, quédate cerca de la costa.", en: "Either route, stay close to the shore.", fr: "N'importe quel itinéraire, reste près de la côte." },
+    flourish:       { ca: "El vent de mar entra directament a la cala.", es: "El viento de mar entra directamente en la cala.", en: "The sea breeze blows straight into the cove.", fr: "Le vent de mer entre directement dans la crique." } },
+  xaloc: { name: "Xaloc", gender: "m",
+    recommendation: { ca: "Ruta sud recomanada.",                   es: "Ruta sur recomendada.",               en: "South route recommended.",             fr: "Itinéraire sud recommandé." },
+    flourish:       { ca: "Càlid i humit, porta aigua.",             es: "Cálido y húmedo, lleva agua.",        en: "Warm and humid, bring water.",          fr: "Chaud et humide, prends de l'eau." } },
+  migjorn: { name: "Migjorn", gender: "m",
+    recommendation: { ca: "Ruta sud recomanada.",                   es: "Ruta sur recomendada.",               en: "South route recommended.",             fr: "Itinéraire sud recommandé." },
+    flourish:       { ca: "Et porta de tornada a la platja.",        es: "Te lleva de vuelta a la playa.",      en: "Carries you back to the beach.",        fr: "Il te ramène jusqu'à la plage." } },
+  "garbí": { name: "Garbí", gender: "m",
+    recommendation: { ca: "Ruta sud recomanada.",                   es: "Ruta sur recomendada.",               en: "South route recommended.",             fr: "Itinéraire sud recommandé." },
+    flourish:       { ca: "Brisa de tarda, surt al matí si vols tranquil·litat.", es: "Brisa de tarde, sal por la mañana si quieres tranquilidad.", en: "Afternoon breeze, paddle in the morning for calmer water.", fr: "Brise d'après-midi, sors le matin pour une eau plus calme." } },
+  ponent: { name: "Ponent", gender: "m",
+    recommendation: { ca: "Ruta sud, queda't a prop de la costa.",  es: "Ruta sur, quédate cerca de la costa.", en: "South route, stay close to the shore.", fr: "Itinéraire sud, reste près de la côte." },
+    flourish:       { ca: "Sembla un mirall, però t'empeny mar endins.", es: "Parece un espejo, pero te empuja mar adentro.", en: "Looks like a mirror, but pushes you out to sea.", fr: "Ressemble à un miroir, mais te pousse vers le large." } },
+  mestral: { name: "Mestral", gender: "m",
+    recommendation: { ca: "Ruta nord recomanada.",                  es: "Ruta norte recomendada.",             en: "North route recommended.",             fr: "Itinéraire nord recommandé." },
+    flourish:       { ca: "Sec i ratxejat, imprevisible fora de la cala.", es: "Seco y racheado, impredecible fuera de la cala.", en: "Dry and gusty, unpredictable outside the cove.", fr: "Sec et rafaleux, imprévisible hors de la crique." } },
+};
+
+function _pick(obj, lang) {
+  return obj?.[lang] ?? obj?.ca ?? "";
+}
+
+export function windBannerData(weather, lang = "ca") {
+  const speedKn  = typeof weather?.wind?.speed === "number" ? weather.wind.speed : 0;
+  const speedKmh = Math.round(speedKn * 1.852);
+  const named    = weather?.wind?.named;   // e.g. "tramuntana"
+  const cardinal = weather?.wind?.cardinal; // e.g. "N"
+  const wind     = _WINDS[named] ?? null;
+
+  // 1. Calm — speed < 1 km/h, Rive rose at rest
+  if (speedKmh < 1) {
+    return {
+      isCalm: true, isSafetyOverride: false,
+      speedKmh, cardinalLetter: null, windName: null,
+      tier: "suau", tierLabel: _pick(_CALM.tierLabel, lang),
+      tierCss: "wind-tag--suau",
+      recommendation: _pick(_CALM.recommendation, lang),
+      flourish:        _pick(_CALM.flourish, lang),
+    };
+  }
+
+  // 2. Safety override — speed ≥ 38 km/h, any direction
+  if (speedKmh >= 38) {
+    const isFem  = wind?.gender === "f";
+    const adjective = _pick(isFem ? _TIERS_F.moltFort : _TIERS_M.moltFort, lang);
+    return {
+      isCalm: false, isSafetyOverride: true,
+      speedKmh, cardinalLetter: cardinal, windName: wind?.name ?? null,
+      tier: "moltFort", tierLabel: `Vent ${adjective}`,
+      tierCss: "wind-tag--molt-fort",
+      recommendation: _pick(_SAFETY.recommendation, lang),
+      flourish:        _pick(_SAFETY.flourish, lang),
+    };
+  }
+
+  // 3. Normal — per-wind copy + tier colour
+  const tier = speedKmh < 12 ? "suau" : speedKmh < 28 ? "moderat" : "fort";
+  const isFem = wind?.gender === "f";
+  const adjective = _pick(isFem ? _TIERS_F[tier] : _TIERS_M[tier], lang);
+  const tierCss   = tier === "suau" ? "wind-tag--suau"
+                  : tier === "moderat" ? "wind-tag--moderat"
+                  : "wind-tag--fort";
+
+  return {
+    isCalm: false, isSafetyOverride: false,
+    speedKmh, cardinalLetter: cardinal, windName: wind?.name ?? null,
+    tier, tierLabel: `Vent ${adjective}`,
+    tierCss,
+    recommendation: wind ? _pick(wind.recommendation, lang) : "",
+    flourish:       wind ? _pick(wind.flourish, lang) : null,
+  };
+}

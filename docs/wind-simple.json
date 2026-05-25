@@ -1,0 +1,249 @@
+{
+  "$schema": "aiguablava-winds-simple-v1",
+  "_meta": {
+    "version": "1.0.0",
+    "location": "Cala d'Aiguablava, Begur, Costa Brava",
+    "lastUpdated": "2026-05-25",
+    "primaryLanguage": "ca",
+    "notes": "Simplified data structure matching the Vent component. Per-wind copy is only the route recommendation + an optional flourish. All other UI state (tier label, direction letter) is derived from raw API values."
+  },
+
+  "speedTiers": {
+    "_comment": "Maps wind speed in km/h to a tier label. Use minKmh <= speed < maxKmh (half-open, lower-inclusive). API may return m/s — convert before lookup: kmh = ms * 3.6.",
+    "suau":     { "minKmh": 1,  "maxKmh": 12, "label": { "ca": "suau",       "es": "suave",      "en": "gentle",      "fr": "léger" } },
+    "moderat":  { "minKmh": 12, "maxKmh": 28, "label": { "ca": "moderat",    "es": "moderado",   "en": "moderate",    "fr": "modéré" } },
+    "fort":     { "minKmh": 28, "maxKmh": 38, "label": { "ca": "fort",       "es": "fuerte",     "en": "strong",      "fr": "fort" } },
+    "moltFort": { "minKmh": 38, "maxKmh": 999,"label": { "ca": "molt fort",  "es": "muy fuerte", "en": "very strong", "fr": "très fort" } }
+  },
+
+  "speedTiersFeminine": {
+    "_comment": "Use these when the wind name is grammatically feminine (Tramuntana / Tramontane). All other winds use the masculine forms above. Note: when the UI label is the standalone word 'Vent' (masculine in Catalan/French, neutral in English/Spanish), always use the masculine forms.",
+    "suau":     { "ca": "suau",        "es": "suave",      "en": "gentle",      "fr": "légère" },
+    "moderat":  { "ca": "moderada",    "es": "moderada",   "en": "moderate",    "fr": "modérée" },
+    "fort":     { "ca": "forta",       "es": "fuerte",     "en": "strong",      "fr": "forte" },
+    "moltFort": { "ca": "molt forta",  "es": "muy fuerte", "en": "very strong", "fr": "très forte" }
+  },
+
+  "tierColors": {
+    "_comment": "Color of the tier label text ('Vent suau' etc.). Maps to a design token. Tier color escalates with speed regardless of direction — direction-specific risk is communicated via the recommendation text and the safety override.",
+    "suau":     "success",
+    "moderat":  "success",
+    "fort":     "warning",
+    "moltFort": "danger"
+  },
+
+  "calmState": {
+    "_comment": "When wind speed is below this threshold, render this banner. Wind direction is meaningless at these speeds. The Rive rose should show its resting state with no active point.",
+    "triggerKmh": 1,
+    "tierLabel": {
+      "ca": "Mar de mirall",
+      "es": "Mar de espejo",
+      "en": "Mirror sea",
+      "fr": "Mer d'huile"
+    },
+    "tierColor": "success",
+    "recommendation": {
+      "ca": "Qualsevol ruta és bona opció.",
+      "es": "Cualquier ruta es una buena opción.",
+      "en": "Any route is a good choice.",
+      "fr": "N'importe quel itinéraire est une bonne option."
+    },
+    "flourish": {
+      "ca": "Dia rar a Aiguablava.",
+      "es": "Día raro en Aiguablava.",
+      "en": "Rare day at Aiguablava.",
+      "fr": "Journée rare à Aiguablava."
+    }
+  },
+
+  "safetyOverride": {
+    "_comment": "When wind speed exceeds this threshold from any direction, override the per-wind recommendation. The tier label still shows 'Vent molt fort' (or feminine), but in danger color.",
+    "triggerKmh": 38,
+    "recommendation": {
+      "ca": "Condicions massa fortes per sortir avui.",
+      "es": "Condiciones demasiado fuertes para salir hoy.",
+      "en": "Conditions too strong to paddle today.",
+      "fr": "Conditions trop fortes pour sortir aujourd'hui."
+    },
+    "flourish": {
+      "ca": "Millor esperar.",
+      "es": "Mejor esperar.",
+      "en": "Better to wait.",
+      "fr": "Mieux vaut attendre."
+    }
+  },
+
+  "winds": {
+    "tramuntana": {
+      "name": "Tramuntana",
+      "gender": "f",
+      "angleRange": [337.5, 22.5],
+      "primaryAngle": 0,
+      "cardinalLetter": "N",
+      "recommendation": {
+        "ca": "Ruta nord recomanada.",
+        "es": "Ruta norte recomendada.",
+        "en": "North route recommended.",
+        "fr": "Itinéraire nord recommandé."
+      },
+      "flourish": {
+        "ca": "El vent t'empeny mar endins, no t'allunyis.",
+        "es": "El viento te empuja mar adentro, no te alejes.",
+        "en": "The wind pushes you out to sea, stay close.",
+        "fr": "Le vent te pousse vers le large, ne t'éloigne pas."
+      }
+    },
+
+    "gregal": {
+      "name": "Gregal",
+      "gender": "m",
+      "angleRange": [22.5, 67.5],
+      "primaryAngle": 45,
+      "cardinalLetter": "NE",
+      "recommendation": {
+        "ca": "Ruta nord recomanada.",
+        "es": "Ruta norte recomendada.",
+        "en": "North route recommended.",
+        "fr": "Itinéraire nord recommandé."
+      },
+      "flourish": {
+        "ca": "Aixeca onatge a l'entrada de la cala.",
+        "es": "Levanta oleaje en la entrada de la cala.",
+        "en": "Builds waves at the cove entrance.",
+        "fr": "Lève la houle à l'entrée de la crique."
+      }
+    },
+
+    "llevant": {
+      "name": "Llevant",
+      "gender": "m",
+      "angleRange": [67.5, 112.5],
+      "primaryAngle": 90,
+      "cardinalLetter": "E",
+      "recommendation": {
+        "ca": "Qualsevol ruta, queda't a prop de la costa.",
+        "es": "Cualquier ruta, quédate cerca de la costa.",
+        "en": "Either route, stay close to the shore.",
+        "fr": "N'importe quel itinéraire, reste près de la côte."
+      },
+      "flourish": {
+        "ca": "El vent de mar entra directament a la cala.",
+        "es": "El viento de mar entra directamente en la cala.",
+        "en": "The sea breeze blows straight into the cove.",
+        "fr": "Le vent de mer entre directement dans la crique."
+      }
+    },
+
+    "xaloc": {
+      "name": "Xaloc",
+      "gender": "m",
+      "angleRange": [112.5, 157.5],
+      "primaryAngle": 135,
+      "cardinalLetter": "SE",
+      "recommendation": {
+        "ca": "Ruta sud recomanada.",
+        "es": "Ruta sur recomendada.",
+        "en": "South route recommended.",
+        "fr": "Itinéraire sud recommandé."
+      },
+      "flourish": {
+        "ca": "Càlid i humit, porta aigua.",
+        "es": "Cálido y húmedo, lleva agua.",
+        "en": "Warm and humid, bring water.",
+        "fr": "Chaud et humide, prends de l'eau."
+      }
+    },
+
+    "migjorn": {
+      "name": "Migjorn",
+      "gender": "m",
+      "angleRange": [157.5, 202.5],
+      "primaryAngle": 180,
+      "cardinalLetter": "S",
+      "recommendation": {
+        "ca": "Ruta sud recomanada.",
+        "es": "Ruta sur recomendada.",
+        "en": "South route recommended.",
+        "fr": "Itinéraire sud recommandé."
+      },
+      "flourish": {
+        "ca": "Et porta de tornada a la platja.",
+        "es": "Te lleva de vuelta a la playa.",
+        "en": "Carries you back to the beach.",
+        "fr": "Il te ramène jusqu'à la plage."
+      }
+    },
+
+    "garbi": {
+      "name": "Garbí",
+      "gender": "m",
+      "angleRange": [202.5, 247.5],
+      "primaryAngle": 225,
+      "cardinalLetter": "SO",
+      "recommendation": {
+        "ca": "Ruta sud recomanada.",
+        "es": "Ruta sur recomendada.",
+        "en": "South route recommended.",
+        "fr": "Itinéraire sud recommandé."
+      },
+      "flourish": {
+        "ca": "Brisa de tarda, surt al matí si vols tranquil·litat.",
+        "es": "Brisa de tarde, sal por la mañana si quieres tranquilidad.",
+        "en": "Afternoon breeze, paddle in the morning for calmer water.",
+        "fr": "Brise d'après-midi, sors le matin pour une eau plus calme."
+      }
+    },
+
+    "ponent": {
+      "name": "Ponent",
+      "gender": "m",
+      "angleRange": [247.5, 292.5],
+      "primaryAngle": 270,
+      "cardinalLetter": "O",
+      "recommendation": {
+        "ca": "Ruta sud, queda't a prop de la costa.",
+        "es": "Ruta sur, quédate cerca de la costa.",
+        "en": "South route, stay close to the shore.",
+        "fr": "Itinéraire sud, reste près de la côte."
+      },
+      "flourish": {
+        "ca": "Sembla un mirall, però t'empeny mar endins.",
+        "es": "Parece un espejo, pero te empuja mar adentro.",
+        "en": "Looks like a mirror, but pushes you out to sea.",
+        "fr": "Ressemble à un miroir, mais te pousse vers le large."
+      }
+    },
+
+    "mestral": {
+      "name": "Mestral",
+      "gender": "m",
+      "angleRange": [292.5, 337.5],
+      "primaryAngle": 315,
+      "cardinalLetter": "NO",
+      "recommendation": {
+        "ca": "Ruta nord recomanada.",
+        "es": "Ruta norte recomendada.",
+        "en": "North route recommended.",
+        "fr": "Itinéraire nord recommandé."
+      },
+      "flourish": {
+        "ca": "Sec i ratxejat, imprevisible fora de la cala.",
+        "es": "Seco y racheado, impredecible fuera de la cala.",
+        "en": "Dry and gusty, unpredictable outside the cove.",
+        "fr": "Sec et rafaleux, imprévisible hors de la crique."
+      }
+    }
+  },
+
+  "displayTemplate": {
+    "_comment": "How the component renders. The Rive rose handles direction visually. The text below has two lines.",
+    "line1Left":   "{speed} km/h {wind.cardinalLetter}",
+    "line1Right":  "Vent {speedTierLabel}   ← colored per tierColors[tier]",
+    "line2":       "{wind.recommendation}{optional: ' ' + wind.flourish}",
+    "resolutionOrder": [
+      "1. If speed < calmState.triggerKmh (1 km/h) → render calmState (no direction shown, Rive rose idle)",
+      "2. Else if speed >= safetyOverride.triggerKmh (38 km/h) → render with wind.cardinalLetter + 'Vent molt fort' in danger color + safetyOverride.recommendation",
+      "3. Else → render per-wind: cardinal letter + 'Vent {tier}' in tier color + wind.recommendation (+ optional flourish)"
+    ]
+  }
+}

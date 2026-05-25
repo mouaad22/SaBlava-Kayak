@@ -272,62 +272,158 @@
   background: var(--color-primary-dark);
 }
 
-/* ============== SCREEN 2 — SEE ROUTES (Paper 9UR-0) ============== */
+/* ============== SCREEN 2 — RUTES (bottom-sheet layout) ============== */
 
+/* Screen container — overflow:clip so the bottom sheet can extend to the
+   bottom edge without triggering a scrollbar on the screen itself. */
 .routes-screen {
   background: #ffffff;
-  align-items: center;
-  gap: 24px;
   width: 100%;
   font-synthesis: none;
-  overflow-x: hidden;
+  overflow: clip;
+  /* position:absolute + inset:0 comes from .screen in base.css — do NOT
+     override it here, or absolutely-positioned children lose their anchor. */
+}
+
+/* Scrollable routes list — sits behind the bottom sheet.
+   padding-bottom reserves room so the last route card clears the sheet. */
+.routes-screen__main {
+  position: absolute;
+  inset: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: max(env(safe-area-inset-bottom), 24px);
-}
-
-.routes-screen__weather {
-  align-self: stretch;
+  scrollbar-width: none;
+  padding-top: max(env(safe-area-inset-top), 24px);
+  padding-inline: 24px;
+  padding-bottom: calc(50vh + 48px);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
-  padding-inline: 24px;
-  position: relative;
+  box-sizing: border-box;
 }
+.routes-screen__main::-webkit-scrollbar { display: none; }
 
-.routes-screen__weather-heading-wrap {
-  align-self: stretch;
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  padding-top: max(env(safe-area-inset-top), 24px);
-  padding-bottom: 8px;
-}
-
-.routes-screen__weather-heading {
+.routes-screen__list-heading {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 28px;
   line-height: 32px;
   color: #1a1a1a;
   margin: 0;
+  align-self: flex-start;
 }
 
-/* Weather body — tab bar + active panel. Paper 9UR-0: 8 px gap between
-   the tab row and the panel below. */
-.routes-screen__weather-body {
-  align-self: stretch;
+/* ── Bottom sheet ──────────────────────────────────────────────────────────── */
+
+.routes-sheet {
+  --routes-collapsed-peek: 72px; /* handle pill + header visible when collapsed */
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  height: 50vh;
+  background: #ffffff;
+  border-top-left-radius: var(--radius-sheet);
+  border-top-right-radius: var(--radius-sheet);
+  box-shadow: var(--shadow-sheet);
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
+  overflow: hidden;
+  transition: transform 320ms var(--ease-entrance);
+  will-change: transform;
 }
 
-/* Segmented control. Pills aren't equal-width — they hug their label with
-   4×16 padding. Paper centres the row inside the column. */
+.routes-sheet.is-collapsed {
+  transform: translateY(calc(50vh - var(--routes-collapsed-peek)));
+}
+
+.routes-sheet.is-dragging {
+  transition: none;
+}
+
+/* Drag handle — same pill pattern as the POI sheet */
+.routes-sheet__handle {
+  flex-shrink: 0;
+  width: 100%;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  background: transparent;
+  border: none;
+  padding: 0;
+  touch-action: none;
+  user-select: none;
+}
+.routes-sheet__handle:active { cursor: grabbing; }
+.routes-sheet__handle::before {
+  content: "";
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: #d1d5d4;
+  transition: background 160ms var(--ease-entrance);
+}
+.routes-sheet__handle:hover::before,
+.routes-sheet__handle:focus-visible::before { background: #b5bab9; }
+.routes-sheet__handle:focus-visible { outline: none; }
+
+/* Sheet header — title + location chip */
+.routes-sheet__header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 24px 10px;
+}
+
+.routes-sheet__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 28px;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.routes-sheet__location {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f2f5f0;
+  border-radius: var(--radius-pill);
+  padding: 5px 11px;
+}
+.routes-sheet__location span {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: #3d6b4f;
+}
+
+/* Tab bar — left-aligned inside the sheet */
+.routes-sheet__tabs {
+  flex-shrink: 0;
+  padding: 0 24px 10px;
+  justify-content: flex-start !important;
+}
+
+/* Scrollable content area */
+.routes-sheet__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.routes-sheet__scroll::-webkit-scrollbar { display: none; }
+
+/* ── Weather tabs (shared by old layout + new sheet) ─────────────────────── */
+
 .weather-tabs {
-  align-self: stretch;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -360,57 +456,99 @@
   font-weight: 600;
 }
 
-/* Each tab's content slot. Square per Paper (354 × 354) — drops below 354
-   in width on narrower viewports via max-width:100% on the canvas. */
+/* Weather panels inside the sheet — no aspect-ratio lock, stack naturally */
+.routes-sheet .weather-panel {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+/* Panels shared between contexts */
 .weather-panel {
-  align-self: stretch;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  aspect-ratio: 1 / 1;
-  max-width: 354px;
-  margin-inline: auto;
 }
 
-.weather-panel.is-hidden {
-  display: none;
+.weather-panel.is-hidden { display: none; }
+
+/* Wind rose — full-width square capped at 280 px inside the sheet */
+.routes-sheet .wind-rose {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  aspect-ratio: 1;
+  align-self: center;
 }
 
 .wind-rose {
   display: block;
   width: 100%;
   height: 100%;
-  /* Drawing surface is 2× to stay crisp on retina; CSS box defines layout. */
 }
 
-/* Routes list */
+/* ── Wind banner ─────────────────────────────────────────────────────────── */
 
-.routes-screen__list {
-  align-self: stretch;
+.wind-banner {
   display: flex;
   flex-direction: column;
+  gap: 6px;
+}
+
+.wind-banner__summary {
+  display: flex;
   align-items: center;
-  gap: 16px;
-  padding-inline: 24px;
-  position: relative;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.routes-screen__list-heading-wrap {
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.routes-screen__list-heading {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 28px;
-  line-height: 32px;
+.wind-banner__speed {
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 600;
   color: #1a1a1a;
+  white-space: nowrap;
+}
+
+.wind-banner__recommendation {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 400;
+  color: #374151;
+  line-height: 24px;
   margin: 0;
 }
+
+.wind-banner__flourish {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: #6b7280;
+  font-style: italic;
+  line-height: 20px;
+  margin: 0;
+}
+
+/* ── Wind intensity tag (pill badge) ─────────────────────────────────────── */
+
+.wind-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  padding: 3px 12px;
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.wind-tag--suau      { color: #005B2B; background: #E6F2EB; }
+.wind-tag--moderat   { color: #4E5404; background: #EEF0D9; }
+.wind-tag--fort      { color: #683E06; background: #F5E9DC; }
+.wind-tag--molt-fort { color: #630805; background: #F4DEDD; }
 
 .route-tile {
   display: flex;

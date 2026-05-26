@@ -725,11 +725,15 @@
   margin: 16px 0 8px;
 }
 
-/* Map widget — satellite illustration + dashed SVG route overlay + play btn */
+/* Map widget — satellite illustration + dashed SVG route overlay + play btn.
+   Negative margins bust out of the parent section's 24px side padding so the
+   illustration bleeds edge-to-edge. */
 .route-map {
   position: relative;
-  width: 100%;
-  height: 185px;
+  width: calc(100% + 48px);
+  margin-left: -24px;
+  margin-right: -24px;
+  height: 169px;
   background-position: 50%;
   background-size: cover;
   overflow: hidden;
@@ -740,8 +744,8 @@
    8 px gap between the two. Pill-shaped because it carries text + icon. */
 .map-button {
   position: absolute;
-  right: 48px;
-  bottom: 0;
+  right: 72px;
+  bottom: 8px;
   height: 40px;
   display: inline-flex;
   align-items: center;
@@ -771,11 +775,11 @@
 
 .play-button {
   position: absolute;
-  /* Paper places this flush to the bottom-right of the 354x185 map frame.
-     Using right/bottom anchors so it survives the route-map being narrower
-     than 354px on viewports < 402. */
-  right: 0;
-  bottom: 0;
+  /* Anchored to the bottom-right of the map strip; 8px clearance from the
+     bottom edge so both buttons float above the image rather than sitting on
+     the very edge. */
+  right: 24px;
+  bottom: 8px;
   width: 40px;
   height: 40px;
   background: #f5f8f1;

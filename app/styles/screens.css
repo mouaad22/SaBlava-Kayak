@@ -371,25 +371,18 @@
 .routes-sheet__handle:focus-visible::before { background: #b5bab9; }
 .routes-sheet__handle:focus-visible { outline: none; }
 
-/* Sheet header — title + location chip */
+/* Sheet header — tabs + location chip in one row */
 .routes-sheet__header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 24px 10px;
-}
-
-.routes-sheet__title {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 22px;
-  line-height: 28px;
-  color: #1a1a1a;
-  margin: 0;
+  padding: 4px 16px 4px 24px;
+  gap: 12px;
 }
 
 .routes-sheet__location {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -404,10 +397,11 @@
   color: #3d6b4f;
 }
 
-/* Tab bar — left-aligned inside the sheet */
+/* Tab bar — inline with the location chip */
 .routes-sheet__tabs {
-  flex-shrink: 0;
-  padding: 0 24px 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
   justify-content: flex-start !important;
 }
 
@@ -474,14 +468,12 @@
 
 .weather-panel.is-hidden { display: none; }
 
-/* Wind rose — full-width square capped at 280 px inside the sheet */
+/* Wind rose — full-width 1:1 square spanning the sheet width */
 .routes-sheet .wind-rose {
   display: block;
   width: 100%;
-  max-width: 280px;
   height: auto;
   aspect-ratio: 1;
-  align-self: center;
 }
 
 .wind-rose {

@@ -43,21 +43,19 @@ export function renderRoutesScreen(host) {
            aria-label="Mostra o oculta el temps"></div>
 
       <div class="routes-sheet__header">
-        <h2 class="routes-sheet__title">${t("routes.weatherTitle")}</h2>
+        <div class="weather-tabs routes-sheet__tabs" role="tablist" aria-label="${t("routes.weatherTitle")}">
+          ${TABS.map((tab, i) => `
+            <button type="button" role="tab"
+              class="weather-tab${i === 0 ? " is-active" : ""}"
+              data-tab="${tab.id}"
+              aria-selected="${i === 0}"
+            >${t(tab.labelKey)}</button>
+          `).join("")}
+        </div>
         <div class="routes-sheet__location">
           ${ICON_LOCATION}
           <span>Aiguablava</span>
         </div>
-      </div>
-
-      <div class="weather-tabs routes-sheet__tabs" role="tablist" aria-label="${t("routes.weatherTitle")}">
-        ${TABS.map((tab, i) => `
-          <button type="button" role="tab"
-            class="weather-tab${i === 0 ? " is-active" : ""}"
-            data-tab="${tab.id}"
-            aria-selected="${i === 0}"
-          >${t(tab.labelKey)}</button>
-        `).join("")}
       </div>
 
       <div class="routes-sheet__scroll">

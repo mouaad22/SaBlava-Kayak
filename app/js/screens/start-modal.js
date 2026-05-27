@@ -189,7 +189,8 @@ export function openStartModal({ routeId, durationId }) {
     primeAudio(getLanguage());
 
     // Persist draft so the summary screen can restore it on refresh.
-    saveDraft(routeId, { durationHours, includedPoiIndices });
+    // Include the raw code so the summary screen can forward it to startSession.
+    saveDraft(routeId, { durationHours, includedPoiIndices, code: codeInput.value.trim() });
 
     close(false);
     navigate(`/route/${routeId}/summary`);

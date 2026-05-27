@@ -11,11 +11,12 @@
 //     localStorage and filters how many POIs are shown
 //     (1h → 6, 1h30 / 2h → 8, 3h → 9).
 //   • POI card tap → /route/:id/poi/:i (POI detail screen built in session 4).
-//   • "Comença ruta" is a Phase-2 stub (console.log).
+//   • "Comença ruta" opens the Phase-2 safety+code modal → summary → navigate.
 
 import { findRoute } from "../data.js";
 import { t, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
+import { openStartModal } from "./start-modal.js";
 
 const POI_COUNT_BY_DURATION = { "1h": 5, "1h30": 8, "2h": 8, "3h": 9 };
 const DURATIONS = ["1h", "1h30", "2h", "3h"];
@@ -369,12 +370,9 @@ export function renderRouteScreen(host, routeId) {
     });
   });
 
-  // --- CTA: Phase-2 stub --------------------------------------------------
+  // --- CTA: open safety + code modal (Phase 2) ----------------------------
   screen.querySelector("[data-action=start]").addEventListener("click", () => {
-    console.log("[Sa Blava] Comença ruta (Phase 2 stub)", {
-      routeId,
-      durationId,
-    });
+    openStartModal({ routeId, durationId });
   });
 
   requestAnimationFrame(() => {

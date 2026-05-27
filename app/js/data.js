@@ -454,6 +454,10 @@ export const ROUTES = [
     pois: POIS_SUD,
     geometry: POIS_SUD.map((p) => p.coords),
     track: TRACK_SUD,
+    // Bounding box [minLon, minLat, maxLon, maxLat] used for Mapbox tile
+    // pre-caching. Padded slightly beyond the furthest POI coords so tiles
+    // cover the full coastal corridor the paddler will see.
+    bbox: [3.207, 41.918, 3.237, 41.940],
   },
   {
     id: "nord",
@@ -499,6 +503,9 @@ export const ROUTES = [
       [3.2238, 41.9213],
       [3.2262, 41.9201],
     ],
+    // Bounding box [minLon, minLat, maxLon, maxLat]. Nord bbox is larger —
+    // the cliffs route extends further south and requires more coastal tiles.
+    bbox: [3.190, 41.915, 3.235, 41.940],
   },
 ];
 

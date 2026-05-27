@@ -7,6 +7,8 @@ import { renderRouteScreen } from "./screens/route.js";
 import { renderPoiScreen } from "./screens/poi.js";
 import { renderGalleryScreen } from "./screens/gallery.js";
 import { renderMapScreen } from "./screens/map.js";
+import { renderRouteSummaryScreen } from "./screens/route-summary.js";
+import { renderNavigateScreen } from "./screens/navigate.js";
 
 // Native-app feel: never let the browser restore a previous scroll position
 // when navigating between hash routes — every screen lands at the top.
@@ -26,6 +28,8 @@ const SCREEN_DEPTH = {
   map: 2,
   poi: 3,
   gallery: 4,
+  summary: 3,
+  navigate: 3,
 };
 
 // Single screen slot — every route mounts its own screen and tears down the
@@ -133,6 +137,20 @@ function render(route) {
             route.params.routeId,
             route.params.poiIndex
           ),
+      });
+      break;
+    case "summary":
+      ensureMain({
+        name: "summary",
+        routeId: route.params.routeId,
+        factory: () => renderRouteSummaryScreen(host, route.params.routeId),
+      });
+      break;
+    case "navigate":
+      ensureMain({
+        name: "navigate",
+        routeId: route.params.routeId,
+        factory: () => renderNavigateScreen(host, route.params.routeId),
       });
       break;
     default:

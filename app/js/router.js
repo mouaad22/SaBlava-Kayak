@@ -5,6 +5,8 @@
 //   #/route/:id/map                 → full-screen map (markers only)
 //   #/route/:id/poi/:i              → POI screen (Mapbox + sheet)
 //   #/route/:id/poi/:i/gallery      → full-screen gallery
+//   #/route/:id/summary             → route summary (edit POIs, confirm)
+//   #/route/:id/navigate            → full-screen GPS navigation
 
 const listeners = [];
 
@@ -30,6 +32,12 @@ export function parseHash() {
   }
   if (parts[0] === "route" && parts[1] && parts[2] === "map") {
     return { name: "map", params: { routeId: parts[1] } };
+  }
+  if (parts[0] === "route" && parts[1] && parts[2] === "summary") {
+    return { name: "summary", params: { routeId: parts[1] } };
+  }
+  if (parts[0] === "route" && parts[1] && parts[2] === "navigate") {
+    return { name: "navigate", params: { routeId: parts[1] } };
   }
   if (parts[0] === "route" && parts[1]) {
     return { name: "route", params: { routeId: parts[1] } };

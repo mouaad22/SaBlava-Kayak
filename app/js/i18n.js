@@ -118,6 +118,49 @@ const dict = {
     "status.go.long": "Condicions favorables",
     "status.caution.long": "Vent o onatge al límit — vés amb compte",
     "status.no-go.long": "Condicions adverses — no recomanat avui",
+
+    // ── Phase 2: modal ───────────────────────────────────────────────────────
+    "modal.title": "Abans de començar",
+    "modal.check.jacket": "Porto armilla salvavides",
+    "modal.check.weather": "He revisat la previsió meteorològica",
+    "modal.check.return": "Tornaré abans que s'acabi el temps",
+    "modal.code.label": "Codi rebut a la base",
+    "modal.code.placeholder": "sablava030528",
+    "modal.code.invalid": "Codi invàlid o caducat",
+    "modal.start": "Comença",
+    "modal.cancel": "Cancel·la",
+
+    // ── Phase 2: route summary ───────────────────────────────────────────────
+    "summary.title": "La teva ruta",
+    "summary.distance": (km) => `Distància: ${km} km`,
+    "summary.estimated": (h, m) => `Temps estimat: ~${h}h ${m}m`,
+    "summary.paid": (h) => `Has pagat: ${h}h`,
+    "summary.over_budget":
+      "El recorregut estimat supera el temps que has pagat.",
+    "summary.pois.title": "POIs a la teva ruta",
+    "summary.pois.min": "Has d'incloure almenys un punt",
+    "summary.accept": "Accepta i comença",
+    "summary.back": "Tornar",
+
+    // ── Phase 2: tile pre-cache overlay ─────────────────────────────────────
+    "prepare.title": "Preparant el mapa per fora de línia…",
+    "prepare.subtitle": "No tanquis l'aplicació",
+
+    // ── Phase 2: navigate screen ─────────────────────────────────────────────
+    "nav.tab.map": "Mapa",
+    "nav.tab.data": "Dades",
+    "nav.end": "Acabar",
+    "nav.end.confirm": "Segur que vols acabar la ruta?",
+    "nav.dades.remaining": "restant",
+    "nav.dades.next": (n, name) => `POI ${n} · ${name}`,
+    "nav.dades.base": (min, m) => `Base: ${min} min · ${m} m`,
+    "nav.permission.denied": "Cal permís d'ubicació per navegar",
+    "nav.voice.t30": "Falten 30 minuts. Comença a pensar en tornar.",
+    "nav.voice.t15": "Falten 15 minuts. Si us plau, comença a tornar.",
+    "nav.voice.t5": "Falten 5 minuts. Torna ja a la base.",
+    "nav.voice.t0": "S'ha acabat el temps. Torna a la base.",
+    "nav.voice.approach": (name) => `T'apropes a ${name}.`,
+    "nav.overtime.banner": (min) => `Temps excedit · +${min} min`,
   },
   es: {
     "lang.welcome": "¡Bienvenido!",
@@ -229,6 +272,49 @@ const dict = {
     "status.go.long": "Condiciones favorables",
     "status.caution.long": "Viento u oleaje al límite — precaución",
     "status.no-go.long": "Condiciones adversas — no recomendado hoy",
+
+    // ── Phase 2: modal ───────────────────────────────────────────────────────
+    "modal.title": "Antes de empezar",
+    "modal.check.jacket": "Llevo chaleco salvavidas",
+    "modal.check.weather": "He revisado la previsión meteorológica",
+    "modal.check.return": "Volveré antes de que se acabe el tiempo",
+    "modal.code.label": "Código recibido en la base",
+    "modal.code.placeholder": "sablava030528",
+    "modal.code.invalid": "Código inválido o caducado",
+    "modal.start": "Empezar",
+    "modal.cancel": "Cancelar",
+
+    // ── Phase 2: route summary ───────────────────────────────────────────────
+    "summary.title": "Tu ruta",
+    "summary.distance": (km) => `Distancia: ${km} km`,
+    "summary.estimated": (h, m) => `Tiempo estimado: ~${h}h ${m}m`,
+    "summary.paid": (h) => `Has pagado: ${h}h`,
+    "summary.over_budget":
+      "El recorrido estimado supera el tiempo que has pagado.",
+    "summary.pois.title": "POIs en tu ruta",
+    "summary.pois.min": "Debes incluir al menos un punto",
+    "summary.accept": "Acepta y empieza",
+    "summary.back": "Volver",
+
+    // ── Phase 2: tile pre-cache overlay ─────────────────────────────────────
+    "prepare.title": "Preparando el mapa sin conexión…",
+    "prepare.subtitle": "No cierres la aplicación",
+
+    // ── Phase 2: navigate screen ─────────────────────────────────────────────
+    "nav.tab.map": "Mapa",
+    "nav.tab.data": "Datos",
+    "nav.end": "Terminar",
+    "nav.end.confirm": "¿Seguro que quieres terminar la ruta?",
+    "nav.dades.remaining": "restante",
+    "nav.dades.next": (n, name) => `POI ${n} · ${name}`,
+    "nav.dades.base": (min, m) => `Base: ${min} min · ${m} m`,
+    "nav.permission.denied": "Se necesita permiso de ubicación para navegar",
+    "nav.voice.t30": "Faltan 30 minutos. Empieza a pensar en volver.",
+    "nav.voice.t15": "Faltan 15 minutos. Por favor, empieza a volver.",
+    "nav.voice.t5": "Faltan 5 minutos. Vuelve ya a la base.",
+    "nav.voice.t0": "Se ha acabado el tiempo. Vuelve a la base.",
+    "nav.voice.approach": (name) => `Te acercas a ${name}.`,
+    "nav.overtime.banner": (min) => `Tiempo excedido · +${min} min`,
   },
   en: {
     "lang.welcome": "Welcome!",
@@ -340,6 +426,49 @@ const dict = {
     "status.go.long": "Favourable conditions",
     "status.caution.long": "Wind or swell on the edge — take care",
     "status.no-go.long": "Adverse conditions — not recommended today",
+
+    // ── Phase 2: modal ───────────────────────────────────────────────────────
+    "modal.title": "Before you start",
+    "modal.check.jacket": "I'm wearing a life jacket",
+    "modal.check.weather": "I've checked the weather forecast",
+    "modal.check.return": "I'll be back before time runs out",
+    "modal.code.label": "Code received at the base",
+    "modal.code.placeholder": "sablava030528",
+    "modal.code.invalid": "Invalid or expired code",
+    "modal.start": "Start",
+    "modal.cancel": "Cancel",
+
+    // ── Phase 2: route summary ───────────────────────────────────────────────
+    "summary.title": "Your route",
+    "summary.distance": (km) => `Distance: ${km} km`,
+    "summary.estimated": (h, m) => `Estimated time: ~${h}h ${m}m`,
+    "summary.paid": (h) => `You've paid for: ${h}h`,
+    "summary.over_budget":
+      "Estimated route exceeds your paid duration.",
+    "summary.pois.title": "Stops on your route",
+    "summary.pois.min": "You must include at least one stop",
+    "summary.accept": "Accept & start",
+    "summary.back": "Back",
+
+    // ── Phase 2: tile pre-cache overlay ─────────────────────────────────────
+    "prepare.title": "Preparing offline map…",
+    "prepare.subtitle": "Don't close the app",
+
+    // ── Phase 2: navigate screen ─────────────────────────────────────────────
+    "nav.tab.map": "Map",
+    "nav.tab.data": "Data",
+    "nav.end": "End",
+    "nav.end.confirm": "Are you sure you want to end the route?",
+    "nav.dades.remaining": "remaining",
+    "nav.dades.next": (n, name) => `POI ${n} · ${name}`,
+    "nav.dades.base": (min, m) => `Base: ${min} min · ${m} m`,
+    "nav.permission.denied": "Location permission required to navigate",
+    "nav.voice.t30": "30 minutes left. Start thinking about heading back.",
+    "nav.voice.t15": "15 minutes left. Please start heading back.",
+    "nav.voice.t5": "5 minutes left. Return to base now.",
+    "nav.voice.t0": "Time is up. Return to base.",
+    "nav.voice.approach": (name) => `Approaching ${name}.`,
+    "nav.overtime.banner": (min) => `Overtime · +${min} min`,
   },
   fr: {
     "lang.welcome": "Bienvenue !",
@@ -451,6 +580,50 @@ const dict = {
     "status.go.long": "Conditions favorables",
     "status.caution.long": "Vent ou houle limite — prudence",
     "status.no-go.long": "Conditions adverses — déconseillé",
+
+    // ── Phase 2: modal ───────────────────────────────────────────────────────
+    "modal.title": "Avant de commencer",
+    "modal.check.jacket": "Je porte un gilet de sauvetage",
+    "modal.check.weather": "J'ai consulté les prévisions météo",
+    "modal.check.return": "Je rentrerai avant la fin du temps",
+    "modal.code.label": "Code reçu à la base",
+    "modal.code.placeholder": "sablava030528",
+    "modal.code.invalid": "Code invalide ou expiré",
+    "modal.start": "Démarrer",
+    "modal.cancel": "Annuler",
+
+    // ── Phase 2: route summary ───────────────────────────────────────────────
+    "summary.title": "Ton itinéraire",
+    "summary.distance": (km) => `Distance : ${km} km`,
+    "summary.estimated": (h, m) => `Temps estimé : ~${h}h ${m}m`,
+    "summary.paid": (h) => `Tu as payé : ${h}h`,
+    "summary.over_budget":
+      "L'itinéraire estimé dépasse la durée payée.",
+    "summary.pois.title": "Étapes de ton itinéraire",
+    "summary.pois.min": "Tu dois inclure au moins une étape",
+    "summary.accept": "Accepter et démarrer",
+    "summary.back": "Retour",
+
+    // ── Phase 2: tile pre-cache overlay ─────────────────────────────────────
+    "prepare.title": "Préparation de la carte hors ligne…",
+    "prepare.subtitle": "Ne ferme pas l'application",
+
+    // ── Phase 2: navigate screen ─────────────────────────────────────────────
+    "nav.tab.map": "Carte",
+    "nav.tab.data": "Données",
+    "nav.end": "Terminer",
+    "nav.end.confirm": "Es-tu sûr de vouloir terminer l'itinéraire ?",
+    "nav.dades.remaining": "restant",
+    "nav.dades.next": (n, name) => `POI ${n} · ${name}`,
+    "nav.dades.base": (min, m) => `Base : ${min} min · ${m} m`,
+    "nav.permission.denied":
+      "La permission de localisation est nécessaire pour naviguer",
+    "nav.voice.t30": "Il reste 30 minutes. Pense à rentrer.",
+    "nav.voice.t15": "Il reste 15 minutes. Commence à rentrer.",
+    "nav.voice.t5": "Il reste 5 minutes. Rentre à la base maintenant.",
+    "nav.voice.t0": "Le temps est écoulé. Rentre à la base.",
+    "nav.voice.approach": (name) => `Tu approches de ${name}.`,
+    "nav.overtime.banner": (min) => `Temps dépassé · +${min} min`,
   },
 };
 

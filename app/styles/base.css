@@ -4,6 +4,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 /* This is a phone-shaped web app, not a web page — desktop scrollbars
    on the inner scrollers look out of place. Hide them everywhere while
    keeping scroll/pan behaviour intact. Mobile browsers already auto-hide. */

@@ -1994,3 +1994,360 @@
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ============== NAVIGATE SCREEN ============== */
+
+/* .screen provides: position:absolute inset:0; display:flex; flex-direction:column */
+.navigate-screen {
+  background: #b1e2df; /* teal placeholder while map tiles load */
+  overflow: hidden;
+  font-synthesis: none;
+}
+
+/* ── Status bar ── */
+.navigate-screen__status-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: max(env(safe-area-inset-top), 12px) 16px 10px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 4;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.nav-status-time {
+  font-variant-numeric: tabular-nums;
+  min-width: 48px;
+}
+
+.nav-status-time.is-overtime {
+  color: var(--color-emergency);
+}
+
+.nav-status-poi {
+  flex: 1;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.nav-status-dist {
+  min-width: 48px;
+  text-align: right;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* ── Map / data content area ── */
+.navigate-screen__content {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.navigate-map-view {
+  position: absolute;
+  inset: 0;
+}
+
+.navigate-map-view .mapboxgl-canvas {
+  outline: none;
+}
+
+/* ── Dades (data) tab view ── */
+.navigate-dades-view {
+  position: absolute;
+  inset: 0;
+  background: #e8ece4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 32px 24px;
+  box-sizing: border-box;
+}
+
+.dades-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.dades-block--poi {
+  background: #ffffff;
+  border-radius: var(--radius-card);
+  corner-shape: var(--corner-shape);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-card);
+  align-self: stretch;
+}
+
+.dades-time {
+  font-family: var(--font-display);
+  font-size: 72px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.dades-time.is-overtime {
+  color: var(--color-emergency);
+}
+
+.dades-remaining {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  color: var(--color-text-secondary);
+}
+
+.dades-poi-label {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-md);
+  color: var(--color-text-secondary);
+}
+
+.dades-poi-dist {
+  font-family: var(--font-body);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.dades-base-label {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* ── Bottom tab bar ── */
+.navigate-screen__tabbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px max(env(safe-area-inset-bottom), 16px);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid var(--color-border);
+  z-index: 4;
+}
+
+.nav-tab-btn {
+  flex: 1;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  corner-shape: var(--corner-shape);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 160ms var(--ease-entrance),
+    color 160ms var(--ease-entrance),
+    border-color 160ms var(--ease-entrance);
+}
+
+.nav-tab-btn.is-active {
+  background: var(--color-surface-tinted);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.nav-tab-btn--end {
+  flex: 0 0 auto;
+  padding: 0 16px;
+  color: var(--color-emergency);
+  border-color: transparent;
+  background: #fef0ef;
+}
+
+.nav-tab-btn--end:active {
+  background: #fdd9d7;
+}
+
+/* ── Overtime banner ── */
+.navigate-screen__overtime-banner {
+  position: absolute;
+  top: calc(max(env(safe-area-inset-top), 12px) + 42px + 8px);
+  left: 12px;
+  right: 12px;
+  z-index: 5;
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-emergency);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(217, 58, 43, 0.28);
+  pointer-events: none;
+}
+
+/* ── GPS-denied banner ── */
+.navigate-screen__gps-banner {
+  position: absolute;
+  bottom: 120px;
+  left: 16px;
+  right: 16px;
+  z-index: 5;
+  padding: 12px 16px;
+  border-radius: var(--radius-pill);
+  background: rgba(26, 26, 26, 0.88);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* ── Threshold flash banner ── */
+.nav-threshold-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, calc(-50% + 12px));
+  z-index: 10;
+  background: rgba(26, 26, 26, 0.88);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 600;
+  padding: 20px 28px;
+  border-radius: var(--radius-card);
+  corner-shape: var(--corner-shape);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms var(--ease-entrance),
+    transform 240ms var(--ease-entrance);
+}
+
+.nav-threshold-banner.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+/* ── Map POI markers ── */
+.nav-poi-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px #ffffff, 0 2px 8px rgba(10, 30, 50, 0.25);
+  cursor: pointer;
+  transition: width 200ms var(--ease-entrance),
+    height 200ms var(--ease-entrance);
+}
+
+.nav-poi-marker.is-active {
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 0 0 3px #ffffff, 0 4px 16px rgba(10, 30, 50, 0.3);
+  z-index: 1;
+}
+
+/* ── Live position marker (blue pulsing dot) ── */
+.nav-position-marker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2563eb;
+  box-shadow: 0 0 0 3px #ffffff, 0 2px 8px rgba(37, 99, 235, 0.35);
+  position: relative;
+}
+
+.nav-position-marker::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.2);
+  animation: nav-position-pulse 2s ease-out infinite;
+}
+
+@keyframes nav-position-pulse {
+  0%   { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(1);   opacity: 0; }
+}
+
+/* ── Recenter button ── */
+.nav-recenter-btn {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(10, 30, 50, 0.2);
+  cursor: pointer;
+  color: var(--color-primary-dark);
+  z-index: 3;
+}
+
+.nav-recenter-btn:active {
+  background: rgba(235, 244, 248, 0.96);
+}
+
+/* ── End-session confirm dialog ── */
+.nav-end-dialog {
+  max-width: 320px;
+  width: calc(100% - 48px);
+  border: 0;
+  border-radius: var(--radius-card);
+  corner-shape: var(--corner-shape);
+  padding: 24px;
+  box-shadow: var(--shadow-sheet);
+}
+
+.nav-end-dialog::backdrop {
+  background: rgba(28, 28, 28, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.nav-end-dialog__text {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-md);
+  color: var(--color-text-primary);
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.nav-end-dialog__actions {
+  display: flex;
+  gap: 12px;
+}

@@ -7,6 +7,7 @@ import { renderRouteScreen } from "./screens/route.js";
 import { renderPoiScreen } from "./screens/poi.js";
 import { renderGalleryScreen } from "./screens/gallery.js";
 import { renderMapScreen } from "./screens/map.js";
+import { renderCodeEntryScreen } from "./screens/code-entry.js";
 import { renderRouteSummaryScreen } from "./screens/route-summary.js";
 import { renderNavigateScreen } from "./screens/navigate.js";
 
@@ -28,8 +29,9 @@ const SCREEN_DEPTH = {
   map: 2,
   poi: 3,
   gallery: 4,
-  summary: 3,
-  navigate: 3,
+  code: 3,
+  summary: 4,
+  navigate: 4,
 };
 
 // Single screen slot — every route mounts its own screen and tears down the
@@ -137,6 +139,13 @@ function render(route) {
             route.params.routeId,
             route.params.poiIndex
           ),
+      });
+      break;
+    case "code":
+      ensureMain({
+        name: "code",
+        routeId: route.params.routeId,
+        factory: () => renderCodeEntryScreen(host, route.params.routeId),
       });
       break;
     case "summary":

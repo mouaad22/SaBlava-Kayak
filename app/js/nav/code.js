@@ -1,25 +1,23 @@
 // nav/code.js — Daily rental code parser & validator.
 //
-// Code format: sablava{HH}{MM}{DD}
+// Code format: {HH}{MM}{DD}  (6 digits, no prefix)
 //   HH = duration key: "01"=1h, "15"=1.5h, "02"=2h, "03"=3h
 //   MM = 2-digit month (01–12)
 //   DD = 2-digit day (01–31)
 //
-// Example: "sablava030528" → 3h rental, issued 28 May
+// Example: "030528" → 3h rental, issued 28 May
 // No server required — validated purely by date matching + known HH values.
 // Security intent: friction gate only (salt is client-side).
 
 const DURATION_TABLE = { "01": 1, "15": 1.5, "02": 2, "03": 3 };
 
 /**
- * Parse a raw code string.
+ * Parse a raw 6-digit code string.
  * @param {string} input
  * @returns {{ durationHours: number, month: number, day: number } | null}
  */
 export function parseCode(input) {
-  const match = /^sablava(\d{2})(\d{2})(\d{2})$/i.exec(
-    (input ?? "").trim().toLowerCase()
-  );
+  const match = /^(\d{2})(\d{2})(\d{2})$/.exec((input ?? "").trim());
   if (!match) return null;
   const [, hh, mm, dd] = match;
   if (!(hh in DURATION_TABLE)) return null;

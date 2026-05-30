@@ -119,26 +119,17 @@ const dict = {
     "status.caution.long": "Vent o onatge al límit — vés amb compte",
     "status.no-go.long": "Condicions adverses — no recomanat avui",
 
-    // ── Phase 2: modal ───────────────────────────────────────────────────────
-    "modal.title": "Abans de començar",
-    "modal.check.jacket": "Porto armilla salvavides",
-    "modal.check.weather": "He revisat la previsió meteorològica",
-    "modal.check.return": "Tornaré abans que s'acabi el temps",
-    "modal.code.label": "Codi rebut a la base",
-    "modal.code.placeholder": "sablava030528",
-    "modal.code.invalid": "Codi invàlid o caducat",
-    "modal.start": "Comença",
-    "modal.cancel": "Cancel·la",
+    // ── Phase 2: code entry screen ────────────────────────────────────────────
+    "code.title": "Introdueix el codi rebut a la base",
+    "code.continue": "Continua",
+    "code.invalid": "Codi invàlid o caducat",
+    "code.back": "Tornar",
 
     // ── Phase 2: route summary ───────────────────────────────────────────────
     "summary.title": "La teva ruta",
-    "summary.distance": (km) => `Distància: ${km} km`,
-    "summary.estimated": (h, m) => `Temps estimat: ~${h}h ${m}m`,
-    "summary.paid": (h) => `Has pagat: ${h}h`,
-    "summary.over_budget":
-      "El recorregut estimat supera el temps que has pagat.",
-    "summary.pois.title": "POIs a la teva ruta",
-    "summary.pois.min": "Has d'incloure almenys un punt",
+    "summary.stat.time": "Temps disponible",
+    "summary.stat.dist": "Distància",
+    "summary.pois.title": "Punts d'interès",
     "summary.accept": "Accepta i comença",
     "summary.back": "Tornar",
 
@@ -273,26 +264,17 @@ const dict = {
     "status.caution.long": "Viento u oleaje al límite — precaución",
     "status.no-go.long": "Condiciones adversas — no recomendado hoy",
 
-    // ── Phase 2: modal ───────────────────────────────────────────────────────
-    "modal.title": "Antes de empezar",
-    "modal.check.jacket": "Llevo chaleco salvavidas",
-    "modal.check.weather": "He revisado la previsión meteorológica",
-    "modal.check.return": "Volveré antes de que se acabe el tiempo",
-    "modal.code.label": "Código recibido en la base",
-    "modal.code.placeholder": "sablava030528",
-    "modal.code.invalid": "Código inválido o caducado",
-    "modal.start": "Empezar",
-    "modal.cancel": "Cancelar",
+    // ── Phase 2: code entry screen ────────────────────────────────────────────
+    "code.title": "Introduce el código recibido en la base",
+    "code.continue": "Continuar",
+    "code.invalid": "Código inválido o caducado",
+    "code.back": "Volver",
 
     // ── Phase 2: route summary ───────────────────────────────────────────────
     "summary.title": "Tu ruta",
-    "summary.distance": (km) => `Distancia: ${km} km`,
-    "summary.estimated": (h, m) => `Tiempo estimado: ~${h}h ${m}m`,
-    "summary.paid": (h) => `Has pagado: ${h}h`,
-    "summary.over_budget":
-      "El recorrido estimado supera el tiempo que has pagado.",
-    "summary.pois.title": "POIs en tu ruta",
-    "summary.pois.min": "Debes incluir al menos un punto",
+    "summary.stat.time": "Tiempo disponible",
+    "summary.stat.dist": "Distancia",
+    "summary.pois.title": "Puntos de interés",
     "summary.accept": "Acepta y empieza",
     "summary.back": "Volver",
 
@@ -427,26 +409,17 @@ const dict = {
     "status.caution.long": "Wind or swell on the edge — take care",
     "status.no-go.long": "Adverse conditions — not recommended today",
 
-    // ── Phase 2: modal ───────────────────────────────────────────────────────
-    "modal.title": "Before you start",
-    "modal.check.jacket": "I'm wearing a life jacket",
-    "modal.check.weather": "I've checked the weather forecast",
-    "modal.check.return": "I'll be back before time runs out",
-    "modal.code.label": "Code received at the base",
-    "modal.code.placeholder": "sablava030528",
-    "modal.code.invalid": "Invalid or expired code",
-    "modal.start": "Start",
-    "modal.cancel": "Cancel",
+    // ── Phase 2: code entry screen ────────────────────────────────────────────
+    "code.title": "Enter the code received at the base",
+    "code.continue": "Continue",
+    "code.invalid": "Invalid or expired code",
+    "code.back": "Back",
 
     // ── Phase 2: route summary ───────────────────────────────────────────────
     "summary.title": "Your route",
-    "summary.distance": (km) => `Distance: ${km} km`,
-    "summary.estimated": (h, m) => `Estimated time: ~${h}h ${m}m`,
-    "summary.paid": (h) => `You've paid for: ${h}h`,
-    "summary.over_budget":
-      "Estimated route exceeds your paid duration.",
-    "summary.pois.title": "Stops on your route",
-    "summary.pois.min": "You must include at least one stop",
+    "summary.stat.time": "Time available",
+    "summary.stat.dist": "Distance",
+    "summary.pois.title": "Points of interest",
     "summary.accept": "Accept & start",
     "summary.back": "Back",
 
@@ -581,26 +554,17 @@ const dict = {
     "status.caution.long": "Vent ou houle limite — prudence",
     "status.no-go.long": "Conditions adverses — déconseillé",
 
-    // ── Phase 2: modal ───────────────────────────────────────────────────────
-    "modal.title": "Avant de commencer",
-    "modal.check.jacket": "Je porte un gilet de sauvetage",
-    "modal.check.weather": "J'ai consulté les prévisions météo",
-    "modal.check.return": "Je rentrerai avant la fin du temps",
-    "modal.code.label": "Code reçu à la base",
-    "modal.code.placeholder": "sablava030528",
-    "modal.code.invalid": "Code invalide ou expiré",
-    "modal.start": "Démarrer",
-    "modal.cancel": "Annuler",
+    // ── Phase 2: code entry screen ────────────────────────────────────────────
+    "code.title": "Entrez le code reçu à la base",
+    "code.continue": "Continuer",
+    "code.invalid": "Code invalide ou expiré",
+    "code.back": "Retour",
 
     // ── Phase 2: route summary ───────────────────────────────────────────────
     "summary.title": "Ton itinéraire",
-    "summary.distance": (km) => `Distance : ${km} km`,
-    "summary.estimated": (h, m) => `Temps estimé : ~${h}h ${m}m`,
-    "summary.paid": (h) => `Tu as payé : ${h}h`,
-    "summary.over_budget":
-      "L'itinéraire estimé dépasse la durée payée.",
-    "summary.pois.title": "Étapes de ton itinéraire",
-    "summary.pois.min": "Tu dois inclure au moins une étape",
+    "summary.stat.time": "Temps disponible",
+    "summary.stat.dist": "Distance",
+    "summary.pois.title": "Points d'intérêt",
     "summary.accept": "Accepter et démarrer",
     "summary.back": "Retour",
 

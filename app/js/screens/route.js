@@ -16,7 +16,6 @@
 import { findRoute } from "../data.js";
 import { t, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
-import { openStartModal } from "./start-modal.js";
 
 const POI_COUNT_BY_DURATION = { "1h": 5, "1h30": 8, "2h": 8, "3h": 9 };
 const DURATIONS = ["1h", "1h30", "2h", "3h"];
@@ -370,9 +369,9 @@ export function renderRouteScreen(host, routeId) {
     });
   });
 
-  // --- CTA: open safety + code modal (Phase 2) ----------------------------
+  // --- CTA: navigate to code entry screen (Phase 2) -----------------------
   screen.querySelector("[data-action=start]").addEventListener("click", () => {
-    openStartModal({ routeId, durationId });
+    navigate(`/route/${routeId}/code`);
   });
 
   requestAnimationFrame(() => {

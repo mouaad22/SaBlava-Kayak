@@ -27,6 +27,7 @@ import { haversineM } from "../nav/geo.js";
 import { speak, chime } from "../nav/audio.js";
 import { acquire, release, attachVisibilityHandler } from "../nav/wake-lock.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE, OVERTIME_WARNINGS_MIN, NAV_ARRIVAL_THRESHOLD_M, KAYAK_SPEED_KMH } from "../config.js";
+import { addRouteTrack } from "./map.js";
 
 const TABS = { MAP: "map", DATA: "data" };
 
@@ -208,18 +209,22 @@ export function renderNavigateScreen(host, routeId) {
     mapInstance.on("load", () => {
       mapReady = true;
 
-      // Route line.
-      const coords = [MARINA.coords, ...activePois.map((p) => p.coords), MARINA.coords];
-      mapInstance.addSource("nav-route", {
-        type: "geojson",
-        data: { type: "Feature", geometry: { type: "LineString", coordinates: coords } },
-      });
-      mapInstance.addLayer({
-        id: "nav-route-line",
-        type: "line",
-        source: "nav-route",
-        paint: { "line-color": "#1B6B8A", "line-width": 3, "line-opacity": 0.8, "line-dasharray": [2, 1.5] },
-      });
+      // Route line — GPX track when available, straight segments as fallback.
+      if (route.track && route.track.length > 1) {
+        addRouteTrack(mapInstance, route);
+      } else {
+        const coords = [MARINA.coords, ...activePois.map((p) => p.coords), MARINA.coords];
+        mapInstance.addSource("nav-route", {
+          type: "geojson",
+          data: { type: "Feature", geometry: { type: "LineString", coordinates: coords } },
+        });
+        mapInstance.addLayer({
+          id: "nav-route-line",
+          type: "line",
+          source: "nav-route",
+          paint: { "line-color": "#1B6B8A", "line-width": 3, "line-opacity": 0.8, "line-dasharray": [2, 1.5] },
+        });
+      }
 
       // POI markers.
       activePois.forEach((poi, i) => {

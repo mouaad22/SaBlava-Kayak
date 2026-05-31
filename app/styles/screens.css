@@ -272,6 +272,81 @@
   background: var(--color-primary-dark);
 }
 
+/* ============== SCREEN 1.5 — WEATHER ============== */
+
+.weather-screen {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  font-synthesis: none;
+  padding-top: max(env(safe-area-inset-top), 24px);
+  padding-bottom: max(env(safe-area-inset-bottom), 24px);
+}
+
+.weather-screen__header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 8px 24px;
+  gap: 12px;
+}
+
+.weather-screen__location {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f2f5f0;
+  border-radius: var(--radius-pill);
+  padding: 5px 11px;
+}
+
+.weather-screen__location span {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: #3d6b4f;
+}
+
+.weather-screen__tabs {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  justify-content: flex-start !important;
+}
+
+.weather-screen__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0 24px;
+}
+.weather-screen__body::-webkit-scrollbar { display: none; }
+
+.weather-screen__panel {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  padding: 8px 0 24px;
+}
+
+.weather-screen .wind-rose {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.weather-screen__footer {
+  flex-shrink: 0;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ============== SCREEN 2 — RUTES (bottom-sheet layout) ============== */
 
 /* Screen container — overflow:clip so the bottom sheet can extend to the
@@ -295,7 +370,7 @@
   scrollbar-width: none;
   padding-top: max(env(safe-area-inset-top), 24px);
   padding-inline: 24px;
-  padding-bottom: calc(50vh + 48px);
+  padding-bottom: max(env(safe-area-inset-bottom), 48px);
   display: flex;
   flex-direction: column;
   align-items: center;

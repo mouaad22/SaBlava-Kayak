@@ -73,7 +73,7 @@ export function renderLanguageScreen(host) {
 
   screen
     .querySelector("[data-action=continue]")
-    .addEventListener("click", () => navigate("/routes"));
+    .addEventListener("click", () => navigate("/weather"));
 
   host.appendChild(screen);
   requestAnimationFrame(() => screen.classList.add("is-active"));

@@ -1,19 +1,10 @@
 // screens/navigate.js — Full-screen GPS navigation screen.
 //
 // Layout:
-//   ┌─────────────────────────────────────┐
-//   │ Status bar: ⏱ time | POI n/N | dist │  ← always visible
-//   ├─────────────────────────────────────┤
-//   │                                     │
-//   │      [Mapa tab]  OR  [Dades tab]    │
-//   │                                     │
-//   ├─────────────────────────────────────┤
-//   │   [ Mapa ]  [ Dades ]  [ × Acabar ] │  ← bottom tab bar
-//   └─────────────────────────────────────┘
-//
-// Mapa tab: live Mapbox + live position marker.
-// Dades tab: 96pt countdown | POI name + distance | base distance.
-//            Mapbox canvas is display:none while Dades is active (saves GPU).
+//   - Map fills full screen (z-index 0)
+//   - Floating header at top (z-index 4): back/end btn | Punt N · POI name
+//   - Dades overlay (z-index 2): shown over map when Dades tab active
+//   - Bottom panel (z-index 3): Mapa/Dades toggle | stats | timeline | kayak
 //
 // A single rAF loop ticks ~1/second; threshold events fire exactly once each.
 
@@ -26,8 +17,9 @@ import {
 import { haversineM } from "../nav/geo.js";
 import { speak, chime } from "../nav/audio.js";
 import { acquire, release, attachVisibilityHandler } from "../nav/wake-lock.js";
-import { MAPBOX_TOKEN, MAPBOX_STYLE, OVERTIME_WARNINGS_MIN, NAV_ARRIVAL_THRESHOLD_M, KAYAK_SPEED_KMH } from "../config.js";
+import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, OVERTIME_WARNINGS_MIN, NAV_ARRIVAL_THRESHOLD_M, KAYAK_SPEED_KMH } from "../config.js";
 import { addRouteTrack } from "./map.js";
+import { mountNavTweakpane } from "../dev/nav-tweakpane.js";
 
 const TABS = { MAP: "map", DATA: "data" };
 
@@ -56,6 +48,7 @@ export function renderNavigateScreen(host, routeId) {
   // ── Mutable state ─────────────────────────────────────────────────────────
   let activeTab        = TABS.MAP;
   let activePOIIdx     = 0;        // index into activePois
+  let isSatellite      = false;
   let userCoords       = null;     // [lng, lat] | null
   let mapInstance      = null;
   let mapReady         = false;
@@ -71,39 +64,86 @@ export function renderNavigateScreen(host, routeId) {
   screen.setAttribute("aria-label", t("nav.tab.map"));
 
   screen.innerHTML = `
-    <div class="navigate-screen__status-bar">
-      <span class="nav-status-time" aria-live="polite">--:--</span>
-      <span class="nav-status-poi"></span>
-      <span class="nav-status-dist"></span>
-    </div>
+    <div class="nav-float-header">
+      <button class="nav-map-btn nav-end-trigger" type="button" aria-label="${t("nav.end")}">
+        <img src="./assets/icons/regular/CaretLeft.svg" width="20" height="20" alt="" aria-hidden="true" />
+      </button>
 
-    <div class="navigate-screen__content">
-      <div class="navigate-map-view" id="nav-map"></div>
-      <div class="navigate-dades-view" hidden>
-        <div class="dades-block dades-block--time">
-          <span class="dades-time">--</span>
-          <span class="dades-remaining">${t("nav.dades.remaining")}</span>
-        </div>
-        <div class="dades-block dades-block--poi">
-          <span class="dades-poi-label"></span>
-          <span class="dades-poi-dist">--</span>
-        </div>
-        <div class="dades-block dades-block--base">
-          <span class="dades-base-label"></span>
-        </div>
+      <div class="nav-float-header__poi">
+        <span class="nav-float-poi-label"></span>
+        <span class="nav-float-poi-name"></span>
+      </div>
+
+      <div class="nav-map-btn-group">
+        <button class="nav-map-btn nav-layer-btn" type="button" aria-label="${t("map.toggleLayer")}" aria-pressed="false">
+          <img src="./assets/icons/regular/Stack.svg" width="20" height="20" alt="" aria-hidden="true" />
+        </button>
+        <button class="nav-map-btn nav-recenter-btn" type="button" aria-label="Recentrar">
+          <img src="./assets/icons/regular/NavigationArrow.svg" width="20" height="20" alt="" aria-hidden="true" />
+        </button>
+        <button class="nav-map-btn nav-sos-btn" type="button" aria-label="SOS">SOS</button>
       </div>
     </div>
 
-    <div class="navigate-screen__tabbar">
-      <button class="nav-tab-btn is-active" data-tab="${TABS.MAP}" aria-pressed="true">
-        ${t("nav.tab.map")}
-      </button>
-      <button class="nav-tab-btn" data-tab="${TABS.DATA}" aria-pressed="false">
-        ${t("nav.tab.data")}
-      </button>
-      <button class="nav-tab-btn nav-tab-btn--end" data-action="end">
-        ${t("nav.end")}
-      </button>
+    <div class="navigate-map-view" id="nav-map"></div>
+
+    <div class="navigate-dades-view" hidden>
+      <div class="dades-block dades-block--time">
+        <span class="dades-time">--</span>
+        <span class="dades-remaining">${t("nav.dades.remaining")}</span>
+      </div>
+      <div class="dades-block dades-block--poi">
+        <span class="dades-poi-label"></span>
+        <span class="dades-poi-dist">--</span>
+      </div>
+      <div class="dades-block dades-block--base">
+        <span class="dades-base-label"></span>
+      </div>
+    </div>
+
+    <div class="nav-bottom">
+      <div class="nav-tab-toggle">
+        <button class="nav-tab-btn is-active" data-tab="${TABS.MAP}" type="button" aria-pressed="true">
+          ${t("nav.tab.map")}
+        </button>
+        <button class="nav-tab-btn" data-tab="${TABS.DATA}" type="button" aria-pressed="false">
+          ${t("nav.tab.data")}
+        </button>
+      </div>
+
+      <div class="navigate-screen__panel">
+        <div class="nav-panel-map-content">
+          <div class="nav-stats-row">
+            <div class="nav-stat">
+              <span class="nav-stat__label">${t("nav.stat.time")}</span>
+              <span class="nav-stat__value nav-status-time" aria-live="polite">--</span>
+            </div>
+            <div class="nav-stat">
+              <span class="nav-stat__label">${t("nav.stat.next")}</span>
+              <span class="nav-stat__value nav-status-dist">--</span>
+            </div>
+            <div class="nav-stat">
+              <span class="nav-stat__label">${t("nav.stat.progress")}</span>
+              <div class="nav-stat__value-row">
+                <span class="nav-stat__value nav-status-progress">0%</span>
+                <span class="nav-direction-badge"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nav-timeline">
+            <div class="nav-timeline__scroll">
+              <div class="nav-timeline__track"></div>
+              <div class="nav-timeline__needle"></div>
+            </div>
+            <div class="nav-timeline__poi-label"></div>
+          </div>
+
+          <div class="nav-kayak">
+            <img src="./assets/illustrations/kayak/kayak.jpg" alt="" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="navigate-screen__overtime-banner" hidden></div>
@@ -123,32 +163,55 @@ export function renderNavigateScreen(host, routeId) {
 
   host.appendChild(screen);
 
+  // ── Timeline ticks (decorative ruler) ─────────────────────────────────────
   // ── Element refs ──────────────────────────────────────────────────────────
-  const statusTime    = screen.querySelector(".nav-status-time");
-  const statusPoi     = screen.querySelector(".nav-status-poi");
-  const statusDist    = screen.querySelector(".nav-status-dist");
-  const mapView       = screen.querySelector(".navigate-map-view");
-  const dadesView     = screen.querySelector(".navigate-dades-view");
-  const dadesTime     = screen.querySelector(".dades-time");
-  const dadesRemaining = screen.querySelector(".dades-remaining");
-  const dadesPoi      = screen.querySelector(".dades-poi-label");
-  const dadesDist     = screen.querySelector(".dades-poi-dist");
-  const dadesBase     = screen.querySelector(".dades-base-label");
-  const overtimeBanner = screen.querySelector(".navigate-screen__overtime-banner");
-  const gpsBanner     = screen.querySelector(".navigate-screen__gps-banner");
-  const endDialog     = screen.querySelector(".nav-end-dialog");
-  const tabBtns       = screen.querySelectorAll(".nav-tab-btn[data-tab]");
+  const floatPoiLabel    = screen.querySelector(".nav-float-poi-label");
+  const floatPoiName     = screen.querySelector(".nav-float-poi-name");
+  const layerBtn         = screen.querySelector(".nav-layer-btn");
+  const recenterBtn      = screen.querySelector(".nav-recenter-btn");
+  const mapView          = screen.querySelector(".navigate-map-view");
+  const dadesView        = screen.querySelector(".navigate-dades-view");
+  const panelMapContent  = screen.querySelector(".nav-panel-map-content");
+  const statusTime       = screen.querySelector(".nav-status-time");
+  const statusDist       = screen.querySelector(".nav-status-dist");
+  const statusProgress   = screen.querySelector(".nav-status-progress");
+  const dirBadge         = screen.querySelector(".nav-direction-badge");
+  const timelineTrack    = screen.querySelector(".nav-timeline__track");
+  const timelinePoiLabel = screen.querySelector(".nav-timeline__poi-label");
+  const dadesTime        = screen.querySelector(".dades-time");
+  const dadesRemaining   = screen.querySelector(".dades-remaining");
+  const dadesPoi         = screen.querySelector(".dades-poi-label");
+  const dadesDist        = screen.querySelector(".dades-poi-dist");
+  const dadesBase        = screen.querySelector(".dades-base-label");
+  const overtimeBanner   = screen.querySelector(".navigate-screen__overtime-banner");
+  const gpsBanner        = screen.querySelector(".navigate-screen__gps-banner");
+  const endDialog        = screen.querySelector(".nav-end-dialog");
+  const tabBtns          = screen.querySelectorAll(".nav-tab-btn");
 
-  // ── Tab switching ─────────────────────────────────────────────────────────
-  screen.querySelector(".navigate-screen__tabbar").addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-tab]");
-    if (btn) {
-      switchTab(btn.dataset.tab);
-      return;
-    }
-    if (e.target.closest("[data-action=end]")) {
-      endDialog.showModal?.() ?? (endDialog.open = true);
-    }
+  // ── End-trip trigger (back button) ────────────────────────────────────────
+  screen.querySelector(".nav-end-trigger").addEventListener("click", () => {
+    endDialog.showModal?.() ?? (endDialog.open = true);
+  });
+
+  // ── Layer toggle ──────────────────────────────────────────────────────────
+  layerBtn.addEventListener("click", () => {
+    if (!mapInstance) return;
+    isSatellite = !isSatellite;
+    layerBtn.innerHTML = isSatellite
+      ? `<img src="./assets/icons/regular/Stack-filled.svg" width="20" height="20" alt="" aria-hidden="true" />`
+      : `<img src="./assets/icons/regular/Stack.svg" width="20" height="20" alt="" aria-hidden="true" />`;
+    layerBtn.setAttribute("aria-pressed", String(isSatellite));
+    mapInstance.setStyle(isSatellite ? MAPBOX_SATELLITE_STYLE : MAPBOX_STYLE);
+  });
+
+  // ── Recenter button ───────────────────────────────────────────────────────
+  recenterBtn.addEventListener("click", () => {
+    if (userCoords && mapInstance) mapInstance.flyTo({ center: userCoords, zoom: 15, duration: 600 });
+  });
+
+  // ── SOS button ────────────────────────────────────────────────────────────
+  screen.querySelector(".nav-sos-btn").addEventListener("click", () => {
+    window.location.href = "tel:112";
   });
 
   endDialog.querySelector(".nav-end-dialog__cancel").addEventListener("click", () => {
@@ -159,6 +222,63 @@ export function renderNavigateScreen(host, routeId) {
     navigate(`/route/${routeId}`);
   });
 
+  // ── Timeline — build once based on real route distance ───────────────────
+  // Each vertical line = 100 m. POI lines are taller and darker.
+  // The track translates so the current position always aligns with the needle.
+  const LINE_STEP = 50; // px per 100 m segment (line width 2px + gap 48px)
+
+  function initTimeline() {
+    const totalDistM = (route.distanceKm ?? 4) * 1000;
+    const tickCount  = Math.ceil(totalDistM / 100);
+
+    // Cumulative distances from marina to each active POI, in metres.
+    const waypoints  = [MARINA, ...activePois];
+    const poiTicks   = new Set();
+    let cum = 0;
+    for (let i = 1; i < waypoints.length; i++) {
+      cum += haversineM(waypoints[i - 1].coords, waypoints[i].coords);
+      poiTicks.add(Math.round(cum / 100));
+    }
+
+    for (let i = 0; i < tickCount; i++) {
+      const line = document.createElement("div");
+      line.className = poiTicks.has(i)
+        ? "nav-timeline__line nav-timeline__line--poi"
+        : "nav-timeline__line";
+      timelineTrack.appendChild(line);
+    }
+  }
+  initTimeline();
+
+  function updateTimeline() {
+    // Current distance along route from GPS + POI progress.
+    const waypoints = [MARINA, ...activePois];
+    let distM = 0;
+    for (let i = 1; i <= activePOIIdx && i < waypoints.length; i++) {
+      distM += haversineM(waypoints[i - 1].coords, waypoints[i].coords);
+    }
+    if (userCoords && activePOIIdx < activePois.length) {
+      const legTotal  = haversineM(waypoints[activePOIIdx].coords, waypoints[activePOIIdx + 1].coords);
+      const toNext    = haversineM(userCoords, activePois[activePOIIdx].coords);
+      distM += Math.max(0, legTotal - toNext);
+    }
+
+    const currentTick = Math.round(distM / 100);
+    const needleX = timelineTrack.parentElement.offsetWidth / 2;
+    timelineTrack.style.transform = `translateX(${needleX - currentTick * LINE_STEP}px)`;
+
+    const poi = activePois[activePOIIdx];
+    timelinePoiLabel.textContent = poi
+      ? t("nav.timeline.poi", activePOIIdx + 1, poi.name[lang] ?? poi.name.ca)
+      : t("nav.timeline.base");
+  }
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  screen.querySelector(".nav-tab-toggle").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-tab]");
+    if (btn) switchTab(btn.dataset.tab);
+  });
+
   function switchTab(tab) {
     activeTab = tab;
     tabBtns.forEach((b) => {
@@ -166,9 +286,11 @@ export function renderNavigateScreen(host, routeId) {
       b.setAttribute("aria-pressed", b.dataset.tab === tab ? "true" : "false");
     });
     const isMap = tab === TABS.MAP;
-    mapView.hidden   = !isMap;
+    // Hide map canvas when showing dades (saves GPU).
+    mapView.style.display = isMap ? "" : "none";
+    panelMapContent.hidden = !isMap;
     dadesView.hidden = isMap;
-    dadesRemaining.textContent = t("nav.dades.remaining");
+    if (!isMap) dadesRemaining.textContent = t("nav.dades.remaining");
   }
 
   // ── GPS watch ─────────────────────────────────────────────────────────────
@@ -193,6 +315,9 @@ export function renderNavigateScreen(host, routeId) {
     gpsBanner.hidden = false;
   }
 
+  // ── Dev panel ─────────────────────────────────────────────────────────────
+  if (!window.mapboxgl || !MAPBOX_TOKEN) mountNavTweakpane(null);
+
   // ── Mapbox map ────────────────────────────────────────────────────────────
   if (window.mapboxgl && MAPBOX_TOKEN) {
     mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -206,11 +331,14 @@ export function renderNavigateScreen(host, routeId) {
       attributionControl: false,
     });
 
-    mapInstance.on("load", () => {
-      mapReady = true;
+    // Re-add route on every style load (covers initial load + satellite toggle).
+    // When the user removes POIs, draw straight segments so the line doesn't
+    // pass through excluded locations.
+    const allPoisIncluded = !session.includedPoiIndices ||
+      session.includedPoiIndices.length === route.pois.length;
 
-      // Route line — GPX track when available, straight segments as fallback.
-      if (route.track && route.track.length > 1) {
+    mapInstance.on("style.load", () => {
+      if (route.track && route.track.length > 1 && allPoisIncluded) {
         addRouteTrack(mapInstance, route);
       } else {
         const coords = [MARINA.coords, ...activePois.map((p) => p.coords), MARINA.coords];
@@ -225,8 +353,12 @@ export function renderNavigateScreen(host, routeId) {
           paint: { "line-color": "#1B6B8A", "line-width": 3, "line-opacity": 0.8, "line-dasharray": [2, 1.5] },
         });
       }
+    });
 
-      // POI markers.
+    mapInstance.on("load", () => {
+      mapReady = true;
+
+      // POI markers (DOM-based, survive style changes — add once).
       activePois.forEach((poi, i) => {
         const el = document.createElement("div");
         el.className = "nav-poi-marker";
@@ -242,17 +374,9 @@ export function renderNavigateScreen(host, routeId) {
         .setLngLat(userCoords ?? MARINA.coords)
         .addTo(mapInstance);
 
-      // Recenter button.
-      const recenterEl = document.createElement("button");
-      recenterEl.className = "nav-recenter-btn";
-      recenterEl.innerHTML = `<img src="./assets/icons/regular/NavigationArrow.svg" width="20" height="20" alt="Recentrar" />`;
-      recenterEl.addEventListener("click", () => {
-        if (userCoords) mapInstance.flyTo({ center: userCoords, zoom: 15, duration: 600 });
-      });
-      mapView.appendChild(recenterEl);
-
       if (userCoords) mapInstance.flyTo({ center: userCoords, zoom: 15 });
       highlightActivePOI();
+      mountNavTweakpane(mapInstance);
     });
   }
 
@@ -294,29 +418,47 @@ export function renderNavigateScreen(host, routeId) {
   }
 
   function updateUI() {
-    const remMs   = timeRemainingMs();
-    const isOver  = remMs < 0;
-    const absMs   = Math.abs(remMs);
+    const remMs    = timeRemainingMs();
+    const isOver   = remMs < 0;
+    const absMs    = Math.abs(remMs);
     const totalSec = Math.floor(absMs / 1000);
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const timeStr = h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
     const displayStr = isOver ? `+${timeStr}` : timeStr;
 
-    // Status bar.
+    // Time stat.
     statusTime.textContent = displayStr;
     statusTime.classList.toggle("is-overtime", isOver);
 
     const poi = activePois[activePOIIdx];
+
+    // Floating header: current target POI.
     if (poi) {
-      statusPoi.textContent = `POI ${activePOIIdx + 1}/${activePois.length}`;
-      const dist = userCoords ? Math.round(haversineM(userCoords, poi.coords)) : null;
-      statusDist.textContent = dist !== null ? `${dist} m` : "";
+      floatPoiLabel.textContent = t("nav.float.poi", activePOIIdx + 1);
+      floatPoiName.textContent  = poi.name[lang] ?? poi.name.ca;
     } else {
-      statusPoi.textContent = `✓ ${activePois.length}/${activePois.length}`;
-      const baseDist = userCoords ? Math.round(haversineM(userCoords, MARINA.coords)) : null;
-      statusDist.textContent = baseDist !== null ? `${baseDist} m` : "";
+      floatPoiLabel.textContent = t("nav.float.poi.done");
+      floatPoiName.textContent  = "";
     }
+
+    // Next-point distance stat.
+    if (poi) {
+      const dist = userCoords ? Math.round(haversineM(userCoords, poi.coords)) : null;
+      statusDist.textContent = dist !== null ? `${dist} m` : "--";
+    } else {
+      const baseDist = userCoords ? Math.round(haversineM(userCoords, MARINA.coords)) : null;
+      statusDist.textContent = baseDist !== null ? `${baseDist} m` : "--";
+    }
+
+    // Progress stat + direction badge.
+    const progressPct = Math.round((activePOIIdx / activePois.length) * 100);
+    statusProgress.textContent = `${progressPct}%`;
+    const isReturn = activePOIIdx >= Math.ceil(activePois.length / 2);
+    dirBadge.textContent = isReturn ? t("nav.direction.back") : t("nav.direction.out");
+
+    // Timeline.
+    updateTimeline();
 
     // Overtime banner.
     if (isOver) {
@@ -374,7 +516,6 @@ export function renderNavigateScreen(host, routeId) {
     if (threshMin === 0) chime();
     speak(voiceKey, lang);
 
-    // Flash a banner overlay for 4 seconds.
     const banner = document.createElement("div");
     banner.className = "nav-threshold-banner";
     banner.textContent = t(voiceKey);
@@ -394,7 +535,6 @@ export function renderNavigateScreen(host, routeId) {
   requestAnimationFrame(() => {
     screen.classList.add("is-active");
     rafId = requestAnimationFrame(tick);
-    // Immediately render UI without waiting for first 1s tick.
     updateUI();
   });
 

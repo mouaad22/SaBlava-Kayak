@@ -2072,81 +2072,115 @@
 
 /* ============== NAVIGATE SCREEN ============== */
 
-/* .screen provides: position:absolute inset:0; display:flex; flex-direction:column */
 .navigate-screen {
   background: #b1e2df; /* teal placeholder while map tiles load */
   overflow: hidden;
   font-synthesis: none;
 }
 
-/* ── Status bar ── */
-.navigate-screen__status-bar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: max(env(safe-area-inset-top), 12px) 16px 10px;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+/* ── Floating header (over map) ── */
+.nav-float-header {
+  position: absolute;
+  top: max(env(safe-area-inset-top), 16px);
+  left: 16px;
+  right: 16px;
   z-index: 4;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  pointer-events: none;
+}
+
+/* Shared squircle button — matches poi-screen__back and poi-screen__map-toggle exactly */
+.nav-map-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 2px solid #e2e6dd;
+  border-radius: 16px;
+  corner-shape: var(--corner-shape);
+  padding: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Right-side vertical button stack */
+.nav-map-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+/* SOS button — danger colors from Paper */
+.nav-sos-btn {
+  background: #f0bcb4;
+  border-color: #7d0001;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #7d0001;
+  letter-spacing: 0.04em;
+}
+
+.nav-float-header__poi {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  min-width: 0;
+}
+
+.nav-float-poi-label {
+  font-family: var(--font-body);
+  font-size: 11px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: rgba(26, 26, 26, 0.55);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.nav-status-time {
-  font-variant-numeric: tabular-nums;
-  min-width: 48px;
-}
-
-.nav-status-time.is-overtime {
-  color: var(--color-emergency);
-}
-
-.nav-status-poi {
-  flex: 1;
+.nav-float-poi-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  color: #1a1a1a;
   text-align: center;
-  color: var(--color-text-secondary);
-  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-.nav-status-dist {
-  min-width: 48px;
-  text-align: right;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-/* ── Map / data content area ── */
-.navigate-screen__content {
-  flex: 1;
-  min-height: 0;
-  position: relative;
-}
-
+/* ── Map (fills full screen) ── */
 .navigate-map-view {
   position: absolute;
   inset: 0;
+  z-index: 0;
 }
 
 .navigate-map-view .mapboxgl-canvas {
   outline: none;
 }
 
-/* ── Dades (data) tab view ── */
+/* ── Dades overlay (over map, under panel) ── */
 .navigate-dades-view {
   position: absolute;
   inset: 0;
+  z-index: 2;
   background: #e8ece4;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 32px;
-  padding: 32px 24px;
+  padding: 32px 24px 280px;
   box-sizing: border-box;
 }
 
@@ -2207,62 +2241,207 @@
   text-align: center;
 }
 
-/* ── Bottom tab bar ── */
-.navigate-screen__tabbar {
-  flex-shrink: 0;
+/* ── Bottom wrapper: toggle floats above the white panel ── */
+.nav-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px max(env(safe-area-inset-bottom), 16px);
-  background: rgba(255, 255, 255, 0.96);
+  gap: 10px;
+  pointer-events: none;
+}
+
+/* ── Mapa / Dades pill toggle (sits above the white panel) ── */
+.nav-tab-toggle {
+  display: flex;
+  background: rgba(240, 240, 240, 0.96);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border-top: 1px solid var(--color-border);
-  z-index: 4;
+  border-radius: 50px;
+  padding: 3px;
+  pointer-events: auto;
+}
+
+/* ── White bottom panel ── */
+.navigate-screen__panel {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
+  pointer-events: auto;
 }
 
 .nav-tab-btn {
-  flex: 1;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-control);
-  corner-shape: var(--corner-shape);
+  height: 36px;
+  padding: 0 28px;
+  border: none;
+  border-radius: 50px;
   background: transparent;
   font-family: var(--font-body);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: background 160ms var(--ease-entrance),
     color 160ms var(--ease-entrance),
-    border-color 160ms var(--ease-entrance);
+    box-shadow 160ms var(--ease-entrance);
 }
 
 .nav-tab-btn.is-active {
-  background: var(--color-surface-tinted);
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  background: #ffffff;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
-.nav-tab-btn--end {
-  flex: 0 0 auto;
-  padding: 0 16px;
+/* ── Stats row ── */
+.nav-stats-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 14px 20px 0;
+}
+
+.nav-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nav-stat + .nav-stat {
+  padding-left: 12px;
+  margin-left: 12px;
+}
+
+.nav-stat__label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.nav-stat__value {
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.nav-stat__value.is-overtime {
   color: var(--color-emergency);
-  border-color: transparent;
-  background: #fef0ef;
 }
 
-.nav-tab-btn--end:active {
-  background: #fdd9d7;
+.nav-stat__value-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.nav-direction-badge {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: #f0f0f0;
+  border-radius: 50px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+/* ── Timeline — scrolling distance ruler ── */
+.nav-timeline {
+  padding: 28px 0 0;
+}
+
+.nav-timeline__scroll {
+  position: relative;
+  height: 28px;
+  overflow: hidden;
+}
+
+/* The track is wider than the screen and translates in JS.
+   No padding-left — JS sets the initial offset so line 0 aligns with the needle. */
+.nav-timeline__track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 48px;
+  height: 100%;
+  will-change: transform;
+}
+
+/* Regular 100 m tick */
+.nav-timeline__line {
+  flex-shrink: 0;
+  width: 1.5px;
+  height: 8px;
+  background: #d0d0d0;
+}
+
+/* POI tick — taller and darker */
+.nav-timeline__line--poi {
+  height: 22px;
+  width: 2px;
+  background: #5a5a5a;
+}
+
+/* Fixed red needle — always centered, shows current position */
+.nav-timeline__needle {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-emergency);
+  border-radius: 1px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* POI name below the needle */
+.nav-timeline__poi-label {
+  padding: 5px 20px 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Kayak illustration ── */
+.nav-kayak {
+  width: 100%;
+  height: 72px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.nav-kayak img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 45%;
 }
 
 /* ── Overtime banner ── */
 .navigate-screen__overtime-banner {
   position: absolute;
-  top: calc(max(env(safe-area-inset-top), 12px) + 42px + 8px);
+  top: max(calc(env(safe-area-inset-top) + 72px), 88px);
   left: 12px;
   right: 12px;
   z-index: 5;
@@ -2281,7 +2460,7 @@
 /* ── GPS-denied banner ── */
 .navigate-screen__gps-banner {
   position: absolute;
-  bottom: 120px;
+  bottom: 290px;
   left: 16px;
   right: 16px;
   z-index: 5;
@@ -2372,30 +2551,7 @@
   100% { transform: scale(1);   opacity: 0; }
 }
 
-/* ── Recenter button ── */
-.nav-recenter-btn {
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(10, 30, 50, 0.2);
-  cursor: pointer;
-  color: var(--color-primary-dark);
-  z-index: 3;
-}
-
-.nav-recenter-btn:active {
-  background: rgba(235, 244, 248, 0.96);
-}
+/* .nav-recenter-btn is now a .nav-map-btn inside .nav-float-header — no separate positioning needed */
 
 /* ── End-session confirm dialog ── */
 .nav-end-dialog {

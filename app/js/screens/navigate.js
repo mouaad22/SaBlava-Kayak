@@ -230,15 +230,17 @@ export function renderNavigateScreen(host, routeId) {
     const totalDistM = (route.distanceKm ?? 4) * 1000;
     const tickCount  = Math.ceil(totalDistM / METERS_PER_TICK);
 
-    // Cumulative distances from marina to each active POI, in metres.
-    const waypoints = [MARINA, ...activePois];
-    const poiTicks  = new Map(); // tickIndex → { n, name }
+    // First active POI is anchored at tick 0 (under the needle at trip start).
+    // Subsequent POIs placed at their cumulative distances from the first.
+    const poiTicks = new Map(); // tickIndex → { n, name }
+    if (activePois.length > 0) {
+      poiTicks.set(0, { n: 1, name: activePois[0].name[lang] ?? activePois[0].name.ca });
+    }
     let cum = 0;
-    for (let i = 1; i < waypoints.length; i++) {
-      cum += haversineM(waypoints[i - 1].coords, waypoints[i].coords);
+    for (let i = 1; i < activePois.length; i++) {
+      cum += haversineM(activePois[i - 1].coords, activePois[i].coords);
       const tidx = Math.round(cum / METERS_PER_TICK);
-      const poi  = activePois[i - 1];
-      poiTicks.set(tidx, { n: i, name: poi.name[lang] ?? poi.name.ca });
+      poiTicks.set(tidx, { n: i + 1, name: activePois[i].name[lang] ?? activePois[i].name.ca });
     }
 
     for (let i = 0; i < tickCount; i++) {
@@ -265,14 +267,16 @@ export function renderNavigateScreen(host, routeId) {
   initTimeline();
 
   function updateTimeline() {
-    const waypoints = [MARINA, ...activePois];
+    // Distance is measured from activePois[0] (tick 0).
+    // The marina → first POI leg is not reflected; needle stays at tick 0
+    // until the user reaches the first POI and activePOIIdx advances.
     let distM = 0;
-    for (let i = 1; i <= activePOIIdx && i < waypoints.length; i++) {
-      distM += haversineM(waypoints[i - 1].coords, waypoints[i].coords);
+    for (let i = 1; i <= activePOIIdx && i < activePois.length; i++) {
+      distM += haversineM(activePois[i - 1].coords, activePois[i].coords);
     }
-    if (userCoords && activePOIIdx < activePois.length) {
-      const legTotal  = haversineM(waypoints[activePOIIdx].coords, waypoints[activePOIIdx + 1].coords);
-      const toNext    = haversineM(userCoords, activePois[activePOIIdx].coords);
+    if (userCoords && activePOIIdx > 0 && activePOIIdx < activePois.length) {
+      const legTotal = haversineM(activePois[activePOIIdx - 1].coords, activePois[activePOIIdx].coords);
+      const toNext   = haversineM(userCoords, activePois[activePOIIdx].coords);
       distM += Math.max(0, legTotal - toNext);
     }
 

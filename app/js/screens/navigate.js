@@ -136,7 +136,6 @@ export function renderNavigateScreen(host, routeId) {
               <div class="nav-timeline__track"></div>
               <div class="nav-timeline__needle"></div>
             </div>
-            <div class="nav-timeline__poi-label"></div>
           </div>
 
           <div class="nav-kayak">
@@ -177,7 +176,6 @@ export function renderNavigateScreen(host, routeId) {
   const statusProgress   = screen.querySelector(".nav-status-progress");
   const dirBadge         = screen.querySelector(".nav-direction-badge");
   const timelineTrack    = screen.querySelector(".nav-timeline__track");
-  const timelinePoiLabel = screen.querySelector(".nav-timeline__poi-label");
   const dadesTime        = screen.querySelector(".dades-time");
   const dadesRemaining   = screen.querySelector(".dades-remaining");
   const dadesPoi         = screen.querySelector(".dades-poi-label");
@@ -225,33 +223,48 @@ export function renderNavigateScreen(host, routeId) {
   // ── Timeline — build once based on real route distance ───────────────────
   // Each vertical line = 100 m. POI lines are taller and darker.
   // The track translates so the current position always aligns with the needle.
-  const LINE_STEP = 50; // px per 100 m segment (line width 2px + gap 48px)
+  const METERS_PER_TICK = 20;
+  const LINE_STEP = 16; // px per tick — must match .nav-timeline__tick { flex: 0 0 16px }
 
   function initTimeline() {
     const totalDistM = (route.distanceKm ?? 4) * 1000;
-    const tickCount  = Math.ceil(totalDistM / 100);
+    const tickCount  = Math.ceil(totalDistM / METERS_PER_TICK);
 
     // Cumulative distances from marina to each active POI, in metres.
-    const waypoints  = [MARINA, ...activePois];
-    const poiTicks   = new Set();
+    const waypoints = [MARINA, ...activePois];
+    const poiTicks  = new Map(); // tickIndex → { n, name }
     let cum = 0;
     for (let i = 1; i < waypoints.length; i++) {
       cum += haversineM(waypoints[i - 1].coords, waypoints[i].coords);
-      poiTicks.add(Math.round(cum / 100));
+      const tidx = Math.round(cum / METERS_PER_TICK);
+      const poi  = activePois[i - 1];
+      poiTicks.set(tidx, { n: i, name: poi.name[lang] ?? poi.name.ca });
     }
 
     for (let i = 0; i < tickCount; i++) {
-      const line = document.createElement("div");
-      line.className = poiTicks.has(i)
-        ? "nav-timeline__line nav-timeline__line--poi"
-        : "nav-timeline__line";
-      timelineTrack.appendChild(line);
+      const tick    = document.createElement("div");
+      const poiData = poiTicks.get(i);
+      if (poiData) {
+        tick.className = "nav-timeline__tick nav-timeline__tick--poi";
+        const line = document.createElement("div");
+        line.className = "nav-timeline__line nav-timeline__line--poi";
+        tick.appendChild(line);
+        const lbl = document.createElement("span");
+        lbl.className = "nav-timeline__tick-label";
+        lbl.textContent = `${poiData.n} – ${poiData.name}`;
+        tick.appendChild(lbl);
+      } else {
+        tick.className = "nav-timeline__tick";
+        const line = document.createElement("div");
+        line.className = "nav-timeline__line";
+        tick.appendChild(line);
+      }
+      timelineTrack.appendChild(tick);
     }
   }
   initTimeline();
 
   function updateTimeline() {
-    // Current distance along route from GPS + POI progress.
     const waypoints = [MARINA, ...activePois];
     let distM = 0;
     for (let i = 1; i <= activePOIIdx && i < waypoints.length; i++) {
@@ -263,14 +276,9 @@ export function renderNavigateScreen(host, routeId) {
       distM += Math.max(0, legTotal - toNext);
     }
 
-    const currentTick = Math.round(distM / 100);
-    const needleX = timelineTrack.parentElement.offsetWidth / 2;
+    const currentTick = Math.round(distM / METERS_PER_TICK);
+    const needleX     = timelineTrack.parentElement.offsetWidth / 2;
     timelineTrack.style.transform = `translateX(${needleX - currentTick * LINE_STEP}px)`;
-
-    const poi = activePois[activePOIIdx];
-    timelinePoiLabel.textContent = poi
-      ? t("nav.timeline.poi", activePOIIdx + 1, poi.name[lang] ?? poi.name.ca)
-      : t("nav.timeline.base");
   }
 
   // ── Tab switching ─────────────────────────────────────────────────────────

@@ -326,9 +326,12 @@
 }
 .weather-screen__body::-webkit-scrollbar { display: none; }
 
-.weather-screen__panel {
+/* More specific than .weather-panel (two classes vs one) — wins regardless of order */
+.weather-screen .weather-panel {
+  display: flex;
   flex-direction: column;
   align-items: stretch;
+  justify-content: flex-start;
   gap: 16px;
   padding: 8px 0 24px;
 }
@@ -2366,36 +2369,52 @@
 
 .nav-timeline__scroll {
   position: relative;
-  height: 28px;
+  height: 52px; /* 28px line area + 24px label area */
   overflow: hidden;
 }
 
-/* The track is wider than the screen and translates in JS.
-   No padding-left — JS sets the initial offset so line 0 aligns with the needle. */
+/* Track translates in JS so the current position sits under the needle. */
 .nav-timeline__track {
   position: absolute;
   top: 0;
   left: 0;
   display: flex;
-  align-items: flex-end;
-  gap: 48px;
+  align-items: flex-start;
   height: 100%;
   will-change: transform;
 }
 
-/* Regular 100 m tick */
+/* Each tick occupies a fixed 16 px slot (must match LINE_STEP in navigate.js) */
+.nav-timeline__tick {
+  flex: 0 0 16px;
+  position: relative;
+  height: 100%;
+}
+
+/* Regular 20 m tick mark */
 .nav-timeline__line {
-  flex-shrink: 0;
-  width: 1.5px;
+  width: 2px;
   height: 8px;
   background: #d0d0d0;
 }
 
 /* POI tick — taller and darker */
 .nav-timeline__line--poi {
-  height: 22px;
   width: 2px;
-  background: #5a5a5a;
+  height: 28px;
+  background: #3a3a3a;
+}
+
+/* POI label — lives inside the track so it slides with it */
+.nav-timeline__tick-label {
+  position: absolute;
+  top: 32px;
+  left: 0;
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
 }
 
 /* Fixed red needle — always centered, shows current position */
@@ -2409,18 +2428,6 @@
   border-radius: 1px;
   z-index: 1;
   pointer-events: none;
-}
-
-/* POI name below the needle */
-.nav-timeline__poi-label {
-  padding: 5px 20px 0;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ── Kayak illustration ── */

@@ -2394,23 +2394,34 @@
   top: 0;
   left: 0;
   display: flex;
-  align-items: flex-start;
-  height: 100%;
+  flex-direction: column;
   will-change: transform;
 }
 
-/* Each tick: fixed-width flex column — line on top, label below for POI ticks */
+/* Layer 1 — tick marks only, no labels */
+.nav-timeline__lines {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  height: 32px;
+}
+
+/* Layer 2 — POI labels positioned by their tick offset */
+.nav-timeline__pois {
+  position: relative;
+  height: 20px;
+}
+
+/* Each tick: fixed 16px slot for a single line */
 .nav-timeline__tick {
   flex: 0 0 16px;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: flex-start;
-  overflow: visible; /* label text overflows tick width; scroll container clips the edges */
 }
 
 /* Regular 20 m tick mark */
 .nav-timeline__line {
-  flex-shrink: 0;
   width: 2px;
   height: 8px;
   background: #d0d0d0;
@@ -2418,16 +2429,15 @@
 
 /* POI tick — taller and darker */
 .nav-timeline__line--poi {
-  flex-shrink: 0;
   width: 2px;
   height: 28px;
   background: #3a3a3a;
 }
 
-/* POI label — flows directly below its line in the same tick column */
-.nav-timeline__tick-label {
-  flex-shrink: 0;
-  margin-top: 4px;
+/* POI label — absolutely placed in the pois layer at its tick x-position */
+.nav-timeline__poi-label {
+  position: absolute;
+  top: 4px;
   white-space: nowrap;
   font-family: var(--font-body);
   font-size: 11px;

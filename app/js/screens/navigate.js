@@ -244,26 +244,33 @@ export function renderNavigateScreen(host, routeId) {
       poiTicks.set(tidx, { n: i + 1, name: activePois[i].name[lang] ?? activePois[i].name.ca });
     }
 
+    // Layer 1 — lines only (no labels, so tick widths are never polluted by text)
+    const linesEl = document.createElement("div");
+    linesEl.className = "nav-timeline__lines";
     for (let i = 0; i < tickCount; i++) {
-      const tick    = document.createElement("div");
-      const poiData = poiTicks.get(i);
-      if (poiData) {
-        tick.className = "nav-timeline__tick nav-timeline__tick--poi";
-        const line = document.createElement("div");
-        line.className = "nav-timeline__line nav-timeline__line--poi";
-        tick.appendChild(line);
-        const lbl = document.createElement("span");
-        lbl.className = "nav-timeline__tick-label";
-        lbl.textContent = `${poiData.n} – ${poiData.name}`;
-        tick.appendChild(lbl);
-      } else {
-        tick.className = "nav-timeline__tick";
-        const line = document.createElement("div");
-        line.className = "nav-timeline__line";
-        tick.appendChild(line);
-      }
-      timelineTrack.appendChild(tick);
+      const tick = document.createElement("div");
+      tick.className = "nav-timeline__tick";
+      const line = document.createElement("div");
+      line.className = poiTicks.has(i)
+        ? "nav-timeline__line nav-timeline__line--poi"
+        : "nav-timeline__line";
+      tick.appendChild(line);
+      linesEl.appendChild(tick);
     }
+
+    // Layer 2 — POI labels at their exact x positions, no layout impact on lines
+    const poisEl = document.createElement("div");
+    poisEl.className = "nav-timeline__pois";
+    for (const [tidx, poiData] of poiTicks) {
+      const lbl = document.createElement("span");
+      lbl.className = "nav-timeline__poi-label";
+      lbl.style.left = `${tidx * LINE_STEP}px`;
+      lbl.textContent = `${poiData.n} – ${poiData.name}`;
+      poisEl.appendChild(lbl);
+    }
+
+    timelineTrack.appendChild(linesEl);
+    timelineTrack.appendChild(poisEl);
   }
   initTimeline();
 

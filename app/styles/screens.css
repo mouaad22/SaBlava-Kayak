@@ -2393,23 +2393,25 @@
   position: absolute;
   top: 0;
   left: 0;
-  display: flex;
-  flex-direction: column;
+  height: 52px;
   will-change: transform;
 }
 
-/* Layer 1 — tick marks only, no labels */
+/* Layer 1 — tick marks only, pinned to top of track */
 .nav-timeline__lines {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  height: 32px;
 }
 
-/* Layer 2 — POI labels positioned by their tick offset */
+/* Layer 2 — POI labels, pinned below the lines layer */
 .nav-timeline__pois {
-  position: relative;
-  height: 20px;
+  position: absolute;
+  top: 32px;
+  left: 0;
 }
 
 /* Each tick: fixed 16px slot for a single line */

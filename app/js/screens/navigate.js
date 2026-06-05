@@ -269,6 +269,7 @@ export function renderNavigateScreen(host, routeId) {
       poisEl.appendChild(lbl);
     }
 
+    timelineTrack.style.width = `${tickCount * LINE_STEP}px`;
     timelineTrack.appendChild(linesEl);
     timelineTrack.appendChild(poisEl);
   }

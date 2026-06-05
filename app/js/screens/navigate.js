@@ -86,6 +86,7 @@ export function renderNavigateScreen(host, routeId) {
     </div>
 
     <div class="navigate-map-view" id="nav-map"></div>
+    <div class="nav-map-gradient" aria-hidden="true"></div>
 
     <div class="navigate-dades-view" hidden>
       <div class="dades-block dades-block--time">

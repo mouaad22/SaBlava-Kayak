@@ -2094,11 +2094,24 @@
   pointer-events: none;
 }
 
+/* ── Map top gradient scrim — lifts header text off the map tiles ── */
+.nav-map-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background: linear-gradient(to bottom, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
+  z-index: 3;
+  pointer-events: none;
+}
+
 /* Shared squircle button — matches poi-screen__back and poi-screen__map-toggle exactly */
 .nav-map-btn {
   flex-shrink: 0;
   width: 40px;
   height: 40px;
+  box-shadow: 0 0 8px -2px rgba(26, 26, 26, 0.15);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2263,6 +2276,7 @@
   display: flex;
   background: rgba(240, 240, 240, 0.96);
   backdrop-filter: blur(8px);
+  box-shadow: 0 0 8px -2px rgba(26, 26, 26, 0.15);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 50px;
   padding: 3px;
@@ -2274,6 +2288,7 @@
   width: 100%;
   background: #ffffff;
   border-radius: 20px 20px 0 0;
+  box-shadow: 0 0 8px -2px rgba(26, 26, 26, 0.15);
   padding-bottom: max(env(safe-area-inset-bottom), 16px);
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
   pointer-events: auto;

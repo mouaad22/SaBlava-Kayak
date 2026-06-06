@@ -752,14 +752,14 @@
 }
 
 .route-screen__change {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: #f5f8f1;
   border: 2px solid #e2e6dd;
-  border-radius: 16px;
+  border-radius: 50%;
   corner-shape: var(--corner-shape);
   flex-shrink: 0;
   padding: 0;
@@ -816,7 +816,7 @@
   position: absolute;
   right: 72px;
   bottom: 8px;
-  height: 40px;
+  height: 48px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -850,11 +850,11 @@
      the very edge. */
   right: 24px;
   bottom: 8px;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   background: #f5f8f1;
   border: 2px solid #e2e6dd;
-  border-radius: 16px;
+  border-radius: 50%;
   corner-shape: var(--corner-shape);
   padding: 0;
   display: inline-flex;
@@ -884,7 +884,7 @@
   content: "";
   position: absolute;
   inset: -2px;
-  border-radius: 16px;
+  border-radius: 50%;
   corner-shape: var(--corner-shape);
   pointer-events: none;
   padding: 2px;
@@ -1238,7 +1238,7 @@
   box-sizing: border-box;
 }
 
-/* Back button — Paper: 48x48, #F5F8F1 bg, 2px #E2E6DD border, radius 16. */
+/* Back button — 48×48, #F5F8F1 bg, 2px #E2E6DD border, full squircle. */
 .poi-screen__back {
   width: 48px;
   height: 48px;
@@ -1247,7 +1247,7 @@
   justify-content: center;
   background: #f5f8f1;
   border: 2px solid #e2e6dd;
-  border-radius: 16px;
+  border-radius: 50%;
   corner-shape: var(--corner-shape);
   flex-shrink: 0;
   padding: 0;
@@ -1266,7 +1266,7 @@
   justify-content: center;
   background: #f5f8f1;
   border: 2px solid #e2e6dd;
-  border-radius: 16px;
+  border-radius: 50%;
   corner-shape: var(--corner-shape);
   flex-shrink: 0;
   padding: 0;
@@ -1441,14 +1441,14 @@
 }
 
 .poi-card__nav-btn {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: #f5f8f1;
   border: 2px solid #e2e6dd;
-  border-radius: 16px;
+  border-radius: 50%;
   corner-shape: var(--corner-shape);
   flex-shrink: 0;
   padding: 0;
@@ -1649,8 +1649,8 @@
 }
 
 .gallery-screen__close {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2117,7 +2117,7 @@
   justify-content: center;
   background: #ffffff;
   border: 2px solid #e2e6dd;
-  border-radius: 16px;
+  border-radius: 50%;
   corner-shape: var(--corner-shape);
   padding: 0;
   cursor: pointer;

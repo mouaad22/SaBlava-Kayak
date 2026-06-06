@@ -740,8 +740,8 @@
 }
 
 .route-screen__back {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1238,10 +1238,10 @@
   box-sizing: border-box;
 }
 
-/* Back button — Paper: 40x40, #F5F8F1 bg, 2px #E2E6DD border, radius 16. */
+/* Back button — Paper: 48x48, #F5F8F1 bg, 2px #E2E6DD border, radius 16. */
 .poi-screen__back {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1259,8 +1259,8 @@
    standalone map screen it has no sheet to hug, so it anchors 24px above the
    viewport bottom instead. */
 .poi-screen__map-toggle {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1275,7 +1275,7 @@
 
 .poi-screen__card .poi-screen__map-toggle {
   position: absolute;
-  top: -52px;
+  top: -60px;
   right: 24px;
 }
 

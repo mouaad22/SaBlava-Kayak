@@ -43,7 +43,8 @@ export function renderNavigateScreen(host, routeId) {
 
   // The POIs the user is navigating (canonical indices).
   const activePois = (session.includedPoiIndices ?? route.pois.map((_, i) => i))
-    .map((idx) => route.pois[idx]);
+    .map((idx) => route.pois[idx])
+    .filter(Boolean);
 
   // ── Mutable state ─────────────────────────────────────────────────────────
   let activeTab        = TABS.MAP;

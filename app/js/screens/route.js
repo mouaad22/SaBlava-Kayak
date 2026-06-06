@@ -17,20 +17,22 @@ import { findRoute } from "../data.js";
 import { t, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
 
-const POI_COUNT_BY_DURATION = { "1h": 5, "1h30": 8, "2h": 8, "3h": 9 };
-const DURATIONS = ["1h", "1h30", "2h", "3h"];
-const DEFAULT_DURATION = "3h";
+const FALLBACK_DURATIONS = {
+  available: ["1h", "1h30", "2h", "3h"],
+  countByDuration: { "1h": 5, "1h30": 8, "2h": 8, "3h": 9 },
+  default: "3h",
+};
 const ROUTE_TOGGLE = { sud: "nord", nord: "sud" };
 
 function durationKey(routeId) {
   return `sa-blava.duration.${routeId}`;
 }
-function loadDuration(routeId) {
+function loadDuration(routeId, durations) {
   try {
     const saved = localStorage.getItem(durationKey(routeId));
-    if (saved && POI_COUNT_BY_DURATION[saved]) return saved;
+    if (saved && durations.countByDuration[saved] !== undefined) return saved;
   } catch {}
-  return DEFAULT_DURATION;
+  return durations.default;
 }
 function saveDuration(routeId, id) {
   try {
@@ -76,13 +78,13 @@ function poiCardHTML(poi, idx, lang, visible) {
   `;
 }
 
-function durationSheetHTML(durationId) {
+function durationSheetHTML(durationId, durations) {
   return `
     <div class="duration-sheet" data-duration-sheet aria-hidden="true">
       <div class="duration-sheet__card" role="dialog" aria-modal="true" aria-labelledby="duration-title">
         <p class="duration-sheet__title" id="duration-title">${t("route.duration.title")}</p>
         <ul class="duration-list">
-          ${DURATIONS.map(
+          ${durations.available.map(
             (id) => `
             <li>
               <button class="duration-row${id === durationId ? " is-selected" : ""}" type="button" data-duration-id="${id}">
@@ -98,8 +100,8 @@ function durationSheetHTML(durationId) {
   `;
 }
 
-function templateHTML(route, lang, durationId) {
-  const visibleCount = POI_COUNT_BY_DURATION[durationId];
+function templateHTML(route, lang, durationId, durations) {
+  const visibleCount = durations.countByDuration[durationId];
   return `
     <header class="route-screen__header">
       <button class="route-screen__back" type="button" data-action="back" aria-label="${t("route.back")}">${ICON_BACK}</button>
@@ -144,12 +146,12 @@ function templateHTML(route, lang, durationId) {
       </button>
     </div>
 
-    ${durationSheetHTML(durationId)}
+    ${durationSheetHTML(durationId, durations)}
   `;
 }
 
-function updateDurationUI(screen, durationId) {
-  const visibleCount = POI_COUNT_BY_DURATION[durationId];
+function updateDurationUI(screen, durationId, durations) {
+  const visibleCount = durations.countByDuration[durationId];
   screen.querySelectorAll("[data-poi-index]").forEach((card) => {
     const idx = Number(card.dataset.poiIndex);
     card.classList.toggle("is-hidden", idx >= visibleCount);
@@ -169,13 +171,14 @@ export function renderRouteScreen(host, routeId) {
     return { teardown() {} };
   }
   const lang = getLanguage();
-  let durationId = loadDuration(routeId);
+  const durations = route.durations ?? FALLBACK_DURATIONS;
+  let durationId = loadDuration(routeId, durations);
 
   const screen = document.createElement("section");
   screen.className = "screen route-screen";
   screen.dataset.screen = "route";
   screen.dataset.routeId = routeId;
-  screen.innerHTML = templateHTML(route, lang, durationId);
+  screen.innerHTML = templateHTML(route, lang, durationId, durations);
   host.appendChild(screen);
 
   // --- Map illustration: one per POI, swaps as carousel scrolls. The map
@@ -197,7 +200,7 @@ export function renderRouteScreen(host, routeId) {
 
   function preloadCurrentPattern() {
     if (!currentPattern) return;
-    const count = POI_COUNT_BY_DURATION[durationId] ?? route.pois.length;
+    const count = durations.countByDuration[durationId] ?? route.pois.length;
     for (let i = 1; i <= count; i++) {
       const im = new Image();
       im.src = mapUrlAt(currentPattern, i - 1);
@@ -349,10 +352,10 @@ export function renderRouteScreen(host, routeId) {
   sheetEl.querySelectorAll("[data-duration-id]").forEach((row) => {
     row.addEventListener("click", () => {
       const id = row.dataset.durationId;
-      if (!POI_COUNT_BY_DURATION[id]) return;
+      if (durations.countByDuration[id] === undefined) return;
       durationId = id;
       saveDuration(routeId, id);
-      updateDurationUI(screen, durationId);
+      updateDurationUI(screen, durationId, durations);
       closeSheet();
       // Filtered POI set just changed — playback would otherwise advance to a
       // now-hidden index, so reset to a clean state.

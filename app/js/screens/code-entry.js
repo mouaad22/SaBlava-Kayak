@@ -9,8 +9,7 @@ import { navigate } from "../router.js";
 import { parseCode, isValidForToday } from "../nav/code.js";
 import { saveDraft } from "../nav/session.js";
 import { prime as primeAudio } from "../nav/audio.js";
-
-const POI_COUNT_BY_HOURS = { 1: 5, 1.5: 8, 2: 8, 3: 9 };
+import { findRoute } from "../data.js";
 
 const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
@@ -131,7 +130,9 @@ export function renderCodeEntryScreen(host, routeId) {
     if (!parsed) return;
 
     const { durationHours } = parsed;
-    const defaultCount = POI_COUNT_BY_HOURS[durationHours] ?? 9;
+    const route = findRoute(routeId);
+    const countByHours = route?.durations?.countByHours ?? { 1: 5, 1.5: 8, 2: 8, 3: 9 };
+    const defaultCount = countByHours[durationHours] ?? route?.pois?.length ?? 9;
     const includedPoiIndices = Array.from({ length: defaultCount }, (_, i) => i);
 
     primeAudio(getLanguage());

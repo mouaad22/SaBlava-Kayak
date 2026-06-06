@@ -2109,8 +2109,8 @@
 /* Shared squircle button — matches poi-screen__back and poi-screen__map-toggle exactly */
 .nav-map-btn {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   box-shadow: 0 0 8px -2px rgba(26, 26, 26, 0.15);
   display: inline-flex;
   align-items: center;

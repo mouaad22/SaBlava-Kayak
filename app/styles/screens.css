@@ -2137,7 +2137,7 @@
   background: #f0bcb4;
   border-color: #7d0001;
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   color: #7d0001;
   letter-spacing: 0.04em;
@@ -2155,7 +2155,7 @@
 
 .nav-float-poi-label {
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 600;
   color: rgba(26, 26, 26, 0.55);
   letter-spacing: 0.06em;
@@ -2232,7 +2232,7 @@
 
 .dades-remaining {
   font-family: var(--font-body);
-  font-size: var(--fs-body-sm);
+  font-size: var(--fs-body-md);
   color: var(--color-text-secondary);
 }
 
@@ -2252,7 +2252,7 @@
 
 .dades-base-label {
   font-family: var(--font-body);
-  font-size: var(--fs-body-sm);
+  font-size: var(--fs-body-md);
   color: var(--color-text-secondary);
   text-align: center;
 }
@@ -2279,7 +2279,7 @@
   box-shadow: 0 0 8px -2px rgba(26, 26, 26, 0.15);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 50px;
-  padding: 3px;
+  padding: 4px;
   pointer-events: auto;
 }
 
@@ -2295,13 +2295,13 @@
 }
 
 .nav-tab-btn {
-  height: 36px;
+  height: 40px;
   padding: 0 28px;
   border: none;
   border-radius: 50px;
   background: transparent;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -2328,7 +2328,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -2339,19 +2339,24 @@
 
 .nav-stat__label {
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: rgba(26, 26, 26, 0.70);
   white-space: nowrap;
 }
 
 .nav-stat__value {
   font-family: var(--font-body);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 600;
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
+}
+
+.nav-stat__unit {
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .nav-stat__value.is-overtime {
@@ -2368,7 +2373,7 @@
 .nav-direction-badge {
   display: inline-block;
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-secondary);
   background: #f0f0f0;
@@ -2384,7 +2389,7 @@
 
 .nav-timeline__scroll {
   position: relative;
-  height: 52px; /* 28px line area + 24px label area */
+  height: 60px; /* 32px line area + 28px label area */
   overflow: hidden;
 }
 
@@ -2393,7 +2398,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  height: 52px;
+  height: 60px;
   will-change: transform;
 }
 
@@ -2442,7 +2447,7 @@
   top: 4px;
   white-space: nowrap;
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-text-secondary);
 }
@@ -2463,7 +2468,7 @@
 /* ── Kayak illustration ── */
 .nav-kayak {
   width: 100%;
-  height: 72px;
+  height: 104px;
   overflow: hidden;
   margin-top: 8px;
 }
@@ -2487,7 +2492,7 @@
   background: var(--color-emergency);
   color: #ffffff;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   text-align: center;
   box-shadow: 0 2px 10px rgba(217, 58, 43, 0.28);
@@ -2506,7 +2511,7 @@
   background: rgba(26, 26, 26, 0.88);
   color: #ffffff;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   text-align: center;
 }
@@ -2540,13 +2545,13 @@
 
 /* ── Map POI markers ── */
 .nav-poi-marker {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--color-primary);
   color: #ffffff;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   display: flex;
   align-items: center;

@@ -445,11 +445,13 @@ export function renderNavigateScreen(host, routeId) {
     const totalSec = Math.floor(absMs / 1000);
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
-    const timeStr = h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
-    const displayStr = isOver ? `+${timeStr}` : timeStr;
+    const u = (s) => `<span class="nav-stat__unit">${s}</span>`;
+    const timeHtml = h > 0
+      ? `${isOver ? "+" : ""}${h}${u("h")} ${String(m).padStart(2, "0")}${u("m")}`
+      : `${isOver ? "+" : ""}${m}${u("m")}`;
 
     // Time stat.
-    statusTime.textContent = displayStr;
+    statusTime.innerHTML = timeHtml;
     statusTime.classList.toggle("is-overtime", isOver);
 
     const poi = activePois[activePOIIdx];
@@ -466,15 +468,15 @@ export function renderNavigateScreen(host, routeId) {
     // Next-point distance stat.
     if (poi) {
       const dist = userCoords ? Math.round(haversineM(userCoords, poi.coords)) : null;
-      statusDist.textContent = dist !== null ? `${dist} m` : "--";
+      statusDist.innerHTML = dist !== null ? `${dist}${u("m")}` : "--";
     } else {
       const baseDist = userCoords ? Math.round(haversineM(userCoords, MARINA.coords)) : null;
-      statusDist.textContent = baseDist !== null ? `${baseDist} m` : "--";
+      statusDist.innerHTML = baseDist !== null ? `${baseDist}${u("m")}` : "--";
     }
 
     // Progress stat + direction badge.
     const progressPct = Math.round((activePOIIdx / activePois.length) * 100);
-    statusProgress.textContent = `${progressPct}%`;
+    statusProgress.innerHTML = `${progressPct}${u("%")}`;
     const isReturn = activePOIIdx >= Math.ceil(activePois.length / 2);
     dirBadge.textContent = isReturn ? t("nav.direction.back") : t("nav.direction.out");
 

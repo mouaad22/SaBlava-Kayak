@@ -29,3 +29,9 @@ app/js/config.local.js
 
 # Photoshop working files
 *.psd
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example

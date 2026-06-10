@@ -1,7 +1,8 @@
 // Drop a Mapbox public token here when ready. Without it the app falls back
 // to a hand-drawn nautical-chart SVG (intentional, not just a placeholder).
-// Public token — replace with a restricted token before production launch
-export const MAPBOX_TOKEN = "pk.eyJ1IjoibW91YWFkMjIiLCJhIjoiY21vc3B3NnRtMDFwNDJ0cGc4ZzAzYTR0YiJ9.GrXrWlYn2Y7NWkTCkGvZvQ";
+// Public token, URL-restricted in the Mapbox dashboard to routes.sablavakayaks.com,
+// *.pages.dev, and localhost:5173. Safe to ship in client code (pk. = public).
+export const MAPBOX_TOKEN = "pk.eyJ1IjoibW91YWFkMjIiLCJhIjoiY21xOGoxNjJoMDkwMzJyczhvcGE3cXhociJ9.ja_qMm4VL9HeVlzA0yIvkg";
 
 export const MAPBOX_STYLE = "mapbox://styles/mapbox/outdoors-v12";
 export const MAPBOX_SATELLITE_STYLE = "mapbox://styles/mapbox/satellite-streets-v12";

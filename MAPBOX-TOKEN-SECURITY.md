@@ -24,7 +24,7 @@ That's it. The token stays public in the code — it just stops being useful to 
 
 ## Notes
 
-- **No new token required.** Adding a restriction to the existing token is enough. (The comment at `config.js:3` says "replace with a restricted token" — restricting the current one achieves the same thing.)
+- **A new token WAS required.** The original token in `config.js` was Mapbox's **default public token**, and Mapbox does not allow URL restrictions on default tokens ("URL restrictions are not supported for default tokens"). So on 2026-06-10 a new restricted public token was created and swapped into `config.js`, restricted to: `https://routes.sablavakayaks.com/*`, `https://*.pages.dev/*` (testing), and `http://localhost:5173/*` (local dev). Keep this URL list in sync with wherever the app is served.
 - Update the allowed-URL list whenever the hosting URL or domain changes.
 - This is independent of *where* we host. Whether the site stays on GitHub Pages or moves to Cloudflare Pages, the token restriction is set in the Mapbox dashboard, not in our hosting config.
 

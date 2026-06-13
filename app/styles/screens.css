@@ -124,8 +124,8 @@
   width: 100%;
 }
 
-/* Weather block lifted into the language screen top: vent/onatge/sol tabs +
-   the Aiguablava pill on top, the Rive wind rose filling the rest. */
+/* Weather block lifted into the language screen top: the Rive wind rose fills
+   the available vertical space below the welcome line. */
 .lang-screen__weather {
   flex: 1 1 0;
   min-height: 0;
@@ -134,26 +134,10 @@
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
-  /* Match the bottom container's 24 px gutters so the rose, tabs and pill all
-     stay inside the page padding instead of bleeding to the frame edge. */
+  /* Match the bottom container's 24 px gutters so the rose stays inside the
+     page padding instead of bleeding to the frame edge. */
   padding: 0 24px;
   box-sizing: border-box;
-}
-
-/* The shared .weather-screen__header / __tabs rules are tuned for the weather
-   screen. Re-scope them here with higher specificity so (1) the header sits on
-   the page gutter the parent already provides, and (2) the tab group hugs its
-   content instead of stretching — otherwise flex:1 + min-width:0 squeezes the
-   three tabs narrower than their text and they overflow into the pill.
-   With the tabs content-sized, justify-content:space-between on the header
-   pushes the pill to the far edge, opening a clean horizontal gap between them. */
-.lang-screen .lang-screen__weather-header {
-  padding: 0;
-}
-
-.lang-screen .weather-screen__tabs {
-  flex: 0 0 auto;
-  min-width: 0;
 }
 
 .lang-screen__panels {
@@ -440,20 +424,17 @@
   background: #ffffff;
   border-radius: 16px;
   corner-shape: var(--corner-shape);
-  box-shadow: 0 2px 4px rgba(15, 23, 12, 0.08), 0 12px 28px rgba(15, 23, 12, 0.14);
+  box-shadow: 0 1px 2px rgba(15, 23, 12, 0.04), 0 6px 16px rgba(15, 23, 12, 0.06);
 }
 
-.routes-weather__title {
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 18px;
-  line-height: 24px;
-  color: #1a1a1a;
-  margin: 0;
+/* Aiguablava pill sits top-left; keep it content-sized instead of stretching
+   to the card width under the column's default align-items: stretch. */
+.routes-weather .weather-screen__location {
+  align-self: flex-start;
 }
 
-/* Compact wind / wave / air strip inside the weather card. Three equal cells
-   split by hairline dividers; the wind cell carries a direction arrow. */
+/* Compact wind / wave / air strip inside the weather card. Three equal cells;
+   the wind cell carries a direction arrow. */
 .conditions {
   display: flex;
   align-items: stretch;
@@ -469,10 +450,6 @@
   gap: 2px;
   padding: 2px 6px;
   text-align: center;
-}
-
-.conditions__cell + .conditions__cell {
-  border-left: 1px solid #e2e6dd;
 }
 
 .conditions__label {

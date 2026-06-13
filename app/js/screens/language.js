@@ -10,51 +10,18 @@ const CHECK_ICON = `
   </svg>
 `;
 
-const ICON_LOCATION = `<svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 0C3.24 0 1 2.24 1 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 6 3.5a1.5 1.5 0 0 1 0 3z" fill="#3D6B4F"/></svg>`;
-
-const TABS = [
-  { id: "wind", labelKey: "weather.tab.wind" },
-  { id: "wave", labelKey: "weather.tab.wave" },
-  { id: "sun",  labelKey: "weather.tab.sun" },
-];
-
 export function renderLanguageScreen(host) {
   const screen = document.createElement("section");
   screen.className = "screen lang-screen";
   screen.dataset.screen = "language";
 
-  const lang = getLanguage();
-
   screen.innerHTML = `
     <div class="lang-screen__top">
       <div class="lang-screen__weather">
-        <div class="weather-screen__header lang-screen__weather-header">
-          <div class="weather-tabs weather-screen__tabs" role="tablist" aria-label="${t(
-            "routes.weatherTitle"
-          )}">
-            ${TABS.map(
-              (tab, i) => `
-              <button type="button" role="tab"
-                class="weather-tab${i === 0 ? " is-active" : ""}"
-                data-tab="${tab.id}"
-                data-i18n="${tab.labelKey}"
-                aria-selected="${i === 0}"
-              >${t(tab.labelKey)}</button>
-            `
-            ).join("")}
-          </div>
-          <div class="weather-screen__location">
-            ${ICON_LOCATION}
-            <span>Aiguablava</span>
-          </div>
-        </div>
-
         <div class="lang-screen__panels">
           <div class="weather-panel" data-panel="wind">
             <canvas class="wind-rose" data-wind-rose width="708" height="708" aria-label="Wind rose"></canvas>
           </div>
-          <div class="weather-panel is-hidden" data-panel="wave"></div>
-          <div class="weather-panel is-hidden" data-panel="sun"></div>
         </div>
       </div>
     </div>
@@ -104,23 +71,6 @@ export function renderLanguageScreen(host) {
       screen
         .querySelectorAll("[data-i18n]")
         .forEach((n) => (n.textContent = t(n.dataset.i18n)));
-    });
-  });
-
-  // ── Weather tabs (wind / wave / sun) ───────────────────────────────────────
-  const tabs   = screen.querySelectorAll(".weather-tab");
-  const panels = screen.querySelectorAll(".weather-panel");
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const id = tab.dataset.tab;
-      tabs.forEach((t) => {
-        const on = t === tab;
-        t.classList.toggle("is-active", on);
-        t.setAttribute("aria-selected", String(on));
-      });
-      panels.forEach((p) => {
-        p.classList.toggle("is-hidden", p.dataset.panel !== id);
-      });
     });
   });
 

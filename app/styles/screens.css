@@ -98,7 +98,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   /* env() honours the device's safe areas (iOS home-indicator, Android nav
      bar). The 24 px floor preserves the original visual rhythm when no
      inset is present (desktop, older browsers). */
@@ -115,31 +115,68 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* welcome on top, hero claims the rest of the column — see hero `flex: 1 1 0`.
-     justify-content stays at the default (`flex-start`) so the hero hugs the
-     gap below the welcome line; vertical centring would just leave dead space
-     above the hero on a tall viewport. */
-  gap: 24px;
+  /* welcome on top, the weather block claims the rest of the column — see
+     `.lang-screen__weather { flex: 1 1 0 }`. justify-content stays at the
+     default (`flex-start`) so the block hugs the gap below the welcome line. */
+  gap: 12px;
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
 }
 
-.lang-screen__hero-img {
-  /* Height-driven sizing. The hero takes whatever vertical room the top
-     section has after the welcome heading + gap, capped at Paper's 364 px.
-     `aspect-ratio: 1` maps height → width so it stays a square, and
-     `max-width` keeps it inside the page gutters when the frame is narrower
-     than 412 px. Width must be `auto` for aspect-ratio to drive it. */
+/* Weather block lifted into the language screen top: vent/onatge/sol tabs +
+   the Aiguablava pill on top, the Rive wind rose filling the rest. */
+.lang-screen__weather {
   flex: 1 1 0;
   min-height: 0;
-  max-height: 364px;
-  width: auto;
-  max-width: calc(100% - 48px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  /* Match the bottom container's 24 px gutters so the rose, tabs and pill all
+     stay inside the page padding instead of bleeding to the frame edge. */
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+/* The shared .weather-screen__header / __tabs rules are tuned for the weather
+   screen. Re-scope them here with higher specificity so (1) the header sits on
+   the page gutter the parent already provides, and (2) the tab group hugs its
+   content instead of stretching — otherwise flex:1 + min-width:0 squeezes the
+   three tabs narrower than their text and they overflow into the pill.
+   With the tabs content-sized, justify-content:space-between on the header
+   pushes the pill to the far edge, opening a clean horizontal gap between them. */
+.lang-screen .lang-screen__weather-header {
+  padding: 0;
+}
+
+.lang-screen .weather-screen__tabs {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.lang-screen__panels {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+}
+
+.lang-screen .weather-panel {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* Width-driven square: the rose spans the panel width and `aspect-ratio` maps
+   that back to an equal height. max-height guards against overflow on short
+   frames, and margin:auto centres it within the (taller) panel. */
+.lang-screen .wind-rose {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
   aspect-ratio: 1 / 1;
-  align-self: center;
-  background-position: 50%;
-  background-size: cover;
+  margin: auto;
+  display: block;
 }
 
 .lang-screen__bottom {
@@ -169,8 +206,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 12px 24px 0;
+  gap: 10px;
+  padding: 8px 24px 0;
 }
 
 .lang-screen__prompt {
@@ -193,7 +230,7 @@
   align-items: center;
   align-self: stretch;
   gap: 16px;
-  height: 56px;
+  height: 48px;
   width: 100%;
   padding: 0;
   background: transparent;
@@ -355,7 +392,7 @@
 /* Screen container — overflow:clip so the bottom sheet can extend to the
    bottom edge without triggering a scrollbar on the screen itself. */
 .routes-screen {
-  background: #ffffff;
+  background: linear-gradient(180deg, #F5F8F1 0%, #ffffff 260px);
   width: 100%;
   font-synthesis: none;
   overflow: clip;
@@ -390,6 +427,93 @@
   color: #1a1a1a;
   margin: 0;
   align-self: flex-start;
+}
+
+/* "Temps a Aiguablava" — placeholder card holding the weather copy moved off
+   the old weather screen. Visual design still to come from Paper. */
+.routes-weather {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  corner-shape: var(--corner-shape);
+  box-shadow: 0 2px 4px rgba(15, 23, 12, 0.08), 0 12px 28px rgba(15, 23, 12, 0.14);
+}
+
+.routes-weather__title {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 24px;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+/* Compact wind / wave / air strip inside the weather card. Three equal cells
+   split by hairline dividers; the wind cell carries a direction arrow. */
+.conditions {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.conditions__cell {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  text-align: center;
+}
+
+.conditions__cell + .conditions__cell {
+  border-left: 1px solid #e2e6dd;
+}
+
+.conditions__label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.conditions__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: #1a1a1a;
+  white-space: nowrap;
+}
+
+.conditions__unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.conditions__sub {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.conditions__arrow {
+  width: 14px;
+  height: 14px;
+  color: #1b6b8a;
+  transform-origin: center;
+  flex-shrink: 0;
 }
 
 /* ── Bottom sheet ──────────────────────────────────────────────────────────── */

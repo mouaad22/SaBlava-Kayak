@@ -5,7 +5,8 @@
       "name": "sa-blava-app",
       "runtimeExecutable": "python",
       "runtimeArgs": ["app/server.py"],
-      "port": 5173
+      "port": 5173,
+      "autoPort": true
     }
   ]
 }

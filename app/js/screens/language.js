@@ -1,6 +1,8 @@
 import { LANGUAGES, t, setLanguage, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
 import { FLAGS } from "../flags.js";
+import { getWeather } from "../weather.js";
+import { mountWindRose } from "../wind-rose.js";
 
 const CHECK_ICON = `
   <svg class="lang-row__check" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -8,19 +10,52 @@ const CHECK_ICON = `
   </svg>
 `;
 
+const ICON_LOCATION = `<svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 0C3.24 0 1 2.24 1 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 6 3.5a1.5 1.5 0 0 1 0 3z" fill="#3D6B4F"/></svg>`;
+
+const TABS = [
+  { id: "wind", labelKey: "weather.tab.wind" },
+  { id: "wave", labelKey: "weather.tab.wave" },
+  { id: "sun",  labelKey: "weather.tab.sun" },
+];
+
 export function renderLanguageScreen(host) {
   const screen = document.createElement("section");
   screen.className = "screen lang-screen";
   screen.dataset.screen = "language";
 
+  const lang = getLanguage();
+
   screen.innerHTML = `
     <div class="lang-screen__top">
-      <div class="lang-screen__hero-img" role="img" aria-label="Aiguablava beach"
-           style="background-image:url('./assets/illustrations/hero-2.jpg');"></div>
-      <div class="lang-screen__welcome">
-        <h1 class="lang-screen__welcome-title" data-i18n="lang.welcome">${t(
-          "lang.welcome"
-        )}</h1>
+      <div class="lang-screen__weather">
+        <div class="weather-screen__header lang-screen__weather-header">
+          <div class="weather-tabs weather-screen__tabs" role="tablist" aria-label="${t(
+            "routes.weatherTitle"
+          )}">
+            ${TABS.map(
+              (tab, i) => `
+              <button type="button" role="tab"
+                class="weather-tab${i === 0 ? " is-active" : ""}"
+                data-tab="${tab.id}"
+                data-i18n="${tab.labelKey}"
+                aria-selected="${i === 0}"
+              >${t(tab.labelKey)}</button>
+            `
+            ).join("")}
+          </div>
+          <div class="weather-screen__location">
+            ${ICON_LOCATION}
+            <span>Aiguablava</span>
+          </div>
+        </div>
+
+        <div class="lang-screen__panels">
+          <div class="weather-panel" data-panel="wind">
+            <canvas class="wind-rose" data-wind-rose width="708" height="708" aria-label="Wind rose"></canvas>
+          </div>
+          <div class="weather-panel is-hidden" data-panel="wave"></div>
+          <div class="weather-panel is-hidden" data-panel="sun"></div>
+        </div>
       </div>
     </div>
 
@@ -56,6 +91,7 @@ export function renderLanguageScreen(host) {
     </div>
   `;
 
+  // ── Language selection ─────────────────────────────────────────────────────
   screen.querySelectorAll("[data-lang]").forEach((row) => {
     row.addEventListener("click", () => {
       const code = row.dataset.lang;
@@ -71,16 +107,52 @@ export function renderLanguageScreen(host) {
     });
   });
 
+  // ── Weather tabs (wind / wave / sun) ───────────────────────────────────────
+  const tabs   = screen.querySelectorAll(".weather-tab");
+  const panels = screen.querySelectorAll(".weather-panel");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const id = tab.dataset.tab;
+      tabs.forEach((t) => {
+        const on = t === tab;
+        t.classList.toggle("is-active", on);
+        t.setAttribute("aria-selected", String(on));
+      });
+      panels.forEach((p) => {
+        p.classList.toggle("is-hidden", p.dataset.panel !== id);
+      });
+    });
+  });
+
+  // Weather page is skipped — the language screen continues straight to routes.
   screen
     .querySelector("[data-action=continue]")
-    .addEventListener("click", () => navigate("/weather"));
+    .addEventListener("click", () => navigate("/routes"));
 
   host.appendChild(screen);
   requestAnimationFrame(() => screen.classList.add("is-active"));
 
+  // ── Rive wind rose ─────────────────────────────────────────────────────────
+  const canvas = screen.querySelector("[data-wind-rose]");
+  const rose   = canvas ? mountWindRose(canvas) : null;
+
+  (async () => {
+    try {
+      const { data } = await getWeather();
+      if (rose && data?.wind) {
+        if (typeof data.wind.direction === "number") rose.setAngle(data.wind.direction);
+        if (data.wind.named || data.wind.cardinal)   rose.setName(data.wind.named || data.wind.cardinal);
+        rose.fireStart();
+      }
+    } catch {
+      // No weather — leave the rose at its resting state; design holds without data.
+    }
+  })();
+
   return {
     teardown() {
       screen.classList.remove("is-active");
+      if (rose) rose.cleanup();
       setTimeout(() => screen.remove(), 320);
     },
   };

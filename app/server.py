@@ -1,5 +1,4 @@
 import http.server
-import socketserver
 import os
 
 PORT = 5173
@@ -18,6 +17,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    with socketserver.TCPServer(("", PORT), NoCacheHandler) as httpd:
+    # ThreadingHTTPServer gives each connection its own thread. The previous
+    # single-threaded TCPServer would wedge once a browser held several
+    # keep-alive connections open — the lone worker blocked and new requests
+    # were refused mid-load.
+    http.server.ThreadingHTTPServer.allow_reuse_address = True
+    with http.server.ThreadingHTTPServer(("", PORT), NoCacheHandler) as httpd:
         print(f"Serving {ROOT} on http://localhost:{PORT}")
         httpd.serve_forever()

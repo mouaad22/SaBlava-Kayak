@@ -37,7 +37,7 @@ const POIS_SUD = [
       fr: "Plage d'Aiguablava",
     },
     description: PLACEHOLDER_DESCRIPTION,
-    thumbnail: "./assets/illustrations/poi1-aiguablava-paint.jpg",
+    thumbnail: "./assets/illustrations/ruta-sud/poi1-aiguablava-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi1-pl-aiguablava/aiguablava-0.jpg" },
       { type: "image", src: "./assets/photos/poi1-pl-aiguablava/aiguablava-1.jpg" },
@@ -65,7 +65,7 @@ const POIS_SUD = [
     description: {
       ca: "Cala de roques.",
     },
-    thumbnail: "./assets/illustrations/poi-2-ses-herbes-paint.jpg",
+    thumbnail: "./assets/illustrations/ruta-sud/poi-2-ses-herbes-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi2-ses-herbes/ses-herbes-1.jpg" },
     ],
@@ -89,7 +89,7 @@ const POIS_SUD = [
     description: {
       ca: "Platja de roques sense accés per terra. Precaució: Esllabissades.",
     },
-    thumbnail: "./assets/illustrations/poi-3-cala-des-tramadiu-paint.jpg",
+    thumbnail: "./assets/illustrations/ruta-sud/poi-3-cala-des-tramadiu-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-3-cala-des-tramadiu/tramadiu-1.jpg" },
     ],
@@ -106,14 +106,14 @@ const POIS_SUD = [
     accessibility: "kayak",
     name: {
       ca: "Cova d'en Gispert",
-      es: "Cueva d'en Gispert",
+      es: "Cueva Gispert",
       en: "Gispert's Cave",
       fr: "Grotte d'en Gispert",
     },
     description: {
       ca: "Cova molt profunda, d'uns 150 m de profunditat.\n\nCal portar frontal per arribar al fons de la cova. Un cop al fons hi ha un roc que li diuen «la taula» al que es pot donar la volta. En aquest punt hi ha una sala amb formacions molt maques.\n\nSi volem, encara es poden recórrer uns metres de cova passada la taula per una escletxa estreta.\n\nL'entrada a la cova, encara que molt visible, no crida excessivament l'atenció. Cal anar atent seguint la costa, portar el track a un GPS o memoritzar la forma de l'entrada (vegeu la foto).\n\nDos dies a l'any el sol es reflecteix al fons de la cova quan surt. Un dels dies és entre el 20 i el 23 d'agost i l'altre cap al 20 o 21 d'abril.",
     },
-    thumbnail: "./assets/illustrations/poi-4-cova-gispert-paint.jpg",
+    thumbnail: "./assets/illustrations/ruta-sud/poi-4-cova-gispert-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-1.jpg" },
       { type: "image", src: "./assets/photos/poi-4-cova-gispert/gispert-2.jpg" },
@@ -148,7 +148,7 @@ const POIS_SUD = [
     description: {
       ca: "Cova no molt gran, però molt maca, al peu d'un alt penya-segat, fàcil de distingir per una gran taca groga que hi ha a l'esquerra de l'entrada.",
     },
-    thumbnail: "./assets/illustrations/poi-5cova-bisbe-paint.jpg",
+    thumbnail: "./assets/illustrations/ruta-sud/poi-5cova-bisbe-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-5-cova-bisbe/bisbe-1.jpg" },
       { type: "image", src: "./assets/photos/poi-5-cova-bisbe/bisbe-2.jpg" },
@@ -173,7 +173,7 @@ const POIS_SUD = [
     description: {
       ca: "Profunda cova de 60 m de llarg i 10 d'alçada. Després d'una sala alta i allargada continua uns 15 m per una galeria estreta però sense problemes per passar. Si no fos per la curta distància amb la Cova d'en Gispert, segur que seria una cova molt destacada.\n\nQuan vam anar-hi al juliol, vam passar dos cops per la cova i els dos cops hi havia una gavina solitària a pocs metres de l'entrada.",
     },
-    thumbnail: "./assets/illustrations/poi-6-cova-gavina-paint.jpg",
+    thumbnail: "./assets/illustrations/ruta-sud/poi-6-cova-gavina-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-6-cova-gavina/gavina-1.jpg" },
       { type: "image", src: "./assets/photos/poi-6-cova-gavina/gavina-2.jpg" },
@@ -210,7 +210,7 @@ const POIS_SUD = [
     description: {
       ca: "Pas estret navegable.\n\nUn dels millors freus de la Costa Brava. Cal anar atents per no saltar-ho, especialment si naveguem cap al Nord. Té parets altes i és força llarg i estret, però sense problemes per passar amb qualsevol caiac.",
     },
-    thumbnail: "./assets/illustrations/poi-7-reg-arbres-paint.jpg",
+    thumbnail: "./assets/illustrations/ruta-sud/poi-7-reg-arbres-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-7-rec-dels-arbres/rec-arbres-1.jpg" },
       { type: "image", src: "./assets/photos/poi-7-rec-dels-arbres/rec-arbres-2.jpg" },
@@ -236,7 +236,7 @@ const POIS_SUD = [
     description: {
       ca: "Tipus: avarada (parada), codolar, bivac.",
     },
-    thumbnail: "./assets/illustrations/poi-8-cala-marquesa-paint.jpg",
+    thumbnail: "./assets/illustrations/ruta-sud/poi-8-cala-marquesa-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-8-cala-marquesa/marquesa-1.jpg" },
       { type: "image", src: "./assets/photos/poi-8-cala-marquesa/marquesa-2.jpg" },
@@ -264,7 +264,7 @@ const POIS_SUD = [
     description: {
       ca: "Aquí va viure Sebastià Puig, l'Hermòs, amic de Josep Pla i que surt en un dels seus llibres.",
     },
-    thumbnail: "./assets/illustrations/poi-9-aigua-xelida-paint.jpg",
+    thumbnail: "./assets/illustrations/ruta-sud/poi-9-aigua-xelida-paint.jpg",
     gallery: [
       { type: "image", src: "./assets/photos/poi-9-aigua-xelida/aigua-xelida-1.jpg" },
       { type: "image", src: "./assets/photos/poi-9-aigua-xelida/aigua-xelida-2.jpg" },
@@ -296,7 +296,7 @@ const POIS_NORD = [
       fr: "Plage d'Aiguablava",
     },
     description: PLACEHOLDER_DESCRIPTION,
-    thumbnail: null,
+    thumbnail: "./assets/illustrations/ruta-nord/poi1-aiguablava-paint.jpg",
     gallery: [],
   },
   {
@@ -311,12 +311,12 @@ const POIS_NORD = [
     accessibility: "kayak",
     name: {
       ca: "Port d'Esclanyà",
-      es: "Port d'Esclanyà",
+      es: "Puerto de Esclanyà",
       en: "Port d'Esclanyà",
       fr: "Port d'Esclanyà",
     },
     description: PLACEHOLDER_DESCRIPTION,
-    thumbnail: null,
+    thumbnail: "./assets/illustrations/ruta-nord/poi2-port-esclanya-paint.jpg",
     gallery: [],
   },
   {
@@ -330,13 +330,13 @@ const POIS_NORD = [
     snorkel: 3,
     accessibility: "kayak",
     name: {
-      ca: "Platja Malaret",
-      es: "Platja Malaret",
+      ca: "Platja d'en Malaret",
+      es: "Playa Malaret",
       en: "Malaret Beach",
       fr: "Plage Malaret",
     },
     description: PLACEHOLDER_DESCRIPTION,
-    thumbnail: null,
+    thumbnail: "./assets/illustrations/ruta-nord/poi3-platja-del-malaret-paint.jpg",
     gallery: [],
   },
   {
@@ -351,12 +351,12 @@ const POIS_NORD = [
     accessibility: "kayak",
     name: {
       ca: "Port de Ses Orats",
-      es: "Port de Ses Orats",
+      es: "Puerto de Ses Orats",
       en: "Port de Ses Orats",
       fr: "Port de Ses Orats",
     },
     description: PLACEHOLDER_DESCRIPTION,
-    thumbnail: null,
+    thumbnail: "./assets/illustrations/ruta-nord/poi4-port-ses-orats-paint.jpg",
     gallery: [],
   },
   {
@@ -371,12 +371,12 @@ const POIS_NORD = [
     accessibility: "kayak",
     name: {
       ca: "Illa Blanca",
-      es: "Illa Blanca",
+      es: "Isla Blanca",
       en: "Illa Blanca",
       fr: "Illa Blanca",
     },
     description: PLACEHOLDER_DESCRIPTION,
-    thumbnail: null,
+    thumbnail: "./assets/illustrations/ruta-nord/poi5-illa-blanca-paint.jpg",
     gallery: [],
   },
   {
@@ -390,13 +390,13 @@ const POIS_NORD = [
     snorkel: 3,
     accessibility: "kayak",
     name: {
-      ca: "Platja de N'Estàsia",
-      es: "Platja de N'Estàsia",
-      en: "N'Estàsia Beach",
-      fr: "Plage de N'Estàsia",
+      ca: "Platja de n'Estasia",
+      es: "Playa de Estasia",
+      en: "N'Estasia Beach",
+      fr: "Plage de n'Estasia",
     },
     description: PLACEHOLDER_DESCRIPTION,
-    thumbnail: null,
+    thumbnail: "./assets/illustrations/ruta-nord/poi6-platja-nestesia-paint.jpg",
     gallery: [],
   },
   {
@@ -411,12 +411,12 @@ const POIS_NORD = [
     accessibility: "kayak",
     name: {
       ca: "Platja Fonda",
-      es: "Platja Fonda",
+      es: "Playa Fonda",
       en: "Platja Fonda",
       fr: "Platja Fonda",
     },
     description: PLACEHOLDER_DESCRIPTION,
-    thumbnail: null,
+    thumbnail: "./assets/illustrations/ruta-nord/poi7-platja-fonda-paint.jpg",
     gallery: [],
   },
   {
@@ -436,7 +436,7 @@ const POIS_NORD = [
       fr: "Es Falcó",
     },
     description: PLACEHOLDER_DESCRIPTION,
-    thumbnail: null,
+    thumbnail: "./assets/illustrations/ruta-nord/poi8-ses-falco-paint.jpg",
     gallery: [],
   },
 ];
@@ -471,8 +471,8 @@ export const ROUTES = [
       wave: { ok: 0.5, caution: 0.8 },
     },
     poiCount: POIS_SUD.length,
-    image: "./assets/illustrations/ruta-sud.png",
-    cardImage: "./assets/illustrations/ruta-sud.png",
+    image: "./assets/illustrations/ruta-sud/ruta-sud.png",
+    cardImage: "./assets/illustrations/ruta-sud/ruta-sud.png",
     mapImagePattern: "./assets/illustrations/mapa-ruta/map-ruta-sud-{i}.jpg",
     mapImagePatternByDuration: {
       "1h": "./assets/illustrations/mapa-ruta/1 hora/map-ruta-sud-{i}-1hora.jpg",
@@ -524,8 +524,8 @@ export const ROUTES = [
       wave: { ok: 0.4, caution: 0.7 },
     },
     poiCount: POIS_NORD.length,
-    image: "./assets/illustrations/ruta-nord.png",
-    cardImage: "./assets/illustrations/ruta-nord.png",
+    image: "./assets/illustrations/ruta-nord/ruta-nord.png",
+    cardImage: "./assets/illustrations/ruta-nord/ruta-nord.png",
     mapImagePattern: "./assets/illustrations/mapa-ruta/map-ruta-sud-{i}.jpg",
     mapImage: "./assets/illustrations/mapa-ruta/map-ruta-sud-1.jpg",
     durations: {

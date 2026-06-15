@@ -4,7 +4,7 @@
 // *.pages.dev, and localhost:5173. Safe to ship in client code (pk. = public).
 export const MAPBOX_TOKEN = "pk.eyJ1IjoibW91YWFkMjIiLCJhIjoiY21xOGoxNjJoMDkwMzJyczhvcGE3cXhociJ9.ja_qMm4VL9HeVlzA0yIvkg";
 
-export const MAPBOX_STYLE = "mapbox://styles/mapbox/outdoors-v12";
+export const MAPBOX_STYLE = "mapbox://styles/mouaad22/cmped7edg001m01sjav2f5b88";
 export const MAPBOX_SATELLITE_STYLE = "mapbox://styles/mapbox/satellite-streets-v12";
 
 // Aiguablava marina, Costa Brava

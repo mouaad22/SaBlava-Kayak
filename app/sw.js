@@ -13,8 +13,8 @@
 // directly from the page context — the SW just intercepts the
 // cached URLs on subsequent requests.
 
-const SHELL_CACHE = "sablava-shell-v9";
-const TILE_CACHE  = "sablava-tiles-v1";
+const SHELL_CACHE = "sablava-shell-v10";
+const TILE_CACHE  = "sablava-tiles-v2";
 
 const SHELL_ASSETS = [
   "/",

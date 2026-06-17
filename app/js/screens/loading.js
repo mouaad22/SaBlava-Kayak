@@ -23,16 +23,20 @@ function collectRouteCards() {
   return uniq(ROUTES.flatMap((r) => [r.cardImage, r.image]));
 }
 
-// Per-POI map illustrations for the default (3h) duration carousel on the
-// route screen. The route screen re-preloads its current duration on mount,
-// so warming the default set here means screen 3 lands without flicker.
+// Per-POI map illustrations for each route's default duration carousel on
+// the route screen. The route screen re-preloads its current duration on
+// mount, so warming the default set here means screen 3 lands without
+// flicker.
 function collectRouteMapSlides() {
   const urls = [];
   for (const route of ROUTES) {
+    const durations = route.durations;
+    const defaultId = durations?.default;
     const pattern =
-      route.mapImagePatternByDuration?.["3h"] ?? route.mapImagePattern;
+      route.mapImagePatternByDuration?.[defaultId] ?? route.mapImagePattern;
     if (!pattern) continue;
-    const count = route.pois?.length ?? 9;
+    const count =
+      durations?.countByDuration?.[defaultId] ?? route.pois?.length ?? 9;
     for (let i = 0; i < count; i++) {
       urls.push(encodeURI(pattern.replace("{i}", String(i + 1))));
     }

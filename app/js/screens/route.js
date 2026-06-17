@@ -3,7 +3,6 @@
 // Layout, copy, and inline styles come from Paper's get_jsx. Interactions
 // added on top per spec:
 //   • Header next-route arrow toggles sud ↔ nord.
-//   • Play button on the map runs a 5s circular border fill on click, looped.
 //   • Horizontal POI carousel; as a card scrolls into the centre the map
 //     illustration swaps to mapa-ruta/map-ruta-{routeId}-{N}.jpg (falls back
 //     to N=1 when the indexed file 404s).
@@ -43,10 +42,6 @@ function saveDuration(routeId, id) {
 const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
 const ICON_NEXT = `<img src="./assets/icons/regular/ArrowRight.svg" width="24" height="24" alt="" aria-hidden="true" />`;
-
-const ICON_PLAY = `<img src="./assets/icons/regular/Play.svg" width="24" height="24" alt="" aria-hidden="true" />`;
-
-const ICON_PAUSE = `<img src="./assets/icons/regular/Pause.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
 const ICON_MAP = `<img src="./assets/icons/regular/MapTrifold.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
@@ -116,9 +111,6 @@ function templateHTML(route, lang, durationId, durations) {
           <button class="map-button" type="button" data-action="open-map" aria-label="${t("route.fullmap")}">
             <span class="map-button__icon">${ICON_MAP}</span>
             <span class="map-button__label">${t("route.mapLabel")}</span>
-          </button>
-          <button class="play-button" type="button" data-action="play" aria-label="${t("route.play")}">
-            <span class="play-button__icon" data-play-icon>${ICON_PLAY}</span>
           </button>
         </div>
 
@@ -268,59 +260,6 @@ export function renderRouteScreen(host, routeId) {
     .querySelector("[data-action=open-map]")
     .addEventListener("click", () => navigate(`/route/${routeId}/map`));
 
-  // --- Play button --------------------------------------------------------
-  // Tap to auto-advance the POI carousel; one POI per 3 s. The animated
-  // border ring (CSS ::after) sweeps in lockstep. Reaching the last visible
-  // POI loops back to the first. Toggling stops playback and resets the
-  // ring; the icon swaps to Pause while playing.
-  const playBtn = screen.querySelector("[data-action=play]");
-  const playIconHost = playBtn.querySelector("[data-play-icon]");
-  const POI_PLAY_MS = 3000;
-  let playTimer = null;
-
-  function visibleCards() {
-    return Array.from(
-      carousel.querySelectorAll("[data-poi-index]:not(.is-hidden)")
-    );
-  }
-  function scrollToCard(card) {
-    const cardRect = card.getBoundingClientRect();
-    const cRect = carousel.getBoundingClientRect();
-    const target =
-      carousel.scrollLeft +
-      (cardRect.left - cRect.left) -
-      (cRect.width - cardRect.width) / 2;
-    carousel.scrollTo({ left: target, behavior: "smooth" });
-  }
-  function stopPlay() {
-    if (playTimer) {
-      clearInterval(playTimer);
-      playTimer = null;
-    }
-    playBtn.classList.remove("is-playing");
-    playIconHost.innerHTML = ICON_PLAY;
-  }
-  function startPlay() {
-    const cards = visibleCards();
-    if (!cards.length) return;
-    playBtn.classList.add("is-playing");
-    playIconHost.innerHTML = ICON_PAUSE;
-    // Advance one card every 3 s, starting from wherever the user already is.
-    playTimer = setInterval(() => {
-      const current = visibleCards();
-      if (!current.length) return;
-      const nextIdx = (activeIdx + 1) % current.length;
-      const target = current.find(
-        (c) => Number(c.dataset.poiIndex) === nextIdx
-      ) ?? current[0];
-      scrollToCard(target);
-    }, POI_PLAY_MS);
-  }
-  playBtn.addEventListener("click", () => {
-    if (playTimer) stopPlay();
-    else startPlay();
-  });
-
   // --- POI cards → POI detail screen --------------------------------------
   carousel.querySelectorAll("[data-poi-index]").forEach((card) => {
     const go = () =>
@@ -357,9 +296,6 @@ export function renderRouteScreen(host, routeId) {
       saveDuration(routeId, id);
       updateDurationUI(screen, durationId, durations);
       closeSheet();
-      // Filtered POI set just changed — playback would otherwise advance to a
-      // now-hidden index, so reset to a clean state.
-      stopPlay();
       // Pull the new map pattern + warm its cache, then refresh the map.
       currentPattern = patternForDuration(durationId);
       mapEl.dataset.currentUrl = "";
@@ -390,7 +326,6 @@ export function renderRouteScreen(host, routeId) {
     routeId,
     el: screen,
     teardown() {
-      stopPlay();
       screen.classList.remove("is-active");
       setTimeout(() => screen.remove(), 320);
     },

@@ -40,7 +40,6 @@ const dict = {
     "route.share": "Compartir",
     "route.back": "Tornar",
     "route.change": "Canviar ruta",
-    "route.play": "Reproduir ruta",
     "route.recorda.title": "Recorda",
     "route.recorda.body":
       "Porta sempre un xiulet i llum, comprova la previsió del temps abans de sortir, i mai pugis al caiac amb tronada a l'horitzó.",
@@ -194,7 +193,6 @@ const dict = {
     "route.share": "Compartir",
     "route.back": "Volver",
     "route.change": "Cambiar ruta",
-    "route.play": "Reproducir ruta",
     "route.recorda.title": "Recuerda",
     "route.recorda.body":
       "Lleva siempre un silbato y luz, comprueba la previsión del tiempo antes de salir, y nunca subas al kayak con tormenta en el horizonte.",
@@ -348,7 +346,6 @@ const dict = {
     "route.share": "Share",
     "route.back": "Back",
     "route.change": "Change route",
-    "route.play": "Play route",
     "route.recorda.title": "Remember",
     "route.recorda.body":
       "Always carry a whistle and light, check the weather forecast before heading out, and never paddle out with a storm on the horizon.",
@@ -502,7 +499,6 @@ const dict = {
     "route.share": "Partager",
     "route.back": "Retour",
     "route.change": "Changer d'itinéraire",
-    "route.play": "Lancer l'itinéraire",
     "route.recorda.title": "À retenir",
     "route.recorda.body":
       "Emporte toujours un sifflet et une lampe, consulte les prévisions avant de partir, et ne pagaie jamais avec un orage à l'horizon.",

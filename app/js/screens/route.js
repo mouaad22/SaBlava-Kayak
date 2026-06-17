@@ -105,9 +105,12 @@ function templateHTML(route, lang, durationId, durations) {
 
     <div class="route-screen__scroll">
       <section class="route-screen__section">
-        <h1 class="route-screen__heading">${route.name[lang]}</h1>
-
-        <div class="route-map" data-route-map role="img" aria-label="${route.name[lang]}">
+        <div class="route-map" role="img" aria-label="${route.name[lang]}">
+          <div class="route-map__spacer"></div>
+          <div class="route-map__image" data-route-map></div>
+          <div class="route-map__title-bar">
+            <h1 class="route-screen__heading">${route.name[lang]}</h1>
+          </div>
           <button class="map-button" type="button" data-action="open-map" aria-label="${t("route.fullmap")}">
             <span class="map-button__icon">${ICON_MAP}</span>
             <span class="map-button__label">${t("route.mapLabel")}</span>

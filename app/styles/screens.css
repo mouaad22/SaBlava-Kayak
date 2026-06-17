@@ -893,7 +893,7 @@
   font-size: 28px;
   line-height: 32px;
   color: #1a1a1a;
-  margin: 16px 0 8px;
+  margin: 0;
 }
 
 /* Map widget — satellite illustration + dashed SVG route overlay + play btn.
@@ -904,10 +904,37 @@
   width: calc(100% + 48px);
   margin-left: -24px;
   margin-right: -24px;
+  height: 193px;
+  overflow: hidden;
+}
+
+.route-map__spacer {
+  width: 100%;
+  height: 24px;
+}
+
+.route-map__image {
+  width: 100%;
   height: 169px;
   background-position: 50%;
   background-size: cover;
-  overflow: hidden;
+}
+
+/* Title floats over the top of the map image, faded into it via a
+   white-to-transparent gradient so the illustration shows through below. */
+.route-map__title-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  padding: 12px 24px 24px;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 1) 52%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 /* "Mapa" pill — sits on the bottom-right edge of the map widget.

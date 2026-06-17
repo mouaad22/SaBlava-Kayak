@@ -40,9 +40,6 @@ const dict = {
     "route.share": "Compartir",
     "route.back": "Tornar",
     "route.change": "Canviar ruta",
-    "route.recorda.title": "Recorda",
-    "route.recorda.body":
-      "Porta sempre un xiulet i llum, comprova la previsió del temps abans de sortir, i mai pugis al caiac amb tronada a l'horitzó.",
     "route.duration.title": "Duració",
     "route.duration.1h": "1 hora",
     "route.duration.1h30": "90 minuts",
@@ -193,9 +190,6 @@ const dict = {
     "route.share": "Compartir",
     "route.back": "Volver",
     "route.change": "Cambiar ruta",
-    "route.recorda.title": "Recuerda",
-    "route.recorda.body":
-      "Lleva siempre un silbato y luz, comprueba la previsión del tiempo antes de salir, y nunca subas al kayak con tormenta en el horizonte.",
     "route.duration.title": "Duración",
     "route.duration.1h": "1 hora",
     "route.duration.1h30": "90 minutos",
@@ -346,9 +340,6 @@ const dict = {
     "route.share": "Share",
     "route.back": "Back",
     "route.change": "Change route",
-    "route.recorda.title": "Remember",
-    "route.recorda.body":
-      "Always carry a whistle and light, check the weather forecast before heading out, and never paddle out with a storm on the horizon.",
     "route.duration.title": "Duration",
     "route.duration.1h": "1 hour",
     "route.duration.1h30": "90 minutes",
@@ -499,9 +490,6 @@ const dict = {
     "route.share": "Partager",
     "route.back": "Retour",
     "route.change": "Changer d'itinéraire",
-    "route.recorda.title": "À retenir",
-    "route.recorda.body":
-      "Emporte toujours un sifflet et une lampe, consulte les prévisions avant de partir, et ne pagaie jamais avec un orage à l'horizon.",
     "route.duration.title": "Durée",
     "route.duration.1h": "1 heure",
     "route.duration.1h30": "90 minutes",

@@ -2,7 +2,6 @@
 //
 // Layout, copy, and inline styles come from Paper's get_jsx. Interactions
 // added on top per spec:
-//   • Header next-route arrow toggles sud ↔ nord.
 //   • Horizontal POI carousel; as a card scrolls into the centre the map
 //     illustration swaps to mapa-ruta/map-ruta-{routeId}-{N}.jpg (falls back
 //     to N=1 when the indexed file 404s).
@@ -21,8 +20,6 @@ const FALLBACK_DURATIONS = {
   countByDuration: { "1h": 5, "1h30": 8, "2h": 8, "3h": 9 },
   default: "3h",
 };
-const ROUTE_TOGGLE = { sud: "nord", nord: "sud" };
-
 function durationKey(routeId) {
   return `sa-blava.duration.${routeId}`;
 }
@@ -40,8 +37,6 @@ function saveDuration(routeId, id) {
 }
 
 const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" height="24" alt="" aria-hidden="true" />`;
-
-const ICON_NEXT = `<img src="./assets/icons/regular/ArrowRight.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
 const ICON_MAP = `<img src="./assets/icons/regular/MapTrifold.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
@@ -100,7 +95,10 @@ function templateHTML(route, lang, durationId, durations) {
   return `
     <header class="route-screen__header">
       <button class="route-screen__back" type="button" data-action="back" aria-label="${t("route.back")}">${ICON_BACK}</button>
-      <button class="route-screen__change" type="button" data-action="change-route" aria-label="${t("route.change")}">${ICON_NEXT}</button>
+      <button class="map-button" type="button" data-action="open-map" aria-label="${t("route.fullmap")}">
+        <span class="map-button__icon">${ICON_MAP}</span>
+        <span class="map-button__label">${t("route.mapLabel")}</span>
+      </button>
     </header>
 
     <div class="route-screen__scroll">
@@ -111,10 +109,6 @@ function templateHTML(route, lang, durationId, durations) {
           <div class="route-map__title-bar">
             <h1 class="route-screen__heading">${route.name[lang]}</h1>
           </div>
-          <button class="map-button" type="button" data-action="open-map" aria-label="${t("route.fullmap")}">
-            <span class="map-button__icon">${ICON_MAP}</span>
-            <span class="map-button__label">${t("route.mapLabel")}</span>
-          </button>
         </div>
 
         <div class="poi-carousel" data-poi-carousel>
@@ -122,11 +116,6 @@ function templateHTML(route, lang, durationId, durations) {
             .map((poi, idx) => poiCardHTML(poi, idx, lang, idx < visibleCount))
             .join("")}
         </div>
-      </section>
-
-      <section class="recorda-section">
-        <h2 class="recorda-section__title">${t("route.recorda.title")}</h2>
-        <p class="recorda-section__body">${t("route.recorda.body")}</p>
       </section>
     </div>
 
@@ -252,11 +241,6 @@ export function renderRouteScreen(host, routeId) {
   screen
     .querySelector("[data-action=back]")
     .addEventListener("click", () => navigate("/routes"));
-  screen
-    .querySelector("[data-action=change-route]")
-    .addEventListener("click", () =>
-      navigate(`/route/${ROUTE_TOGGLE[routeId] || "sud"}`)
-    );
 
   // --- Open full-screen map ----------------------------------------------
   screen

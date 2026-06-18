@@ -803,7 +803,8 @@
   z-index: 5;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 4px;
   padding: max(env(safe-area-inset-top), 16px) 24px 0;
   min-height: 56px;
   background: unset;
@@ -850,6 +851,11 @@
   line-height: 28px;
   color: #1a1a1a;
   margin: 0;
+  /* Sits beside the back button; clip long route names rather than wrap. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Map widget — satellite illustration + dashed SVG route overlay + play btn.
@@ -918,36 +924,52 @@
   );
 }
 
-/* "Mapa" pill — sits in the header, in place of the old change-route button.
-   Pill-shaped because it carries text + icon. */
-.map-button {
-  height: 48px;
+/* Inline segmented duration control (Paper route-duration JVO-0) — lives in
+   the title-bar gradient where the route heading used to sit. */
+.duration-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.duration-bar__label {
+  flex: 1;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 16px;
+  color: #1a1a1a;
+}
+
+.duration-bar__segments {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.duration-seg {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 20px 0 16px;
-  background: #f5f8f1;
-  border: 0;
-  border-radius: 16px;
+  justify-content: center;
+  min-width: 48px;
+  height: 32px;
+  padding: 0 8px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
   corner-shape: var(--corner-shape);
-  outline: 2px solid #e2e6dd;
-  outline-offset: -1px;
-  flex-shrink: 0;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 16px;
+  color: #555555;
   cursor: pointer;
 }
 
-.map-button__icon {
-  display: inline-flex;
-  width: 24px;
-  height: 24px;
-}
-
-.map-button__label {
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 20px;
-  color: #1a1a1a;
+.duration-seg.is-selected {
+  background: #ffffff;
+  border-color: #2f6b89;
+  color: #2f6b89;
 }
 
 /* Horizontal POI carousel — scoped to .route-screen because screen 4
@@ -999,14 +1021,22 @@
 .route-screen .poi-card__title {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 20px;
-  line-height: 30px;
+  font-size: 18px;
+  line-height: 27px;
+  color: #1a1a1a;
+}
+
+.route-screen .poi-card__number {
   color: var(--color-primary);
 }
 
 .route-screen .poi-card.is-active .poi-card__number,
 .route-screen .poi-card.is-active .poi-card__title {
-  color: var(--color-primary-dark);
+  color: #1a1a1a;
+}
+
+.route-screen .poi-card.is-active .poi-card__number {
+  color: var(--color-primary);
 }
 
 .route-screen .poi-card__media {
@@ -1059,43 +1089,49 @@
   );
 }
 
-.duration-chip {
+/* Secondary CTA — "Mapa" (white fill, teal outline). */
+.map-cta-button {
+  flex: 1;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  width: 138px;
+  justify-content: center;
+  gap: 10px;
   height: 48px;
   padding: 12px 16px;
-  background: #f5f8f1;
+  background: #ffffff;
+  border: 1.5px solid #2f6b89;
   border-radius: 16px;
   corner-shape: var(--corner-shape);
-  outline: 2px solid #e2e6dd;
-  outline-offset: -1px;
-  border: 0;
+}
+
+.map-cta-button__icon {
+  display: inline-flex;
   flex-shrink: 0;
 }
 
-.duration-chip__label {
+.map-cta-button__label {
   font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 500;
   line-height: 22.5px;
-  color: #1a1a1a;
+  color: #1e5670;
   text-align: center;
 }
 
+/* Primary CTA — "Comença" (teal fill). */
 .start-button {
   flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   height: 48px;
   padding: 12px 16px;
   background: #1b6b8a;
   border-radius: 16px;
   corner-shape: var(--corner-shape);
   border: 0;
+  box-shadow: 0 0 12px -4px rgba(0, 0, 0, 0.2);
 }
 
 .start-button:active {
@@ -1104,99 +1140,10 @@
 
 .start-button__label {
   font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 500;
   line-height: 22.5px;
   color: #ffffff;
-}
-
-/* Duración bottom sheet (overlay) */
-.duration-sheet {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  background: rgba(28, 28, 28, 0.25);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 220ms var(--ease-entrance);
-}
-
-.duration-sheet.is-open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.duration-sheet__card {
-  position: absolute;
-  left: 24px;
-  right: 24px;
-  bottom: 128px;
-  background: #ffffff;
-  border-radius: 24px;
-  corner-shape: var(--corner-shape);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.15),
-    0 0 40px -19px rgba(0, 0, 0, 0.2);
-  transform: translateY(24px);
-  transition: transform 240ms var(--ease-entrance);
-}
-
-.duration-sheet.is-open .duration-sheet__card {
-  transform: none;
-}
-
-.duration-sheet__title {
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 24px;
-  color: #6f7273;
-  margin: 0;
-}
-
-.duration-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.duration-row {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 56px;
-  padding: 0 8px;
-  gap: 16px;
-  background: transparent;
-  border: 0;
-  text-align: left;
-}
-
-.duration-row__label {
-  flex: 1;
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 20px;
-  color: #1a1a1a;
-}
-
-.duration-row.is-selected .duration-row__label {
-  font-weight: 700;
-}
-
-.duration-row__check {
-  display: none;
-  flex-shrink: 0;
-}
-
-.duration-row.is-selected .duration-row__check {
-  display: inline-flex;
 }
 
 /* ============== SCREEN 4 — POI DETAILS (Paper A1P-1) ============== */

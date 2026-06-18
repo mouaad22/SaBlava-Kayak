@@ -36,15 +36,14 @@ function saveDuration(routeId, id) {
   } catch {}
 }
 
+// Compact, language-neutral labels for the segmented duration control.
+const DURATION_SHORT = { "1h": "1h", "1h30": "90m", "2h": "2h", "3h": "3h" };
+
 const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
-const ICON_MAP = `<img src="./assets/icons/regular/MapTrifold.svg" width="24" height="24" alt="" aria-hidden="true" />`;
-
-const ICON_CHEVRON_DOWN = `<img src="./assets/icons/regular/CaretDown.svg" width="24" height="24" alt="" aria-hidden="true" />`;
+const ICON_MAP = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21.461 4.659C21.371 4.589 21.267 4.54 21.155 4.516C21.044 4.493 20.929 4.495 20.818 4.523L15.087 5.955L9.336 3.079C9.175 2.999 8.992 2.979 8.818 3.023L2.818 4.523C2.656 4.563 2.512 4.657 2.409 4.789C2.306 4.92 2.25 5.083 2.25 5.25V18.75C2.25 18.864 2.276 18.977 2.326 19.079C2.376 19.181 2.449 19.271 2.538 19.341C2.628 19.411 2.733 19.46 2.844 19.484C2.956 19.507 3.071 19.505 3.182 19.478L8.913 18.045L14.664 20.921C14.769 20.973 14.884 21 15 21C15.061 21 15.122 20.992 15.182 20.978L21.182 19.478C21.344 19.437 21.488 19.343 21.591 19.212C21.694 19.08 21.75 18.917 21.75 18.75V5.25C21.75 5.136 21.724 5.023 21.674 4.921C21.624 4.818 21.551 4.729 21.461 4.659ZM9 16.5C8.939 16.5 8.878 16.508 8.818 16.523L3.75 17.789V5.836L8.913 4.545L9 4.588V16.5ZM20.25 18.164L15.087 19.455L15 19.412V7.5C15.061 7.5 15.122 7.493 15.182 7.479L20.25 6.211V18.164Z" fill="#1E5670"/></svg>`;
 
 const ICON_KITE = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true"><path d="M0.75 11.398C0.752 11.715 0.856 12.023 1.047 12.276C1.237 12.529 1.504 12.714 1.808 12.804L1.827 12.81L9.139 14.857L11.187 22.17L11.192 22.189C11.282 22.493 11.468 22.759 11.721 22.95C11.974 23.141 12.282 23.245 12.599 23.247H12.627C12.938 23.25 13.241 23.155 13.495 22.976C13.748 22.796 13.939 22.541 14.04 22.247L20.156 5.757C20.158 5.752 20.159 5.747 20.16 5.742C20.252 5.477 20.267 5.191 20.204 4.917C20.141 4.644 20.002 4.393 19.804 4.195C19.606 3.996 19.356 3.857 19.082 3.793C18.809 3.729 18.523 3.744 18.257 3.834L18.242 3.839L1.75 9.957C1.451 10.059 1.193 10.254 1.013 10.514C0.833 10.773 0.741 11.083 0.75 11.398Z" fill="#FFFFFF"/></svg>`;
-
-const ICON_CHECK = `<svg viewBox="0 0 50 50" width="24" height="24" fill="#1B6B8A" aria-hidden="true"><path d="M 42.875 8.625 C 42.844 8.633 42.813 8.645 42.781 8.656 C 42.52 8.723 42.293 8.891 42.156 9.125 L 21.719 40.813 L 7.656 28.125 C 7.41 27.813 7 27.676 6.613 27.777 C 6.227 27.879 5.941 28.203 5.883 28.598 C 5.824 28.992 6.004 29.383 6.344 29.594 L 21.25 43.094 C 21.469 43.285 21.762 43.371 22.051 43.328 C 22.34 43.285 22.594 43.121 22.75 42.875 L 43.844 10.188 C 44.074 9.859 44.086 9.426 43.875 9.086 C 43.664 8.746 43.27 8.566 42.875 8.625 Z"/></svg>`;
 
 function poiDescription(poi, lang) {
   if (poi.description && poi.description[lang]) return poi.description[lang];
@@ -58,35 +57,13 @@ function pad2(n) {
 function poiCardHTML(poi, idx, lang, visible) {
   return `
     <article class="poi-card${visible ? "" : " is-hidden"}" data-poi-index="${idx}" role="button" tabindex="0" aria-label="${poi.name[lang]}">
+      <div class="poi-card__media" style="background-image:url('${poi.thumbnail ?? poi.gallery?.[0]?.src ?? ""}')"></div>
       <div class="poi-card__heading">
         <span class="poi-card__number">${pad2(idx + 1)}</span>
         <span class="poi-card__title">${poi.name[lang]}</span>
       </div>
-      <div class="poi-card__media" style="background-image:url('${poi.thumbnail ?? poi.gallery?.[0]?.src ?? ""}')"></div>
       <p class="poi-card__desc">${poiDescription(poi, lang)}</p>
     </article>
-  `;
-}
-
-function durationSheetHTML(durationId, durations) {
-  return `
-    <div class="duration-sheet" data-duration-sheet aria-hidden="true">
-      <div class="duration-sheet__card" role="dialog" aria-modal="true" aria-labelledby="duration-title">
-        <p class="duration-sheet__title" id="duration-title">${t("route.duration.title")}</p>
-        <ul class="duration-list">
-          ${durations.available.map(
-            (id) => `
-            <li>
-              <button class="duration-row${id === durationId ? " is-selected" : ""}" type="button" data-duration-id="${id}">
-                <span class="duration-row__label">${t("route.duration." + id)}</span>
-                <span class="duration-row__check">${ICON_CHECK}</span>
-              </button>
-            </li>
-          `
-          ).join("")}
-        </ul>
-      </div>
-    </div>
   `;
 }
 
@@ -95,10 +72,7 @@ function templateHTML(route, lang, durationId, durations) {
   return `
     <header class="route-screen__header">
       <button class="route-screen__back" type="button" data-action="back" aria-label="${t("route.back")}">${ICON_BACK}</button>
-      <button class="map-button" type="button" data-action="open-map" aria-label="${t("route.fullmap")}">
-        <span class="map-button__icon">${ICON_MAP}</span>
-        <span class="map-button__label">${t("route.mapLabel")}</span>
-      </button>
+      <h1 class="route-screen__heading">${route.name[lang]}</h1>
     </header>
 
     <div class="route-screen__scroll">
@@ -110,7 +84,17 @@ function templateHTML(route, lang, durationId, durations) {
             <div class="route-map__layer" data-map-layer></div>
           </div>
           <div class="route-map__title-bar">
-            <h1 class="route-screen__heading">${route.name[lang]}</h1>
+            <div class="duration-bar" role="group" aria-label="${t("route.duration.title")}">
+              <span class="duration-bar__label">${t("route.duration.title")}</span>
+              <div class="duration-bar__segments">
+                ${durations.available
+                  .map(
+                    (id) =>
+                      `<button class="duration-seg${id === durationId ? " is-selected" : ""}" type="button" data-duration-id="${id}" aria-pressed="${id === durationId}">${DURATION_SHORT[id] ?? id}</button>`
+                  )
+                  .join("")}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -123,32 +107,16 @@ function templateHTML(route, lang, durationId, durations) {
     </div>
 
     <div class="route-screen__cta">
-      <button class="duration-chip" type="button" data-action="open-duration" aria-haspopup="dialog">
-        <span class="duration-chip__label" data-duration-label>${t("route.duration." + durationId)}</span>
-        ${ICON_CHEVRON_DOWN}
+      <button class="map-cta-button" type="button" data-action="open-map" aria-label="${t("route.fullmap")}">
+        <span class="map-cta-button__icon">${ICON_MAP}</span>
+        <span class="map-cta-button__label">${t("route.mapLabel")}</span>
       </button>
       <button class="start-button" type="button" data-action="start">
         ${ICON_KITE}
         <span class="start-button__label">${t("route.start")}</span>
       </button>
     </div>
-
-    ${durationSheetHTML(durationId, durations)}
   `;
-}
-
-function updateDurationUI(screen, durationId, durations) {
-  const visibleCount = durations.countByDuration[durationId];
-  screen.querySelectorAll("[data-poi-index]").forEach((card) => {
-    const idx = Number(card.dataset.poiIndex);
-    card.classList.toggle("is-hidden", idx >= visibleCount);
-  });
-  screen.querySelector("[data-duration-label]").textContent = t(
-    "route.duration." + durationId
-  );
-  screen.querySelectorAll("[data-duration-id]").forEach((row) => {
-    row.classList.toggle("is-selected", row.dataset.durationId === durationId);
-  });
 }
 
 export function renderRouteScreen(host, routeId) {
@@ -296,36 +264,36 @@ export function renderRouteScreen(host, routeId) {
     });
   });
 
-  // --- Duration sheet -----------------------------------------------------
-  const sheetEl = screen.querySelector("[data-duration-sheet]");
-  const chipEl = screen.querySelector("[data-action=open-duration]");
-  function openSheet() {
-    sheetEl.classList.add("is-open");
-    sheetEl.setAttribute("aria-hidden", "false");
+  // --- Duration segments: filter visible POIs + swap the illustrated map ---
+  function applyDuration(id) {
+    const visibleCount = durations.countByDuration[id];
+    carousel.querySelectorAll("[data-poi-index]").forEach((card) => {
+      card.classList.toggle(
+        "is-hidden",
+        Number(card.dataset.poiIndex) >= visibleCount
+      );
+    });
+    screen.querySelectorAll(".duration-seg").forEach((seg) => {
+      const selected = seg.dataset.durationId === id;
+      seg.classList.toggle("is-selected", selected);
+      seg.setAttribute("aria-pressed", String(selected));
+    });
   }
-  function closeSheet() {
-    sheetEl.classList.remove("is-open");
-    sheetEl.setAttribute("aria-hidden", "true");
-  }
-  chipEl.addEventListener("click", openSheet);
-  sheetEl.addEventListener("click", (ev) => {
-    if (ev.target === sheetEl) closeSheet();
-  });
-  sheetEl.querySelectorAll("[data-duration-id]").forEach((row) => {
-    row.addEventListener("click", () => {
-      const id = row.dataset.durationId;
-      if (durations.countByDuration[id] === undefined) return;
+
+  screen.querySelectorAll(".duration-seg").forEach((seg) => {
+    seg.addEventListener("click", () => {
+      const id = seg.dataset.durationId;
+      if (id === durationId || durations.countByDuration[id] === undefined)
+        return;
       durationId = id;
       saveDuration(routeId, id);
-      updateDurationUI(screen, durationId, durations);
-      closeSheet();
-      // Pull the new map (base + overlay set) + warm its cache, swap the base,
-      // then refresh the overlay.
+      applyDuration(id);
+      // Pull the new map (base + overlay set), warm its cache, swap the base,
+      // then refresh the overlay for the (possibly moved) centred POI.
       currentMap = mapForDuration(durationId);
       currentUrl = null;
       setBaseImage();
       preloadCurrentMap();
-      // Filtering may move the centred POI; recheck after the layout settles.
       requestAnimationFrame(() => {
         recomputeActive();
         setMapOverlayForIndex(activeIdx);

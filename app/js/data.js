@@ -473,14 +473,27 @@ export const ROUTES = [
     poiCount: POIS_SUD.length,
     image: "./assets/illustrations/ruta-sud/ruta-sud.png",
     cardImage: "./assets/illustrations/ruta-sud/ruta-sud.png",
-    mapImagePattern: "./assets/illustrations/mapa-ruta/3hores/map-ruta-sud-{i}.jpg",
-    mapImagePatternByDuration: {
-      "1h": "./assets/illustrations/mapa-ruta/1hora/map-ruta-sud-{i}-1hora.jpg",
-      "1h30": "./assets/illustrations/mapa-ruta/2hores + 90 minuts/map-ruta-sud-{i}-2hores-90-mins.jpg",
-      "2h": "./assets/illustrations/mapa-ruta/2hores + 90 minuts/map-ruta-sud-{i}-2hores-90-mins.jpg",
-      "3h": "./assets/illustrations/mapa-ruta/3hores/map-ruta-sud-{i}.jpg",
+    // Illustrated route map = a base JPG per duration + one SVG overlay per
+    // POI stacked on top. Only the overlay swaps as the carousel scrolls; the
+    // base changes when the duration changes. {i} is the 1-based POI index.
+    mapByDuration: {
+      "1h": {
+        base: "./assets/illustrations/mapa-ruta/ruta-sud/map-ruta-sud-base-1hora.jpg",
+        overlay: "./assets/illustrations/mapa-ruta/ruta-sud/map-ruta-sud-{i}-1hora.svg",
+      },
+      "1h30": {
+        base: "./assets/illustrations/mapa-ruta/ruta-sud/map-ruta-sud-base-2hores-90-mins.jpg",
+        overlay: "./assets/illustrations/mapa-ruta/ruta-sud/map-ruta-sud-{i}-2hores-90-mins.svg",
+      },
+      "2h": {
+        base: "./assets/illustrations/mapa-ruta/ruta-sud/map-ruta-sud-base-2hores-90-mins.jpg",
+        overlay: "./assets/illustrations/mapa-ruta/ruta-sud/map-ruta-sud-{i}-2hores-90-mins.svg",
+      },
+      "3h": {
+        base: "./assets/illustrations/mapa-ruta/ruta-sud/map-ruta-base-3h.jpg",
+        overlay: "./assets/illustrations/mapa-ruta/ruta-sud/map-ruta-sud-{i}.svg",
+      },
     },
-    mapImage: "./assets/illustrations/mapa-ruta/3hores/map-ruta-sud-1.jpg",
     durations: {
       available: ["1h", "1h30", "2h", "3h"],
       countByDuration: { "1h": 5, "1h30": 8, "2h": 8, "3h": 9 },
@@ -526,13 +539,20 @@ export const ROUTES = [
     poiCount: POIS_NORD.length,
     image: "./assets/illustrations/ruta-nord/ruta-nord.png",
     cardImage: "./assets/illustrations/ruta-nord/ruta-nord.png",
-    mapImagePattern: "./assets/illustrations/mapa-ruta/nord/1-hora/map-ruta-nord-{i}-1-hora.jpg",
-    mapImagePatternByDuration: {
-      "1h": "./assets/illustrations/mapa-ruta/nord/1-hora/map-ruta-nord-{i}-1-hora.jpg",
-      "1h30": "./assets/illustrations/mapa-ruta/nord/1-hora/map-ruta-nord-{i}-1-hora.jpg",
-      "2h": "./assets/illustrations/mapa-ruta/nord/2-hores/map-ruta-nord-{i}.jpg",
+    mapByDuration: {
+      "1h": {
+        base: "./assets/illustrations/mapa-ruta/ruta-nord/map-ruta-nord-base-1-hora.jpg",
+        overlay: "./assets/illustrations/mapa-ruta/ruta-nord/map-ruta-nord-{i}-1-hora.svg",
+      },
+      "1h30": {
+        base: "./assets/illustrations/mapa-ruta/ruta-nord/map-ruta-nord-base-1-hora.jpg",
+        overlay: "./assets/illustrations/mapa-ruta/ruta-nord/map-ruta-nord-{i}-1-hora.svg",
+      },
+      "2h": {
+        base: "./assets/illustrations/mapa-ruta/ruta-nord/map-ruta-base-2h.jpg",
+        overlay: "./assets/illustrations/mapa-ruta/ruta-nord/map-ruta-nord-{i}.svg",
+      },
     },
-    mapImage: "./assets/illustrations/mapa-ruta/nord/1-hora/map-ruta-nord-1-1-hora.jpg",
     durations: {
       available: ["1h", "1h30", "2h"],
       countByDuration: { "1h": 7, "1h30": 7, "2h": 8 },

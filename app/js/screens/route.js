@@ -105,6 +105,7 @@ function templateHTML(route, lang, durationId, durations) {
       <section class="route-screen__section">
         <div class="route-map" role="img" aria-label="${route.name[lang]}">
           <div class="route-map__image" data-route-map>
+            <div class="route-map__base" data-map-base></div>
             <div class="route-map__layer" data-map-layer></div>
             <div class="route-map__layer" data-map-layer></div>
           </div>
@@ -167,39 +168,48 @@ export function renderRouteScreen(host, routeId) {
   screen.innerHTML = templateHTML(route, lang, durationId, durations);
   host.appendChild(screen);
 
-  // --- Map illustration: one per POI, swaps as carousel scrolls. The map
-  //     pattern depends on the selected duration (different illustrated maps
-  //     exist for 1h / 1h30+2h / 3h). Updated whenever duration changes.
+  // --- Map illustration: a base JPG (one per duration) with a per-POI SVG
+  //     overlay stacked on top. As the carousel scrolls only the overlay
+  //     swaps; the base is re-set whenever the duration changes (different
+  //     illustrated maps exist for 1h / 1h30+2h / 3h).
   const mapEl = screen.querySelector("[data-route-map]");
+  const baseEl = mapEl.querySelector("[data-map-base]");
   const mapLayers = [...mapEl.querySelectorAll("[data-map-layer]")];
   const carousel = screen.querySelector("[data-poi-carousel]");
 
-  function patternForDuration(id) {
-    return (
-      route.mapImagePatternByDuration?.[id] ?? route.mapImagePattern ?? null
-    );
+  function mapForDuration(id) {
+    return route.mapByDuration?.[id] ?? null;
   }
-  function mapUrlAt(pattern, idx) {
-    return encodeURI(pattern.replace("{i}", String(idx + 1)));
+  function overlayUrlAt(map, idx) {
+    return encodeURI(map.overlay.replace("{i}", String(idx + 1)));
   }
 
-  let currentPattern = patternForDuration(durationId);
+  let currentMap = mapForDuration(durationId);
 
-  function preloadCurrentPattern() {
-    if (!currentPattern) return;
+  function setBaseImage() {
+    if (!currentMap) return;
+    baseEl.style.backgroundImage = `url("${encodeURI(currentMap.base)}")`;
+  }
+  setBaseImage();
+
+  function preloadCurrentMap() {
+    if (!currentMap) return;
+    const baseImg = new Image();
+    baseImg.src = encodeURI(currentMap.base);
     const count = durations.countByDuration[durationId] ?? route.pois.length;
-    for (let i = 1; i <= count; i++) {
+    for (let i = 0; i < count; i++) {
       const im = new Image();
-      im.src = mapUrlAt(currentPattern, i - 1);
+      im.src = overlayUrlAt(currentMap, i);
     }
   }
-  preloadCurrentPattern();
+  preloadCurrentMap();
 
-  // Double-buffered crossfade: two stacked layers ping-pong so the visible
-  // image is never cleared mid-swap. Swapping `background-image` on a single
-  // element paints the box white for a frame while the new image re-decodes;
-  // instead we paint the next image onto the hidden layer and fade it in over
-  // the old one, which stays on screen until the new one is ready.
+  // Double-buffered crossfade for the overlay: two stacked layers ping-pong so
+  // the visible overlay is never cleared mid-swap. Swapping `background-image`
+  // on a single element paints the box empty for a frame while the new image
+  // re-decodes; instead we paint the next overlay onto the hidden layer and
+  // fade it in over the old one, which stays on screen until the new one is
+  // ready. The base JPG sits behind both and shows through the transparent SVG.
   let currentUrl = null;
   let front = 0; // index of the layer currently shown
 
@@ -211,9 +221,9 @@ export function renderRouteScreen(host, routeId) {
     front ^= 1;
   }
 
-  function setMapImageForIndex(idx) {
-    if (!currentPattern) return;
-    const url = mapUrlAt(currentPattern, idx);
+  function setMapOverlayForIndex(idx) {
+    if (!currentMap) return;
+    const url = overlayUrlAt(currentMap, idx);
     if (currentUrl === url) return;
     currentUrl = url;
     const probe = new Image();
@@ -223,13 +233,13 @@ export function renderRouteScreen(host, routeId) {
     };
     probe.onerror = () => {
       if (currentUrl !== url) return;
-      const fallback = mapUrlAt(currentPattern, 0);
+      const fallback = overlayUrlAt(currentMap, 0);
       currentUrl = fallback;
       crossfadeTo(fallback);
     };
     probe.src = url;
   }
-  setMapImageForIndex(0);
+  setMapOverlayForIndex(0);
 
   let activeIdx = 0;
   function markActive(idx) {
@@ -258,7 +268,7 @@ export function renderRouteScreen(host, routeId) {
     if (best !== activeIdx) {
       activeIdx = best;
       markActive(best);
-      setMapImageForIndex(best);
+      setMapOverlayForIndex(best);
     }
   }
   carousel.addEventListener("scroll", recomputeActive, { passive: true });
@@ -309,14 +319,16 @@ export function renderRouteScreen(host, routeId) {
       saveDuration(routeId, id);
       updateDurationUI(screen, durationId, durations);
       closeSheet();
-      // Pull the new map pattern + warm its cache, then refresh the map.
-      currentPattern = patternForDuration(durationId);
+      // Pull the new map (base + overlay set) + warm its cache, swap the base,
+      // then refresh the overlay.
+      currentMap = mapForDuration(durationId);
       currentUrl = null;
-      preloadCurrentPattern();
+      setBaseImage();
+      preloadCurrentMap();
       // Filtering may move the centred POI; recheck after the layout settles.
       requestAnimationFrame(() => {
         recomputeActive();
-        setMapImageForIndex(activeIdx);
+        setMapOverlayForIndex(activeIdx);
       });
     });
   });

@@ -873,8 +873,17 @@
   aspect-ratio: 2076 / 1201;
 }
 
-/* Two stacked layers crossfaded by route.js so the map never flashes white
-   while the next POI's illustration decodes. */
+/* Base illustrated map (one JPG per duration) sitting behind the overlay
+   layers. The per-POI SVG overlays are transparent, so this shows through. */
+.route-map__base {
+  position: absolute;
+  inset: 0;
+  background-position: 50%;
+  background-size: cover;
+}
+
+/* Two stacked overlay layers crossfaded by route.js so the POI marker never
+   flashes empty while the next POI's SVG decodes. */
 .route-map__layer {
   position: absolute;
   inset: 0;

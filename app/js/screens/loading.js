@@ -32,13 +32,13 @@ function collectRouteMapSlides() {
   for (const route of ROUTES) {
     const durations = route.durations;
     const defaultId = durations?.default;
-    const pattern =
-      route.mapImagePatternByDuration?.[defaultId] ?? route.mapImagePattern;
-    if (!pattern) continue;
+    const map = route.mapByDuration?.[defaultId];
+    if (!map) continue;
+    urls.push(map.base);
     const count =
       durations?.countByDuration?.[defaultId] ?? route.pois?.length ?? 9;
     for (let i = 0; i < count; i++) {
-      urls.push(encodeURI(pattern.replace("{i}", String(i + 1))));
+      urls.push(encodeURI(map.overlay.replace("{i}", String(i + 1))));
     }
   }
   return uniq(urls);

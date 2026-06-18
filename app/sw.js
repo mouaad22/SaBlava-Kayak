@@ -1,21 +1,30 @@
 // sw.js — Service Worker for Sa Blava Kayak app.
 //
 // Strategy:
-//   • App shell (HTML, JS, CSS, fonts, icons): cache-first.
-//     On first fetch the response is stored; subsequent fetches
-//     are served from cache immediately (no network round-trip).
-//   • Mapbox tile URLs (api.mapbox.com/styles/.../tiles/*,
-//     api.mapbox.com/v4/*): network-first with cache fallback.
-//     This covers the pre-cached tiles from nav/tile-cache.js.
-//   • All other requests: network-pass-through (no caching).
+//   • Navigations + HTML + JS + CSS: NETWORK-FIRST.
+//     Always fetch the latest from the network when online, falling
+//     back to cache only when offline. This guarantees that a freshly
+//     deployed design shows up on the next load — no manual cache
+//     version bump required, no device getting "frozen" on an old
+//     snapshot. (The previous cache-first strategy froze index.html
+//     and every JS module on first visit, which is why different
+//     devices showed different, stale designs.)
+//   • Fonts / images / icons: CACHE-FIRST.
+//     These rarely change and are safe to serve from cache for speed.
+//     When you do change one, give it a new filename (or bump the
+//     SHELL_CACHE version below) to force a refresh.
+//   • Mapbox tile URLs: NETWORK-FIRST with cache fallback (offline maps).
+//   • All other (third-party) requests: network pass-through.
 //
-// The tile pre-caching from nav/tile-cache.js uses caches.open()
-// directly from the page context — the SW just intercepts the
-// cached URLs on subsequent requests.
+// Self-heal: install() calls skipWaiting() and activate() calls
+// clients.claim(), so a newly deployed SW takes control immediately.
+// index.html listens for `controllerchange` and reloads once, so an
+// already-open page also picks up the new version automatically.
 
-const SHELL_CACHE = "sablava-shell-v11";
+const SHELL_CACHE = "sablava-shell-v12";
 const TILE_CACHE  = "sablava-tiles-v2";
 
+// Core shell, pre-cached so the app boots offline even on first run.
 const SHELL_ASSETS = [
   "/",
   "/index.html",
@@ -25,6 +34,8 @@ const SHELL_ASSETS = [
   "/styles/screens.css",
   "/js/app.js",
 ];
+
+const STATIC_ASSET_RE = /\.(?:woff2?|ttf|otf|eot|png|jpe?g|svg|webp|gif|ico|avif)$/i;
 
 // ── Install ───────────────────────────────────────────────────────────────────
 
@@ -58,25 +69,30 @@ self.addEventListener("activate", (e) => {
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 
 self.addEventListener("fetch", (e) => {
-  const url = e.request.url;
+  const req = e.request;
+  const url = req.url;
 
   // Ignore non-GET and analytics/events requests.
-  if (e.request.method !== "GET") return;
+  if (req.method !== "GET") return;
   if (url.includes("events.mapbox.com")) return;
 
   // Mapbox tile URLs → network-first with tile cache fallback.
   if (isTileRequest(url)) {
-    e.respondWith(networkFirstTile(e.request));
+    e.respondWith(networkFirst(req, TILE_CACHE));
     return;
   }
 
-  // App shell → cache-first.
-  if (isShellRequest(url)) {
-    e.respondWith(cacheFirst(e.request, SHELL_CACHE));
+  // Only manage same-origin requests; let third parties pass through.
+  if (!isSameOrigin(url)) return;
+
+  // Static assets (fonts, images, icons) → cache-first.
+  if (STATIC_ASSET_RE.test(new URL(url).pathname)) {
+    e.respondWith(cacheFirst(req, SHELL_CACHE));
     return;
   }
 
-  // Everything else → network pass-through.
+  // Everything else same-origin (navigations, HTML, JS, CSS) → network-first.
+  e.respondWith(networkFirst(req, SHELL_CACHE));
 });
 
 // ── Strategies ────────────────────────────────────────────────────────────────
@@ -92,23 +108,28 @@ async function cacheFirst(request, cacheName) {
     }
     return res;
   } catch {
-    // Offline and not cached.
     return new Response("Offline", { status: 503 });
   }
 }
 
-async function networkFirstTile(request) {
+async function networkFirst(request, cacheName) {
   try {
     const res = await fetch(request);
     if (res.ok) {
-      const cache = await caches.open(TILE_CACHE);
+      const cache = await caches.open(cacheName);
       cache.put(request, res.clone());
     }
     return res;
   } catch {
     const cached = await caches.match(request);
     if (cached) return cached;
-    return new Response("Tile unavailable offline", { status: 503 });
+    // For navigations, fall back to the cached app shell so the app
+    // still opens offline even on an uncached deep link.
+    if (request.mode === "navigate") {
+      const shell = await caches.match("/index.html");
+      if (shell) return shell;
+    }
+    return new Response("Offline", { status: 503 });
   }
 }
 
@@ -122,11 +143,9 @@ function isTileRequest(url) {
   );
 }
 
-function isShellRequest(url) {
-  // Same origin and not a third-party CDN.
+function isSameOrigin(url) {
   try {
-    const u = new URL(url);
-    return u.origin === self.location.origin;
+    return new URL(url).origin === self.location.origin;
   } catch {
     return false;
   }

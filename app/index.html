@@ -39,6 +39,14 @@
     <script type="module" src="./js/app.js"></script>
     <script>
       if ('serviceWorker' in navigator) {
+        // Self-heal: when a freshly deployed SW takes control, reload once
+        // so the open page picks up the new design instead of the old one.
+        var swRefreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          if (swRefreshing) return;
+          swRefreshing = true;
+          window.location.reload();
+        });
         navigator.serviceWorker.register('./sw.js').catch(function(e) {
           console.warn('[Sa Blava] Service Worker registration failed:', e);
         });

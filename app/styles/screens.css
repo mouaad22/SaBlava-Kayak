@@ -860,20 +860,32 @@
   width: calc(100% + 48px);
   margin-left: -24px;
   margin-right: -24px;
-  height: 193px;
   overflow: hidden;
 }
 
-.route-map__spacer {
+/* Full map illustration, never cropped: the box always spans the full width
+   and its height follows the image's native aspect ratio (~2076×1201), so
+   `cover` fills the width with nothing trimmed. The title gradient above
+   overlaps the top of the image. */
+.route-map__image {
+  position: relative;
   width: 100%;
-  height: 24px;
+  aspect-ratio: 2076 / 1201;
 }
 
-.route-map__image {
-  width: 100%;
-  height: 169px;
+/* Two stacked layers crossfaded by route.js so the map never flashes white
+   while the next POI's illustration decodes. */
+.route-map__layer {
+  position: absolute;
+  inset: 0;
   background-position: 50%;
   background-size: cover;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.route-map__layer.is-visible {
+  opacity: 1;
 }
 
 /* Title floats over the top of the map image, faded into it via a
@@ -884,12 +896,16 @@
   left: 0;
   right: 0;
   z-index: 2;
-  padding: 4px 24px 24px;
+  padding: 12px 24px 32px;
   background-image: linear-gradient(
     180deg,
-    rgba(245, 248, 241, 1) 0%,
-    rgba(245, 248, 241, 1) 52%,
-    rgba(245, 248, 241, 0) 100%
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 1) 30%,
+    rgba(255, 255, 255, 0.94) 45%,
+    rgba(255, 255, 255, 0.78) 58%,
+    rgba(255, 255, 255, 0.5) 72%,
+    rgba(255, 255, 255, 0.2) 87%,
+    rgba(255, 255, 255, 0) 100%
   );
 }
 
@@ -900,12 +916,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 0 16px 0 12px;
-  background: #ffffff;
+  padding: 0 20px 0 16px;
+  background: #f5f8f1;
   border: 0;
   border-radius: 16px;
   corner-shape: var(--corner-shape);
-  box-shadow: var(--shadow-card);
+  outline: 2px solid #e2e6dd;
+  outline-offset: -1px;
   flex-shrink: 0;
   cursor: pointer;
 }
@@ -969,20 +986,18 @@
   align-self: stretch;
 }
 
-.route-screen .poi-card__number {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 20px;
-  line-height: 30px;
-  color: #1b6b8a;
-}
-
+.route-screen .poi-card__number,
 .route-screen .poi-card__title {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 20px;
   line-height: 30px;
-  color: #1a1a1a;
+  color: var(--color-primary);
+}
+
+.route-screen .poi-card.is-active .poi-card__number,
+.route-screen .poi-card.is-active .poi-card__title {
+  color: var(--color-primary-dark);
 }
 
 .route-screen .poi-card__media {

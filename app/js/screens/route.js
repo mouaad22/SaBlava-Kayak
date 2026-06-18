@@ -104,8 +104,10 @@ function templateHTML(route, lang, durationId, durations) {
     <div class="route-screen__scroll">
       <section class="route-screen__section">
         <div class="route-map" role="img" aria-label="${route.name[lang]}">
-          <div class="route-map__spacer"></div>
-          <div class="route-map__image" data-route-map></div>
+          <div class="route-map__image" data-route-map>
+            <div class="route-map__layer" data-map-layer></div>
+            <div class="route-map__layer" data-map-layer></div>
+          </div>
           <div class="route-map__title-bar">
             <h1 class="route-screen__heading">${route.name[lang]}</h1>
           </div>
@@ -169,6 +171,7 @@ export function renderRouteScreen(host, routeId) {
   //     pattern depends on the selected duration (different illustrated maps
   //     exist for 1h / 1h30+2h / 3h). Updated whenever duration changes.
   const mapEl = screen.querySelector("[data-route-map]");
+  const mapLayers = [...mapEl.querySelectorAll("[data-map-layer]")];
   const carousel = screen.querySelector("[data-poi-carousel]");
 
   function patternForDuration(id) {
@@ -192,27 +195,49 @@ export function renderRouteScreen(host, routeId) {
   }
   preloadCurrentPattern();
 
+  // Double-buffered crossfade: two stacked layers ping-pong so the visible
+  // image is never cleared mid-swap. Swapping `background-image` on a single
+  // element paints the box white for a frame while the new image re-decodes;
+  // instead we paint the next image onto the hidden layer and fade it in over
+  // the old one, which stays on screen until the new one is ready.
+  let currentUrl = null;
+  let front = 0; // index of the layer currently shown
+
+  function crossfadeTo(url) {
+    const back = mapLayers[front ^ 1];
+    back.style.backgroundImage = `url("${url}")`;
+    back.classList.add("is-visible");
+    mapLayers[front].classList.remove("is-visible");
+    front ^= 1;
+  }
+
   function setMapImageForIndex(idx) {
     if (!currentPattern) return;
     const url = mapUrlAt(currentPattern, idx);
-    if (mapEl.dataset.currentUrl === url) return;
-    mapEl.dataset.currentUrl = url;
+    if (currentUrl === url) return;
+    currentUrl = url;
     const probe = new Image();
     probe.onload = () => {
-      if (mapEl.dataset.currentUrl === url) {
-        mapEl.style.backgroundImage = `url("${url}")`;
-      }
+      if (currentUrl !== url) return; // a newer scroll already won
+      crossfadeTo(url);
     };
     probe.onerror = () => {
+      if (currentUrl !== url) return;
       const fallback = mapUrlAt(currentPattern, 0);
-      mapEl.dataset.currentUrl = fallback;
-      mapEl.style.backgroundImage = `url("${fallback}")`;
+      currentUrl = fallback;
+      crossfadeTo(fallback);
     };
     probe.src = url;
   }
   setMapImageForIndex(0);
 
   let activeIdx = 0;
+  function markActive(idx) {
+    carousel.querySelectorAll("[data-poi-index]").forEach((card) => {
+      card.classList.toggle("is-active", Number(card.dataset.poiIndex) === idx);
+    });
+  }
+  markActive(0);
   function recomputeActive() {
     const cards = carousel.querySelectorAll(
       "[data-poi-index]:not(.is-hidden)"
@@ -232,6 +257,7 @@ export function renderRouteScreen(host, routeId) {
     });
     if (best !== activeIdx) {
       activeIdx = best;
+      markActive(best);
       setMapImageForIndex(best);
     }
   }
@@ -285,7 +311,7 @@ export function renderRouteScreen(host, routeId) {
       closeSheet();
       // Pull the new map pattern + warm its cache, then refresh the map.
       currentPattern = patternForDuration(durationId);
-      mapEl.dataset.currentUrl = "";
+      currentUrl = null;
       preloadCurrentPattern();
       // Filtering may move the centred POI; recheck after the layout settles.
       requestAnimationFrame(() => {

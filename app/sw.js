@@ -120,7 +120,15 @@ async function networkFirst(request, cacheName) {
       cache.put(request, res.clone());
     }
     return res;
-  } catch {
+  } catch (err) {
+    // Mapbox GL aborts its own in-flight style/sprite/glyph/tile requests
+    // during map init and panning (via AbortController). Those aborts must
+    // NOT be turned into a fabricated 503 — Mapbox reads that as a failed
+    // resource and the custom style ends up blank until you change styles.
+    // Let the abort propagate so Mapbox handles its own cancellation.
+    if (request.signal?.aborted || err?.name === "AbortError") {
+      throw err;
+    }
     const cached = await caches.match(request);
     if (cached) return cached;
     // For navigations, fall back to the cached app shell so the app

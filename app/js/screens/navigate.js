@@ -141,7 +141,7 @@ export function renderNavigateScreen(host, routeId) {
           </div>
 
           <div class="nav-kayak">
-            <img src="./assets/illustrations/kayak/kayak.jpg" alt="" aria-hidden="true" />
+            <img src="./assets/illustrations/kayak/kayak.webp" alt="" aria-hidden="true" />
           </div>
         </div>
       </div>

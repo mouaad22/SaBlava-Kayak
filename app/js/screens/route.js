@@ -3,7 +3,7 @@
 // Layout, copy, and inline styles come from Paper's get_jsx. Interactions
 // added on top per spec:
 //   • Horizontal POI carousel; as a card scrolls into the centre the map
-//     illustration swaps to mapa-ruta/map-ruta-{routeId}-{N}.jpg (falls back
+//     illustration swaps to mapa-ruta/map-ruta-{routeId}-{N}.webp (falls back
 //     to N=1 when the indexed file 404s).
 //   • Duració chip opens a bottom sheet; selection persists per-route in
 //     localStorage and filters how many POIs are shown

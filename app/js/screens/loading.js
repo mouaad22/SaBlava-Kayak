@@ -12,8 +12,8 @@ const MIN_CHUNK_GAP_MS = 180;
 const TEARDOWN_FADE_MS = 280;
 const MAX_WAIT_MS = 8000;
 
-const BRUSH_BASE = "./assets/illustrations/progress-bar/base.jpg";
-const BRUSH_FILL = "./assets/illustrations/progress-bar/full.jpg";
+const BRUSH_BASE = "./assets/illustrations/progress-bar/base.webp";
+const BRUSH_FILL = "./assets/illustrations/progress-bar/full.webp";
 
 function uniq(arr) {
   return Array.from(new Set(arr.filter(Boolean)));
@@ -94,9 +94,9 @@ const PRELOAD_STAGES = [
   // Brand fonts — block teardown so the next screen never FOUTs.
   { name: "fonts", task: preloadFonts },
   // Language screen hero — first full-bleed image users see after splash.
-  { name: "language-hero", urls: ["./assets/illustrations/hero-2.jpg"] },
+  { name: "language-hero", urls: ["./assets/illustrations/hero-2.webp"] },
   // Watercolor weather scene on the routes list.
-  { name: "routes-hero", urls: ["./assets/illustrations/mascot-ref-2.jpg"] },
+  { name: "routes-hero", urls: ["./assets/illustrations/mascot-ref-2.webp"] },
   // Route card thumbnails (sud / nord) on the routes list.
   { name: "route-cards", urls: collectRouteCards() },
   // Per-POI illustrated maps that swap as the route carousel scrolls.

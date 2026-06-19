@@ -1112,7 +1112,7 @@
 .map-cta-button__label {
   font-family: var(--font-body);
   font-size: 17px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 22.5px;
   color: #1e5670;
   text-align: center;
@@ -1141,7 +1141,7 @@
 .start-button__label {
   font-family: var(--font-body);
   font-size: 17px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 22.5px;
   color: #ffffff;
 }

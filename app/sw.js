@@ -21,7 +21,7 @@
 // index.html listens for `controllerchange` and reloads once, so an
 // already-open page also picks up the new version automatically.
 
-const SHELL_CACHE = "sablava-shell-v14";
+const SHELL_CACHE = "sablava-shell-v15";
 const TILE_CACHE  = "sablava-tiles-v2";
 
 // Core shell, pre-cached so the app boots offline even on first run.

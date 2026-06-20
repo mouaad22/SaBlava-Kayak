@@ -141,34 +141,119 @@
   box-sizing: border-box;
 }
 
-/* Header above the rose: centred Vent/Onatge tabs. */
+/* Header row on top of the hero image: Vent/Onatge tabs on the left, the
+   Aiguablava place label on the right. */
 .lang-screen__header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 12px;
 }
 
-/* Hero group: the wind/wave element with the location caption glued 12px
-   beneath it. The group fills (and centres within) the available vertical
-   space so the caption anchors to the image — not to the panel below. */
+/* Place label (right of the tabs): map glyph + "Aiguablava" in secondary grey. */
+.lang-screen__place {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+}
+
+.lang-screen__place-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.lang-screen__place-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.lang-screen__place-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  color: inherit;
+}
+
+/* Hero unit: the header row (tabs + place label), the wind/wave element, the
+   conditions summary, and the "Condicions d'avui" button stacked as one group —
+   header on top, then image, verdict line, and the details button last. The
+   group fills (and centres within) the available vertical space so it reads as a
+   single component, tightly spaced. */
 .lang-screen__hero {
   flex: 1 1 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
 }
 
-/* Row below the wind/wave element holding the centred tertiary button. */
+/* Tertiary "Condicions d'avui" button — last element of the hero unit, centred
+   below the conditions summary. The 4px margin sits on top of the hero's 12px
+   gap (16px total) so the tappable action reads as distinct from the verdict. */
 .lang-screen__caption {
   flex-shrink: 0;
-  margin: 0;
+  margin: 4px 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Conditions summary — the smart "good to go / not" verdict line, the last
+   element of the hero unit (below the Vent/Onatge tabs). A traffic-light dot
+   leads, then verdict · live-number, then one short reason. The dot colour is
+   driven by the verdict modifier set in JS. Hidden until live weather (or a
+   manual override) lands. */
+.conditions-summary {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 16px;
+  text-align: center;
+  text-wrap: balance;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+  color: var(--color-text-secondary);
+}
+
+.conditions-summary[hidden] {
+  display: none;
+}
+
+/* Traffic light — a standalone marker that rides alongside the text on the
+   first line: an inline-block keeps it a true circle, vertical-align centres it
+   against the text, and the right margin sets the 8px gap. --dot is the verdict
+   colour set by the modifier below. */
+.conditions-summary__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  aspect-ratio: 1;
+  flex: none;
+  border-radius: 50%;
+  background: var(--dot, var(--color-sage));
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.conditions-summary--green { --dot: var(--color-sage); }
+.conditions-summary--coral { --dot: var(--color-accent); }
+.conditions-summary--red   { --dot: var(--color-emergency); }
+
+/* Verdict leads in near-black; the anchor figure and reason recede in grey so
+   the eye lands on the verdict first. */
+.conditions-summary__verdict {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.conditions-summary__anchor {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* Tertiary action below the rose — opens the weather details overlay. No fill
@@ -267,16 +352,51 @@
 /* Language header at the top of the page — language is the first choice, so it
    leads. Holds the row of flag cards; the CTA lives in the footer below,
    outside this panel. Runs flush to the top edge, absorbing the safe-area inset
-   in its own top padding. Its background fades smoothly from a blue-tinted grey
-   (the track grey nudged toward our primary blue) at the top into the white
-   page below. */
+   in its own top padding.
+
+   Background: a blue-tinted wash (#E7EEF4) at the top that dissolves COMPLETELY
+   into white before the panel's bottom edge — so there's no perceptible edge
+   above the Vent/Onatge tabs. The fade is an eased (ease-out) alpha ramp: it
+   loses most of its strength early, then trails off to zero so the tail never
+   shows a hard line where the wash ends. A faint monochrome noise layer
+   (SVG feTurbulence) dithers the ramp, breaking up the 8-bit banding that's
+   otherwise very visible in subtle gradients on phone screens. */
 .lang-screen__langs {
   align-self: stretch;
-  background: linear-gradient(180deg, #dde5ea 0%, #ffffff 100%);
+  background-color: #ffffff;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
+    linear-gradient(
+      180deg,
+      #e7eef4 0%,
+      rgba(231, 238, 244, 0.94) 12%,
+      rgba(231, 238, 244, 0.82) 24%,
+      rgba(231, 238, 244, 0.66) 38%,
+      rgba(231, 238, 244, 0.48) 52%,
+      rgba(231, 238, 244, 0.3) 66%,
+      rgba(231, 238, 244, 0.16) 78%,
+      rgba(231, 238, 244, 0.07) 88%,
+      rgba(231, 238, 244, 0.02) 95%,
+      rgba(231, 238, 244, 0) 100%
+    );
+  background-repeat: repeat, no-repeat;
+  background-size: 160px 160px, 100% 100%;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  gap: 14px;
   padding: max(env(safe-area-inset-top), 18px) 16px 18px;
+}
+
+/* "Tria el teu idioma" prompt above the flag cards. */
+.lang-screen__prompt {
+  align-self: stretch;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 24px;
+  color: #5b5b5b;
+  margin: 0;
+  text-align: left;
 }
 
 /* Four evenly-spaced flag cards. The selected one lifts onto a white card with
@@ -338,8 +458,8 @@
   color: var(--color-text-primary);
 }
 
-/* CTA footer — sits below the weather hero, outside the grey language header,
-   flush to the bottom edge and absorbing the safe-area inset. */
+/* CTA footer — holds the primary CTA, flush to the bottom edge and absorbing the
+   safe-area inset. The tertiary details button now lives in the hero unit. */
 .lang-screen__footer {
   flex-shrink: 0;
   align-self: stretch;

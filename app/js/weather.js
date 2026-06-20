@@ -298,3 +298,175 @@ export function windBannerData(weather, lang = "ca") {
     flourish:       wind ? _pick(wind.flourish, lang) : null,
   };
 }
+
+// ─── Conditions summary line ─────────────────────────────────────────────────
+// One short "good to go / not" verdict for the language screen, sitting between
+// the hero image and the details button. It's a template system, not one
+// string: lead with the verdict, ride a single live number behind it, then one
+// short reason. Three states map to the traffic-light tokens:
+//   green → --color-sage   coral → --color-accent   red → --color-emergency
+// Tone rule: green & coral stay warm and friendly; red is plain and firm —
+// state the condition and the recommendation, nothing playful.
+//
+// Verdict rule (worst factor wins), grounded in the route conditions in data.js
+// and the windStrength tiers above. Wind in knots, wave in metres:
+//   green  — wind ≤ 12 kn AND wave ≤ 0.5 m
+//   coral  — wind 12–18 kn OR wave 0.5–0.8 m, or a tramuntana gust ≥ 12 kn
+//   red    — wind > 18 kn OR wave > 0.8 m
+//
+// Variants are condition-mapped (never random) so the copy always names the
+// real driver; the trust anchor follows the same driver — wind km/h on wind
+// days, wave height on swell days.
+
+const _SUMMARY = {
+  green: {
+    // Dead calm: barely any wind, glassy sea.
+    calm: {
+      verdict: { ca: "Mar en calma",          es: "Mar en calma",            en: "Calm sea",            fr: "Mer calme" },
+      reason:  { ca: "Dia ideal per remar.",   es: "Día ideal para remar.",   en: "A perfect day to paddle.", fr: "Journée idéale pour pagayer." },
+    },
+    // Light breeze over a flat sea.
+    light: {
+      verdict: { ca: "Vent fluix i mar plana", es: "Viento flojo y mar llana", en: "Light wind, flat sea", fr: "Vent faible, mer plate" },
+      reason:  { ca: "Perfecte per sortir.",   es: "Perfecto para salir.",     en: "Perfect for heading out.", fr: "Parfait pour sortir." },
+    },
+    // Everything's fine but nothing notable to call out.
+    generic: {
+      verdict: { ca: "Tot a punt",             es: "Todo listo",               en: "All set",              fr: "Tout est prêt" },
+      reason:  { ca: "Bon dia per remar.",     es: "Buen día para remar.",     en: "A good day to paddle.", fr: "Belle journée pour pagayer." },
+    },
+  },
+  coral: {
+    // Wind is the limiting factor.
+    wind: {
+      verdict: { ca: "Una mica de vent",       es: "Algo de viento",           en: "A bit of wind",        fr: "Un peu de vent" },
+      reason:  { ca: "Vés amb compte si surts.", es: "Ve con cuidado si sales.", en: "Take care if you head out.", fr: "Sois prudent si tu sors." },
+    },
+    // Swell is the limiting factor.
+    wave: {
+      verdict: { ca: "Mar moguda",             es: "Mar movida",               en: "Choppy sea",           fr: "Mer un peu agitée" },
+      reason:  { ca: "Recomanat només per a experts.", es: "Recomendado solo para expertos.", en: "Recommended for experts only.", fr: "Recommandé aux experts seulement." },
+    },
+    // Both wind and swell are nudging the limits.
+    both: {
+      verdict: { ca: "Condicions justes",      es: "Condiciones justas",       en: "Marginal conditions",  fr: "Conditions limites" },
+      reason:  { ca: "Millor no allunyar-se de la costa.", es: "Mejor no alejarse de la costa.", en: "Best to stay close to shore.", fr: "Mieux vaut rester près de la côte." },
+    },
+  },
+  red: {
+    // Plain and firm — no personality here.
+    wind: {
+      verdict: { ca: "Vent fort",              es: "Viento fuerte",            en: "Strong wind",          fr: "Vent fort" },
+      reason:  { ca: "No es recomana remar.",  es: "No se recomienda remar.",  en: "Paddling is not recommended.", fr: "Il est déconseillé de pagayer." },
+    },
+    wave: {
+      verdict: { ca: "Mar agitada",            es: "Mar agitada",              en: "Rough sea",            fr: "Mer agitée" },
+      reason:  { ca: "Avui millor no sortir amb caiac.", es: "Hoy mejor no salir en kayak.", en: "Better not to kayak today.", fr: "Mieux vaut ne pas sortir en kayak aujourd'hui." },
+    },
+  },
+};
+
+const _ANCHOR_WAVE = { ca: "onatge", es: "oleaje", en: "swell", fr: "houle" };
+
+export const SUMMARY_VERDICTS = ["green", "coral", "red"];
+
+// Format a wave height (m) for display: one decimal, locale separator.
+function _formatWave(m, lang) {
+  const s = (Math.round(m * 10) / 10).toFixed(1);
+  return lang === "en" ? s : s.replace(".", ",");
+}
+
+// Loose lang pick: accepts a plain string (same in every language) or a
+// per-language map. Lets the future control panel store either form.
+function _pickLoose(val, lang) {
+  if (typeof val === "string") return val.trim();
+  if (val && typeof val === "object") return _pick(val, lang).trim();
+  return "";
+}
+
+// ── Manual-override seam for the future employee control panel ────────────────
+// Mirrors the wave-state override: staff will pin a hand-written verdict + line
+// from a control panel; that choice flows through `conditionsSummary(..., override)`
+// and wins over the live computation. Today the override is read from
+// localStorage so the seam is already wired — swap `getSummaryOverride()` for a
+// backend/config read when the panel ships.
+//
+// Override shape (all text fields accept a plain string or a {ca,es,en,fr} map):
+//   { verdict: "green"|"coral"|"red",   // required — drives the traffic light
+//     verdict_text: "...",              // required — the lead phrase
+//     reason_text:  "...",              // optional — the short reason
+//     anchor:       "..." }             // optional — grounding figure, "" hides it
+//
+// Returns the same shape as the auto path (with source:"manual"), or null when
+// the override is absent/invalid so the caller falls back to the live verdict.
+export function resolveSummaryOverride(override, lang = "ca") {
+  if (!override || typeof override !== "object") return null;
+  if (!SUMMARY_VERDICTS.includes(override.verdict)) return null;
+  const verdictText = _pickLoose(override.verdict_text, lang);
+  if (!verdictText) return null;
+  return {
+    verdict: override.verdict,
+    verdictText,
+    reasonText: _pickLoose(override.reason_text, lang),
+    anchor: typeof override.anchor === "string" ? override.anchor : _pickLoose(override.anchor, lang),
+    source: "manual",
+  };
+}
+
+const SUMMARY_OVERRIDE_KEY = "sa-blava.summary.override";
+
+export function getSummaryOverride() {
+  try {
+    const raw = localStorage.getItem(SUMMARY_OVERRIDE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Returns { verdict: "green"|"coral"|"red", verdictText, reasonText, anchor, source }.
+// `anchor` is the grounding micro-figure (e.g. "8 km/h" or "0,8 m onatge").
+// `source` is "manual" when an employee override wins, else "auto".
+// Pass `override` (or null/undefined for the live computation).
+export function conditionsSummary(weather, lang = "ca", override = null) {
+  const manual = resolveSummaryOverride(override, lang);
+  if (manual) return manual;
+
+  const wind = typeof weather?.wind?.speed === "number" ? weather.wind.speed : 0; // kn
+  const wave = typeof weather?.wave?.height === "number" ? weather.wave.height : 0; // m
+  const speedKmh = Math.round(wind * 1.852);
+  const tramuntanaSpike = weather?.wind?.named === "tramuntana" && wind >= 12;
+
+  let verdict, variant, driver;
+  if (wind > 18 || wave > 0.8) {
+    verdict = "red";
+    driver = wind > 18 ? "wind" : "wave";
+    variant = driver;
+  } else if (wind > 12 || wave > 0.5 || tramuntanaSpike) {
+    verdict = "coral";
+    const windDriven = wind > 12 || tramuntanaSpike;
+    const waveDriven = wave > 0.5;
+    if (windDriven && waveDriven) { variant = "both"; driver = "wind"; }
+    else if (waveDriven)          { variant = "wave"; driver = "wave"; }
+    else                          { variant = "wind"; driver = "wind"; }
+  } else {
+    verdict = "green";
+    driver = "wind";
+    if (wind < 5 && wave <= 0.3) variant = "calm";
+    else if (wind >= 5)          variant = "light";
+    else                         variant = "generic";
+  }
+
+  const node = _SUMMARY[verdict][variant];
+  const anchor = driver === "wave"
+    ? `${_formatWave(wave, lang)} m ${_pick(_ANCHOR_WAVE, lang)}`
+    : `${speedKmh} km/h`;
+
+  return {
+    verdict,
+    verdictText: _pick(node.verdict, lang),
+    reasonText:  _pick(node.reason, lang),
+    anchor,
+    source: "auto",
+  };
+}

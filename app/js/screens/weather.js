@@ -6,7 +6,6 @@ import { mountWindRose } from "../wind-rose.js";
 const TABS = [
   { id: "wind", labelKey: "weather.tab.wind" },
   { id: "wave", labelKey: "weather.tab.wave" },
-  { id: "sun",  labelKey: "weather.tab.sun" },
 ];
 
 const ICON_LOCATION = `<svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 0C3.24 0 1 2.24 1 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 6 3.5a1.5 1.5 0 0 1 0 3z" fill="#3D6B4F"/></svg>`;
@@ -20,6 +19,10 @@ export function renderWeatherScreen(host) {
 
   screen.innerHTML = `
     <div class="weather-screen__header">
+      <div class="weather-screen__location">
+        ${ICON_LOCATION}
+        <span>Aiguablava</span>
+      </div>
       <div class="weather-tabs weather-screen__tabs" role="tablist" aria-label="${t("routes.weatherTitle")}">
         ${TABS.map((tab, i) => `
           <button type="button" role="tab"
@@ -29,10 +32,6 @@ export function renderWeatherScreen(host) {
           >${t(tab.labelKey)}</button>
         `).join("")}
       </div>
-      <div class="weather-screen__location">
-        ${ICON_LOCATION}
-        <span>Aiguablava</span>
-      </div>
     </div>
 
     <div class="weather-screen__body">
@@ -41,7 +40,6 @@ export function renderWeatherScreen(host) {
         <div class="wind-banner" data-wind-banner aria-live="polite"></div>
       </div>
       <div class="weather-panel weather-screen__panel is-hidden" data-panel="wave"></div>
-      <div class="weather-panel weather-screen__panel is-hidden" data-panel="sun"></div>
     </div>
 
     <div class="weather-screen__footer">

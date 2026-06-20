@@ -331,10 +331,9 @@
 }
 
 .weather-screen__tabs {
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
   padding: 0;
-  justify-content: flex-start !important;
+  justify-content: flex-end !important;
 }
 
 .weather-screen__body {
@@ -463,7 +462,7 @@
 
 .conditions__value {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: 3px;
   font-family: var(--font-body);
   font-size: 18px;
@@ -491,6 +490,7 @@
   color: #1b6b8a;
   transform-origin: center;
   flex-shrink: 0;
+  align-self: center;
 }
 
 /* ── Bottom sheet ──────────────────────────────────────────────────────────── */

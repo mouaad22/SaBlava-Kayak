@@ -408,3 +408,131 @@
   flex: 1;
   width: auto;
 }
+
+/* ── Weather details overlay ──────────────────────────────────────────────── */
+.weather-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms var(--ease-entrance);
+}
+
+.weather-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.weather-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 28, 28, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.weather-overlay__card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  background: #ffffff;
+  border-top-left-radius: var(--radius-sheet);
+  border-top-right-radius: var(--radius-sheet);
+  corner-shape: var(--corner-shape);
+  padding: 24px 24px max(env(safe-area-inset-bottom), 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-sheet);
+  transform: translateY(24px);
+  transition: transform 280ms var(--ease-entrance);
+}
+
+.weather-overlay.is-open .weather-overlay__card {
+  transform: none;
+}
+
+.weather-overlay__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weather-overlay__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-heading-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.weather-overlay__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-track);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.weather-overlay__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.weather-overlay__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-track);
+}
+
+.weather-overlay__row:last-child {
+  border-bottom: 0;
+}
+
+.weather-overlay__label {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-md);
+  color: var(--color-text-secondary);
+}
+
+.weather-overlay__value {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+.weather-overlay__sub {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.weather-overlay__status,
+.weather-overlay__note {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  color: var(--color-text-secondary);
+}
+
+.weather-overlay__note {
+  padding-top: 8px;
+}

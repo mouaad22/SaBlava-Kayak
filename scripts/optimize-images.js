@@ -14,6 +14,9 @@ const MAP_PREFIX = "app/assets/illustrations/mapa-ruta";
 const KEEP_PNG = new Set(["app/assets/icon-192.png", "app/assets/icon-512.png"]);
 const ROUTE_PNG_RE = /\/(ruta-sud|ruta-nord)\/(ruta-sud|ruta-nord)\.png$/;
 const WAVES_PNG_RE = /\/illustrations\/WAVES\/[^/]+\.png$/;
+// Language-picker flag illustrations: 800px painted sources, only ever shown in
+// the ~40px flag card, so they cap tiny (160px = 4× for retina).
+const FLAGS_PNG_RE = /\/illustrations\/country-flags\/[^/]+\.png$/;
 
 async function* walk(dir) {
   for (const e of await readdir(dir, { withFileTypes: true })) {
@@ -26,7 +29,7 @@ async function* walk(dir) {
 function shouldConvert(norm) {
   const ext = extname(norm).toLowerCase();
   if (ext === ".jpg" || ext === ".jpeg") return true;
-  if (ext === ".png") return !KEEP_PNG.has(norm) && (ROUTE_PNG_RE.test(norm) || WAVES_PNG_RE.test(norm));
+  if (ext === ".png") return !KEEP_PNG.has(norm) && (ROUTE_PNG_RE.test(norm) || WAVES_PNG_RE.test(norm) || FLAGS_PNG_RE.test(norm));
   return false;
 }
 
@@ -35,7 +38,8 @@ for await (const raw of walk(ROOT)) {
   const norm = raw.replaceAll("\\", "/");
   if (!shouldConvert(norm)) continue;
   const isMap = norm.startsWith(MAP_PREFIX);
-  const cap = isMap ? 2200 : 1600;
+  const isFlag = FLAGS_PNG_RE.test(norm);
+  const cap = isFlag ? 160 : isMap ? 2200 : 1600;
   const quality = isMap ? 82 : 80;
   const out = raw.replace(/\.(jpe?g|png)$/i, ".webp");
   const sz = (await stat(raw)).size;

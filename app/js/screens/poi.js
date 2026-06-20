@@ -459,13 +459,14 @@ export function renderPoiScreen(host, routeId, poiIndex) {
     });
 
     map.on("load", () => {
-      // Markers — thumbnails using each POI's first image. The active POI
+      // Markers — thumbnails using each POI's `mapThumbnail` override (for
+      // POIs whose first gallery item is a video) or first image. The active POI
       // is styled in CSS via `.is-active` (grows to 40×40). Tapping any
       // marker jumps to that POI.
       route.pois.forEach((p, idx) => {
         const el = document.createElement("div");
         el.className = "poi-marker";
-        const img = p.gallery?.[0]?.src;
+        const img = p.mapThumbnail ?? p.gallery?.[0]?.src;
         if (img) el.style.backgroundImage = `url("${img}")`;
         if (p.id === route.pois[currentIndex].id) {
           el.classList.add("is-active");

@@ -3,6 +3,14 @@ import { navigate } from "../router.js";
 import { FLAGS } from "../flags.js";
 import { getWeather } from "../weather.js";
 import { mountWindRose } from "../wind-rose.js";
+import { waveImageFor, getWaveOverride } from "../wave-state.js";
+
+const TABS = [
+  { id: "wind", labelKey: "weather.tab.wind" },
+  { id: "wave", labelKey: "weather.tab.wave" },
+];
+
+const ICON_LOCATION = `<svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 0C3.24 0 1 2.24 1 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 6 3.5a1.5 1.5 0 0 1 0 3z" fill="#3D6B4F"/></svg>`;
 
 const CHECK_ICON = `
   <svg class="lang-row__check" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -18,9 +26,28 @@ export function renderLanguageScreen(host) {
   screen.innerHTML = `
     <div class="lang-screen__top">
       <div class="lang-screen__weather">
+        <div class="lang-screen__header">
+          <div class="weather-screen__location">
+            ${ICON_LOCATION}
+            <span>Aiguablava</span>
+          </div>
+          <div class="weather-tabs" role="tablist" aria-label="${t("routes.weatherTitle")}">
+            ${TABS.map((tab, i) => `
+              <button type="button" role="tab"
+                class="weather-tab${i === 0 ? " is-active" : ""}"
+                data-tab="${tab.id}"
+                data-i18n="${tab.labelKey}"
+                aria-selected="${i === 0}"
+              >${t(tab.labelKey)}</button>
+            `).join("")}
+          </div>
+        </div>
         <div class="lang-screen__panels">
           <div class="weather-panel" data-panel="wind">
             <canvas class="wind-rose" data-wind-rose width="708" height="708" aria-label="Wind rose"></canvas>
+          </div>
+          <div class="weather-panel is-hidden" data-panel="wave">
+            <img class="wave-illustration" data-wave-img alt="${t("weather.tab.wave")}" />
           </div>
         </div>
       </div>
@@ -79,12 +106,33 @@ export function renderLanguageScreen(host) {
     .querySelector("[data-action=continue]")
     .addEventListener("click", () => navigate("/routes"));
 
+  // ── Wind / Onatge tabs ─────────────────────────────────────────────────────
+  const tabs   = screen.querySelectorAll(".weather-tab");
+  const panels = screen.querySelectorAll(".weather-panel");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const id = tab.dataset.tab;
+      tabs.forEach((x) => {
+        const on = x === tab;
+        x.classList.toggle("is-active", on);
+        x.setAttribute("aria-selected", String(on));
+      });
+      panels.forEach((p) => p.classList.toggle("is-hidden", p.dataset.panel !== id));
+    });
+  });
+
   host.appendChild(screen);
   requestAnimationFrame(() => screen.classList.add("is-active"));
 
   // ── Rive wind rose ─────────────────────────────────────────────────────────
   const canvas = screen.querySelector("[data-wind-rose]");
   const rose   = canvas ? mountWindRose(canvas) : null;
+
+  // Onatge illustration — defaults to calm until live swell arrives, and a
+  // worker override (when set) wins over the live reading. See wave-state.js.
+  const waveImg  = screen.querySelector("[data-wave-img]");
+  const override = getWaveOverride();
+  if (waveImg) waveImg.src = waveImageFor(undefined, override);
 
   (async () => {
     try {
@@ -94,8 +142,10 @@ export function renderLanguageScreen(host) {
         if (data.wind.named || data.wind.cardinal)   rose.setName(data.wind.named || data.wind.cardinal);
         rose.fireStart();
       }
+      if (waveImg) waveImg.src = waveImageFor(data?.wave?.height, override);
     } catch {
-      // No weather — leave the rose at its resting state; design holds without data.
+      // No weather — leave the rose at its resting state and the swell tab on
+      // its calm default; design holds without data.
     }
   })();
 

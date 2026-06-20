@@ -3,8 +3,6 @@ import { t, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
 import { getWeather } from "../weather.js";
 
-const ICON_LOCATION = `<svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 0C3.24 0 1 2.24 1 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 6 3.5a1.5 1.5 0 0 1 0 3z" fill="#3D6B4F"/></svg>`;
-
 export function renderRoutesScreen(host) {
   const screen = document.createElement("section");
   screen.className = "screen routes-screen";
@@ -17,10 +15,6 @@ export function renderRoutesScreen(host) {
       <h1 class="routes-screen__list-heading">${t("routes.listTitle")}</h1>
 
       <section class="routes-weather">
-        <div class="weather-screen__location">
-          ${ICON_LOCATION}
-          <span>Aiguablava</span>
-        </div>
         <div class="conditions" data-conditions aria-live="polite"></div>
       </section>
 
@@ -115,7 +109,7 @@ function renderConditions(data) {
     </div>
     <div class="conditions__cell">
       <span class="conditions__label">${t("weather.air.label")}</span>
-      <span class="conditions__value">${show(airTemp, "°")}</span>
+      <span class="conditions__value">${airTemp == null ? "—" : `${airTemp}°`}</span>
       <span class="conditions__sub">UV ${uv == null ? "—" : uv}</span>
     </div>
   `;

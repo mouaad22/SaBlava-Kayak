@@ -247,6 +247,7 @@ const POIS_SUD = [
       ca: "Pas estret navegable.\n\nUn dels millors freus de la Costa Brava. Cal anar atents per no saltar-ho, especialment si naveguem cap al Nord. Té parets altes i és força llarg i estret, però sense problemes per passar amb qualsevol caiac.",
     },
     thumbnail: "./assets/illustrations/ruta-sud/poi-7-reg-arbres-paint.webp",
+    mapThumbnail: "./assets/photos/ruta-sud/poi-7-rec-dels-arbres/2.webp",
     gallery: [
       {
         type: "video",

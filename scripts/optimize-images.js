@@ -1,7 +1,9 @@
 // Convert referenced raster assets to WebP with Bun.Image.
 //   • All .jpg/.jpeg under app/assets  -> WebP
 //   • The two route illustration PNGs   -> WebP
-//   • Skipped: PWA manifest icons, orphaned WAVES/*.png, .svg/.riv vectors
+//   • The WAVES/*.png swell illustrations -> WebP (2048px sources, never
+//     shown larger than the ~708px weather panel before they become wave.riv)
+//   • Skipped: PWA manifest icons, .svg/.riv vectors
 // Photos cap at 1600px long edge (q80); illustrated maps at 2200px (q82) since
 // they're pannable. Originals are deleted here but remain in git history.
 import { readdir, stat, unlink } from "node:fs/promises";
@@ -11,6 +13,7 @@ const ROOT = "app/assets";
 const MAP_PREFIX = "app/assets/illustrations/mapa-ruta";
 const KEEP_PNG = new Set(["app/assets/icon-192.png", "app/assets/icon-512.png"]);
 const ROUTE_PNG_RE = /\/(ruta-sud|ruta-nord)\/(ruta-sud|ruta-nord)\.png$/;
+const WAVES_PNG_RE = /\/illustrations\/WAVES\/[^/]+\.png$/;
 
 async function* walk(dir) {
   for (const e of await readdir(dir, { withFileTypes: true })) {
@@ -23,7 +26,7 @@ async function* walk(dir) {
 function shouldConvert(norm) {
   const ext = extname(norm).toLowerCase();
   if (ext === ".jpg" || ext === ".jpeg") return true;
-  if (ext === ".png") return !KEEP_PNG.has(norm) && ROUTE_PNG_RE.test(norm);
+  if (ext === ".png") return !KEEP_PNG.has(norm) && (ROUTE_PNG_RE.test(norm) || WAVES_PNG_RE.test(norm));
   return false;
 }
 

@@ -352,8 +352,6 @@
 
 .weather-screen__tabs {
   flex: 0 0 auto;
-  padding: 0;
-  justify-content: flex-end !important;
 }
 
 .weather-screen__body {
@@ -617,36 +615,44 @@
 /* ── Weather tabs (shared by old layout + new sheet) ─────────────────────── */
 
 .weather-tabs {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
+  padding: var(--space-1); /* 4px track padding */
+  background: var(--color-track);
+  border-radius: var(--radius-pill);
+  corner-shape: var(--corner-shape);
 }
 
 .weather-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 16px;
   font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 24px;
-  color: #5b5b5b;
+  font-size: var(--fs-body-sm);
+  line-height: 1;
+  color: var(--color-text-secondary);
   background: transparent;
-  border: 2px solid transparent;
-  border-radius: 16px;
+  border: none;
+  border-radius: var(--radius-pill);
   corner-shape: var(--corner-shape);
-  padding: 4px 16px;
   cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
   transition:
     background 200ms var(--ease-entrance),
-    border-color 200ms var(--ease-entrance),
     color 200ms var(--ease-entrance),
-    font-weight 200ms var(--ease-entrance);
-  font-weight: 400;
+    box-shadow 200ms var(--ease-entrance);
 }
 
 .weather-tab.is-active {
-  background: #f5f8f1;
-  border-color: #e2e6dd;
-  color: #1b6b8a;
+  background: var(--color-surface);
+  color: var(--color-primary);
   font-weight: 600;
+  box-shadow: var(--shadow-tab);
 }
 
 /* Weather panels inside the sheet — no aspect-ratio lock, stack naturally */

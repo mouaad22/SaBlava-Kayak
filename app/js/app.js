@@ -60,8 +60,18 @@ function ensureMain(target) {
       ? "forward"
       : "backward";
 
+  // Route detail ⇄ full-screen map share an identical bottom CTA and header
+  // position, so a horizontal slide would make those fixed elements appear to
+  // slide off and back on. Crossfade in place instead (no translate); only the
+  // left CTA button's content swap (Mapa ⇄ Ruta) animates, drawing the eye to
+  // the one thing that actually changed.
+  const isFixedPair =
+    !isFirstNav &&
+    ((prevRouteName === "route" && target.name === "map") ||
+      (prevRouteName === "map" && target.name === "route"));
+
   if (main?.teardown) {
-    if (!isFirstNav) {
+    if (!isFirstNav && !isFixedPair) {
       const outgoing = host.querySelector(".screen.is-active");
       if (outgoing) {
         outgoing.classList.add(
@@ -77,16 +87,22 @@ function ensureMain(target) {
   if (!isFirstNav) {
     const incoming = host.lastElementChild;
     if (incoming && incoming.classList.contains("screen")) {
-      incoming.classList.add(
-        direction === "forward"
-          ? "is-entering-from-right"
-          : "is-entering-from-left"
-      );
-      // Force a reflow so the entering style (translated + opacity:0) is
-      // committed before the renderer's RAF adds .is-active. Without this
-      // the browser collapses both class additions into one style cycle and
-      // the transform transition never fires — the screen just appears.
-      void incoming.offsetWidth;
+      if (isFixedPair) {
+        // No slide — the screen just crossfades. Mark it so the left CTA
+        // button (and only that button) plays its content-swap animation.
+        incoming.classList.add("is-cta-swap");
+      } else {
+        incoming.classList.add(
+          direction === "forward"
+            ? "is-entering-from-right"
+            : "is-entering-from-left"
+        );
+        // Force a reflow so the entering style (translated + opacity:0) is
+        // committed before the renderer's RAF adds .is-active. Without this
+        // the browser collapses both class additions into one style cycle and
+        // the transform transition never fires — the screen just appears.
+        void incoming.offsetWidth;
+      }
     }
   }
 

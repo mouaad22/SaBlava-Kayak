@@ -14,8 +14,8 @@ import { navigate } from "../router.js";
 import {
   getSession, endSession, timeRemainingMs, isActive,
 } from "../nav/session.js";
-import { haversineM } from "../nav/geo.js";
-import { speak, chime } from "../nav/audio.js";
+import { haversineM, trackThroughPois } from "../nav/geo.js";
+import { speak, chime, announceArrival } from "../nav/audio.js";
 import { acquire, release, attachVisibilityHandler } from "../nav/wake-lock.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, OVERTIME_WARNINGS_MIN, NAV_ARRIVAL_THRESHOLD_M, KAYAK_SPEED_KMH } from "../config.js";
 import { addRouteTrack } from "./map.js";
@@ -133,14 +133,15 @@ export function renderNavigateScreen(host, routeId) {
             </div>
           </div>
 
-          <div class="nav-timeline">
+          <!-- TODO(next session): timeline + kayak are broken — hidden for now. -->
+          <div class="nav-timeline" hidden>
             <div class="nav-timeline__scroll">
               <div class="nav-timeline__track"></div>
               <div class="nav-timeline__needle"></div>
             </div>
           </div>
 
-          <div class="nav-kayak">
+          <div class="nav-kayak" hidden>
             <img src="./assets/illustrations/kayak/kayak.webp" alt="" aria-hidden="true" />
           </div>
         </div>
@@ -274,7 +275,8 @@ export function renderNavigateScreen(host, routeId) {
     timelineTrack.appendChild(linesEl);
     timelineTrack.appendChild(poisEl);
   }
-  initTimeline();
+  // TODO(next session): timeline hidden while broken — skip init + ticks.
+  // initTimeline();
 
   function updateTimeline() {
     // Distance is measured from activePois[0] (tick 0).
@@ -354,14 +356,15 @@ export function renderNavigateScreen(host, routeId) {
     });
 
     // Re-add route on every style load (covers initial load + satellite toggle).
-    // When the user removes POIs, draw straight segments so the line doesn't
-    // pass through excluded locations.
-    const allPoisIncluded = !session.includedPoiIndices ||
-      session.includedPoiIndices.length === route.pois.length;
-
+    // Follow the recorded GPS track so the drawn line hugs the coast — even for
+    // shorter durations or after the user removes a POI, where the navigated
+    // POIs are only a subset. Each active POI is projected onto the track and
+    // the track is walked between them (see trackThroughPois). Only routes that
+    // ship no GPS track fall back to straight segments through the POIs.
     mapInstance.on("style.load", () => {
-      if (route.track && route.track.length > 1 && allPoisIncluded) {
-        addRouteTrack(mapInstance, route);
+      if (route.track && route.track.length > 1) {
+        const coords = trackThroughPois(route.track, activePois.map((p) => p.coords));
+        addRouteTrack(mapInstance, route, coords);
       } else {
         const coords = [MARINA.coords, ...activePois.map((p) => p.coords), MARINA.coords];
         mapInstance.addSource("nav-route", {
@@ -419,7 +422,8 @@ export function renderNavigateScreen(host, routeId) {
     const nextPoi = activePois[activePOIIdx];
     const dist = haversineM(userCoords, nextPoi.coords);
     if (dist <= NAV_ARRIVAL_THRESHOLD_M) {
-      speak("nav.voice.approach", lang, nextPoi.name[lang] ?? nextPoi.name.ca);
+      // Chime, then a warm spoken "you've arrived at <POI>" in the user's language.
+      announceArrival(nextPoi.name[lang] ?? nextPoi.name.ca, lang);
       advancePOI();
     }
   }
@@ -481,8 +485,8 @@ export function renderNavigateScreen(host, routeId) {
     const isReturn = activePOIIdx >= Math.ceil(activePois.length / 2);
     dirBadge.textContent = isReturn ? t("nav.direction.back") : t("nav.direction.out");
 
-    // Timeline.
-    updateTimeline();
+    // Timeline — hidden while broken (see TODO above).
+    // updateTimeline();
 
     // Overtime banner.
     if (isOver) {

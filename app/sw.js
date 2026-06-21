@@ -21,7 +21,7 @@
 // index.html listens for `controllerchange` and reloads once, so an
 // already-open page also picks up the new version automatically.
 
-const SHELL_CACHE = "sablava-shell-v17";
+const SHELL_CACHE = "sablava-shell-v18";
 const TILE_CACHE  = "sablava-tiles-v2";
 
 // Core shell, pre-cached so the app boots offline even on first run.
@@ -33,9 +33,11 @@ const SHELL_ASSETS = [
   "/styles/components.css",
   "/styles/screens.css",
   "/js/app.js",
+  // Arrival cue — precached so it rings offline on the very first trip.
+  "/assets/sounds/arrived-at-poi.mp3",
 ];
 
-const STATIC_ASSET_RE = /\.(?:woff2?|ttf|otf|eot|png|jpe?g|svg|webp|gif|ico|avif)$/i;
+const STATIC_ASSET_RE = /\.(?:woff2?|ttf|otf|eot|png|jpe?g|svg|webp|gif|ico|avif|mp3|wav|ogg|m4a|aac)$/i;
 
 // ── Install ───────────────────────────────────────────────────────────────────
 

@@ -365,22 +365,33 @@
   align-self: stretch;
   background-color: #ffffff;
   background-image:
+    /* Cover layer: pure white from 82% down, ramping in from 60%. Sits ON TOP
+       of the noise so the texture also dissolves to flat white before the
+       panel's bottom edge — otherwise the noise tiles the whole panel and its
+       hard cut at the border reads as a faint seam even once the tint is gone. */
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0) 60%,
+      rgba(255, 255, 255, 1) 82%,
+      rgba(255, 255, 255, 1) 100%
+    ),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
     linear-gradient(
       180deg,
       #e7eef4 0%,
-      rgba(231, 238, 244, 0.94) 12%,
-      rgba(231, 238, 244, 0.82) 24%,
-      rgba(231, 238, 244, 0.66) 38%,
-      rgba(231, 238, 244, 0.48) 52%,
-      rgba(231, 238, 244, 0.3) 66%,
-      rgba(231, 238, 244, 0.16) 78%,
-      rgba(231, 238, 244, 0.07) 88%,
-      rgba(231, 238, 244, 0.02) 95%,
+      rgba(231, 238, 244, 0.94) 10%,
+      rgba(231, 238, 244, 0.82) 20%,
+      rgba(231, 238, 244, 0.66) 31%,
+      rgba(231, 238, 244, 0.48) 43%,
+      rgba(231, 238, 244, 0.3) 54%,
+      rgba(231, 238, 244, 0.16) 64%,
+      rgba(231, 238, 244, 0.07) 72%,
+      rgba(231, 238, 244, 0.02) 78%,
+      rgba(231, 238, 244, 0) 82%,
       rgba(231, 238, 244, 0) 100%
     );
-  background-repeat: repeat, no-repeat;
-  background-size: 160px 160px, 100% 100%;
+  background-repeat: no-repeat, repeat, no-repeat;
+  background-size: 100% 100%, 160px 160px, 100% 100%;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -580,15 +591,17 @@
      override it here, or absolutely-positioned children lose their anchor. */
 }
 
-/* Scrollable routes list — sits behind the bottom sheet.
-   padding-bottom reserves room so the last route card clears the sheet. */
+/* Scrollable routes list — sits behind the bottom sheet. The header
+   (.route-screen__header, shared with the route detail screen) floats over the
+   top, so the padding-top here matches .route-screen__scroll exactly to keep
+   the first card clear of it — identical geometry on both pages, no jump. */
 .routes-screen__main {
   position: absolute;
   inset: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding-top: max(env(safe-area-inset-top), 24px);
+  padding-top: calc(max(env(safe-area-inset-top), 16px) + 48px);
   padding-inline: 24px;
   padding-bottom: max(env(safe-area-inset-bottom), 48px);
   display: flex;
@@ -598,88 +611,6 @@
   box-sizing: border-box;
 }
 .routes-screen__main::-webkit-scrollbar { display: none; }
-
-.routes-screen__list-heading {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 28px;
-  line-height: 32px;
-  color: #1a1a1a;
-  margin: 0;
-  align-self: flex-start;
-}
-
-/* "Temps a Aiguablava" — placeholder card holding the weather copy moved off
-   the old weather screen. Visual design still to come from Paper. */
-.routes-weather {
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #ffffff;
-  border-radius: 16px;
-  corner-shape: var(--corner-shape);
-  box-shadow: 0 1px 2px rgba(15, 23, 12, 0.04), 0 6px 16px rgba(15, 23, 12, 0.06);
-}
-
-/* Aiguablava pill sits top-left; keep it content-sized instead of stretching
-   to the card width under the column's default align-items: stretch. */
-.routes-weather .weather-screen__location {
-  align-self: flex-start;
-}
-
-/* Compact wind / wave / air strip inside the weather card. Three equal cells;
-   the wind cell carries a direction arrow. */
-.conditions {
-  display: flex;
-  align-items: stretch;
-  width: 100%;
-}
-
-.conditions__cell {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 6px;
-  text-align: center;
-}
-
-.conditions__label {
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #6b7280;
-}
-
-.conditions__value {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 3px;
-  font-family: var(--font-body);
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.1;
-  color: #1a1a1a;
-  white-space: nowrap;
-}
-
-.conditions__unit {
-  font-size: 11px;
-  font-weight: 500;
-  color: #6b7280;
-}
-
-.conditions__sub {
-  font-family: var(--font-body);
-  font-size: 12px;
-  color: #6b7280;
-}
 
 .conditions__arrow {
   width: 14px;

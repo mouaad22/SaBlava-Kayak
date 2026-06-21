@@ -69,6 +69,15 @@ export function openWeatherOverlay() {
   return { close };
 }
 
+// WHO UV-index risk bands → i18n key suffix (weather.uv.<band>).
+function uvBand(uv) {
+  if (uv <= 2) return "low";
+  if (uv <= 5) return "moderate";
+  if (uv <= 7) return "high";
+  if (uv <= 10) return "veryHigh";
+  return "extreme";
+}
+
 function row(label, value) {
   return `
     <div class="weather-overlay__row">
@@ -83,9 +92,17 @@ function renderRows(d, lang) {
 
   const out = [];
 
-  // Wind — speed + cardinal, local wind name, gusts.
+  // Wind — direction arrow + speed + cardinal, local wind name, gusts.
   if (d.wind && typeof d.wind.speed === "number") {
     let wind = `${d.wind.speed} kn`;
+    // Same rotated arrow as the routes conditions strip: `direction` is where
+    // the wind blows FROM, so +180° points it the way the wind blows TOWARD.
+    if (typeof d.wind.direction === "number") {
+      const arrow = `<svg class="conditions__arrow weather-overlay__wind-arrow" style="transform:rotate(${Math.round(
+        d.wind.direction + 180
+      )}deg)" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M12 3l-5 6M12 3l5 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      wind = `${arrow}${wind}`;
+    }
     if (d.wind.cardinal && d.wind.cardinal !== "—") wind += ` ${d.wind.cardinal}`;
     if (d.wind.named) wind += ` · ${t(`weather.named.${d.wind.named}`)}`;
     if (typeof d.wind.gusts === "number")
@@ -106,6 +123,15 @@ function renderRows(d, lang) {
     out.push(row(t("weather.air.label"), t("weather.temp", d.air.temp)));
   if (d.wave && typeof d.wave.seaTemp === "number")
     out.push(row(t("weather.sea.label"), t("weather.temp", d.wave.seaTemp)));
+
+  // UV index — number plus a localised risk band so it reads at a glance.
+  if (d.air && typeof d.air.uv === "number") {
+    const band = uvBand(d.air.uv);
+    out.push(row(
+      t("weather.uv.label"),
+      `${d.air.uv} <span class="weather-overlay__sub">${t(`weather.uv.${band}`)}</span>`
+    ));
+  }
 
   // Sunset — HH:MM from the ISO timestamp.
   if (d.sunset && d.sunset.length >= 16)

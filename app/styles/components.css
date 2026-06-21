@@ -525,6 +525,14 @@
   color: var(--color-text-secondary);
 }
 
+/* Wind-direction arrow inline in the wind value — same glyph as the routes
+   conditions strip, nudged to sit on the text baseline. */
+.weather-overlay__wind-arrow {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 5px;
+}
+
 .weather-overlay__status,
 .weather-overlay__note {
   margin: 0;

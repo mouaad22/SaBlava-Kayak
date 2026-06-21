@@ -68,6 +68,49 @@ export function estimatedHours(km, speedKmh = KAYAK_SPEED_KMH) {
 }
 
 /**
+ * Build a coastal polyline that follows the recorded GPS `track` but only
+ * spans the given POIs. Each POI is projected onto its nearest track vertex,
+ * then the track is walked (in whichever direction is needed) between
+ * consecutive POIs, so the line hugs the real coast instead of cutting across
+ * land. Used whenever the paddler navigates a subset of the route — a shorter
+ * duration (fewer POIs) or after removing a POI.
+ *
+ * @param {Array<[number, number]>} track     — dense [lng, lat] GPS polyline
+ * @param {Array<[number, number]>} poiCoords — ordered POI [lng, lat] to pass through
+ * @returns {Array<[number, number]>} polyline coordinates following the track
+ */
+export function trackThroughPois(track, poiCoords) {
+  if (!track || track.length < 2) return poiCoords.slice();
+  if (poiCoords.length === 0) return [];
+
+  // Nearest track vertex index for a POI.
+  const nearestIdx = (coord) => {
+    let best = Infinity;
+    let bi = 0;
+    for (let i = 0; i < track.length; i++) {
+      const d = haversineM(coord, track[i]);
+      if (d < best) { best = d; bi = i; }
+    }
+    return bi;
+  };
+
+  const idxs = poiCoords.map(nearestIdx);
+
+  // Walk the track between each consecutive pair of projected POIs. The start
+  // vertex of each leg is pushed by the previous leg (or, for the first leg,
+  // by being the leg's own start), so every vertex is emitted exactly once.
+  const out = [];
+  for (let leg = 0; leg < idxs.length - 1; leg++) {
+    const a = idxs[leg];
+    const b = idxs[leg + 1];
+    const step = a <= b ? 1 : -1;
+    for (let k = a; k !== b; k += step) out.push(track[k]);
+  }
+  out.push(track[idxs[idxs.length - 1]]); // final POI's vertex
+  return out;
+}
+
+/**
  * Initial bearing (0–360°, clockwise from north) from point A to point B.
  * @param {[number, number]} from — [lng, lat]
  * @param {[number, number]} to   — [lng, lat]

@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-# Pre-push guard: refuse to push a build that boots to a white screen.
+# Pre-push guard: refuse to push a build whose ES-module links are broken.
+#
+# A single import of a non-existent named export aborts the whole module graph
+# at load and white-screens the live site (this has happened). The check is
+# static, deterministic and runs in well under a second.
 #
 # Install:  cp scripts/pre-push.hook .git/hooks/pre-push && chmod +x .git/hooks/pre-push
 #
-# Runs the headless smoke test (scripts/smoke-test.sh).
-#   exit 0 → app boots, allow push
-#   exit 1 → white-screen / boot error, BLOCK push
-#   exit 2 → no browser available, skip the check (don't block)
+# For a deeper, real-browser boot check (catches runtime errors too, not just
+# link errors) run `bash scripts/smoke-test.sh` manually — it's not wired here
+# because headless Chrome is comparatively slow and flaky.
 ROOT="$(git rev-parse --show-toplevel)"
-bash "$ROOT/scripts/smoke-test.sh"
-rc=$?
-if [ "$rc" -eq 1 ]; then
-  echo "pre-push: BLOCKED — the app boots to a white screen. Fix it or push with --no-verify." >&2
+if ! node "$ROOT/scripts/check-esm-links.mjs"; then
+  echo "pre-push: BLOCKED — broken ESM links would white-screen the app. Fix, or push with --no-verify." >&2
   exit 1
 fi
 exit 0

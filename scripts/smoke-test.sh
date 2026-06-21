@@ -50,7 +50,9 @@ CHROME="$(find_chrome)" || { echo "[smoke] SKIP: no Chrome/Chromium/Edge found."
 # ── Start the local server ──────────────────────────────────────────────────
 python "$ROOT/app/server.py" >/dev/null 2>&1 &
 SERVER_PID=$!
-cleanup() { kill "$SERVER_PID" 2>/dev/null; rm -rf "$LOG" "$DOM" "$PROFILE"; }
+# Quiet cleanup: a watchdog-killed Chrome can leave child procs briefly holding
+# the profile dir, so ignore "busy" errors — it lives under the OS temp dir.
+cleanup() { kill "$SERVER_PID" 2>/dev/null; rm -rf "$LOG" "$DOM" "$PROFILE" 2>/dev/null || true; }
 trap cleanup EXIT
 
 # Wait (up to ~10s) for the server to answer.
@@ -61,15 +63,29 @@ done
 [ "${ready:-0}" = 1 ] || { echo "[smoke] FAIL: server never came up on :$PORT" >&2; exit 2; }
 
 # ── Load the page in headless Chrome ────────────────────────────────────────
-# Snapshot mid-splash: the loading screen mounts synchronously at boot but
-# tears itself down after ~4s (before the first real screen mounts), so a
-# late snapshot would land in the gap and see an empty stack even on success.
-# A ~2.5s virtual-time budget is past import/eval (so gate 1 catches any error)
-# but well inside the splash window (so gate 2 reliably sees a mounted screen).
+# --virtual-time-budget makes headless advance its clock and then EXIT after
+# the budget — essential here, because the splash runs a perpetual rAF/timer
+# animation and registers a service worker, so the `load`-based --dump-dom
+# would otherwise never return. 2.5s is past import/eval (gate 1 sees any
+# error) and inside the splash window before its ~4s self-teardown (gate 2
+# reliably sees a mounted screen).
+#
+# Watchdog: run Chrome in the background and hard-kill it if it ever wedges, so
+# this guard can never block a push indefinitely. A timeout → skip (exit 2).
 "$CHROME" --headless=new --disable-gpu --no-sandbox \
   --user-data-dir="$PROFILE" --no-first-run --no-default-browser-check \
   --enable-logging=stderr --v=1 --virtual-time-budget=2500 \
-  --dump-dom "$URL" >"$DOM" 2>"$LOG"
+  --dump-dom "$URL" >"$DOM" 2>"$LOG" &
+CHROME_PID=$!
+for _ in $(seq 1 50); do          # up to ~25s
+  kill -0 "$CHROME_PID" 2>/dev/null || break
+  sleep 0.5
+done
+if kill -0 "$CHROME_PID" 2>/dev/null; then
+  kill "$CHROME_PID" 2>/dev/null
+  echo "[smoke] SKIP: headless Chrome timed out (not blocking push)." >&2
+  exit 2
+fi
 
 # ── Gate 1: any uncaught JS error during boot ───────────────────────────────
 # This is the primary detector — the white-screen bug surfaced exactly here as

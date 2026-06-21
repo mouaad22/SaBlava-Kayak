@@ -57,6 +57,56 @@
      already has a non-pill, non-circle border-radius. */
   --corner-shape: squircle;
 
+  /* ── Premium shadow system (see docs/SHADOWS.md) ─────────────────────────
+     One overhead light, straight down, layered, tinted (never #000), blur ≈
+     2× offset, alpha low. Every elevation maps to one of these tokens; the
+     near-identical contact layer is what ties a chip to a sheet. The tint is a
+     deep teal-navy so it sits in the nautical palette instead of muddy grey.
+     New shadows MUST use a token below — no raw box-shadow values elsewhere. */
+  --shadow-color: 205 50% 13%;
+
+  /* xs — chips, tabs, segmented controls, badges, resting inline cards */
+  --shadow-xs:
+    0 1px 2px -1px hsl(var(--shadow-color) / 0.10),
+    0 1px 1px -0.5px hsl(var(--shadow-color) / 0.06);
+
+  /* sm — buttons, icon buttons, inputs, small cards, tooltips */
+  --shadow-sm:
+    0 1px 2px -1px hsl(var(--shadow-color) / 0.10),
+    0 2px 4px -1px hsl(var(--shadow-color) / 0.07),
+    0 4px 6px -2px hsl(var(--shadow-color) / 0.04);
+
+  /* md — cards, dropdowns, selects, focused carousel card */
+  --shadow-md:
+    0 1px 2px -1px hsl(var(--shadow-color) / 0.09),
+    0 2px 6px -1px hsl(var(--shadow-color) / 0.07),
+    0 8px 16px -4px hsl(var(--shadow-color) / 0.06);
+
+  /* lg — popovers, menus, floating toolbars, toasts */
+  --shadow-lg:
+    0 1px 2px -1px hsl(var(--shadow-color) / 0.08),
+    0 4px 8px -2px hsl(var(--shadow-color) / 0.06),
+    0 12px 24px -6px hsl(var(--shadow-color) / 0.10);
+
+  /* xl — modals, command palettes, large floating cards */
+  --shadow-xl:
+    0 1px 2px -1px hsl(var(--shadow-color) / 0.08),
+    0 8px 16px -4px hsl(var(--shadow-color) / 0.08),
+    0 24px 48px -12px hsl(var(--shadow-color) / 0.12);
+
+  /* Hairline edge — the faint tinted line that keeps a surface from dissolving
+     into the page. Used as a real 1px border on icon buttons. */
+  --hairline-color: hsl(var(--shadow-color) / 0.06);
+
+  /* Hairline border companion + lit top edge for surfaces at md and above. */
+  --shadow-hairline: 0 0 0 1px hsl(var(--shadow-color) / 0.05);
+  --shadow-top-highlight: inset 0 1px 0 hsl(0 0% 100% / 0.6);
+
+  /* Focus ring — kept separate from elevation; compose as `var(--shadow-sm), var(--ring)`. */
+  --ring: 0 0 0 3px hsl(var(--shadow-color) / 0.15);
+
+  /* Legacy named shadows — kept so existing surfaces don't regress while the
+     repo migrates onto the scale above. Prefer the tokens above for new work. */
   --shadow-card: 0 2px 14px rgba(10, 77, 107, 0.09);
   --shadow-card-hover: 0 6px 22px rgba(10, 77, 107, 0.14);
   --shadow-sheet: 0 -2px 4px rgba(0, 0, 0, 0.06), 0 -6px 32px rgba(10, 77, 107, 0.22);

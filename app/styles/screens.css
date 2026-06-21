@@ -945,7 +945,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px;
+  gap: 16px;
   padding: max(env(safe-area-inset-top), 16px) 24px 0;
   min-height: 56px;
   background: unset;
@@ -953,15 +953,28 @@
 }
 
 .route-screen__back {
-  width: 48px;
-  height: 48px;
+  /* 44×44 — the iOS minimum tap target for a back button. */
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  background: transparent;
-  border: 0;
+  /* White chip with a subtle drop so it reads as a pressable button rather
+     than a bare glyph floating over the page. A clean, true circle (no
+     squircle corner-shape). */
+  background: var(--color-surface);
+  border: 1px solid var(--hairline-color);
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0;
+  cursor: pointer;
+  transition: box-shadow 150ms var(--ease-exit),
+    transform 150ms var(--ease-exit);
+}
+.route-screen__back:active {
+  box-shadow: var(--shadow-xs);
+  transform: translateY(1px);
 }
 
 .route-screen__scroll {
@@ -988,10 +1001,14 @@
 .route-screen__heading {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 24px;
-  line-height: 28px;
+  font-size: 22px;
+  line-height: 26px;
   color: #1a1a1a;
   margin: 0;
+  /* Optical nudge: Recoleta's caps leave the reserved descender space unused,
+     so the line-box center sits ~1.5px above the visual center of the text.
+     Push down so the title reads as centered against the round back button. */
+  transform: translateY(1.5px);
   /* Sits beside the back button; clip long route names rather than wrap. */
   min-width: 0;
   overflow: hidden;
@@ -1074,9 +1091,8 @@
 }
 
 .duration-bar__label {
-  flex: 1;
   font-family: var(--font-body);
-  font-weight: 500;
+  font-weight: 400;
   font-size: 16px;
   line-height: 16px;
   color: #1a1a1a;
@@ -1100,32 +1116,41 @@
   border-radius: 8px;
   corner-shape: var(--corner-shape);
   font-family: var(--font-body);
-  font-weight: 500;
+  font-weight: 400;
   font-size: 14px;
   line-height: 16px;
   color: #555555;
   cursor: pointer;
 }
 
+/* Selected reads as an elevated white chip — no blue outline, just the small
+   top-down shadow plus a touch more weight. */
 .duration-seg.is-selected {
   background: #ffffff;
-  border-color: #2f6b89;
-  color: #2f6b89;
+  border-color: var(--hairline-color);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
 /* Horizontal POI carousel — scoped to .route-screen because screen 4
    reuses .poi-card / .poi-carousel for its own (full-screen) card. */
 .route-screen .poi-carousel {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  padding: 16px 0;
+  /* Extra vertical padding gives the focused card's elevated shadow room to
+     fall before overflow-y: hidden clips it. */
+  padding: 24px 0;
   margin: 0 -24px;
   padding-inline: 24px;
+  /* Without this, mandatory snap pulls the first card flush to the scroll edge
+     and hides the left gutter. Snap targets are inset by 24px to match. */
+  scroll-padding-inline: 24px;
   position: static;
   inset: auto;
 }
@@ -1141,9 +1166,22 @@
   gap: 8px;
   scroll-snap-align: start;
   cursor: pointer;
-  background: transparent;
+  /* A white card surface. Resting cards stay completely flat — no border, no
+     shadow; only the focused card lifts with a shadow. */
+  background: var(--color-surface);
   border: 0;
-  padding: 0;
+  border-radius: var(--radius-card);
+  corner-shape: var(--corner-shape);
+  padding: 16px;
+  box-shadow: none;
+  transition: box-shadow 200ms var(--ease-entrance),
+    transform 200ms var(--ease-entrance);
+}
+
+/* Focused card lifts toward the user — clearly the elevated, in-focus item. */
+.route-screen .poi-card.is-active {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .route-screen .poi-card.is-hidden {
@@ -1203,9 +1241,12 @@
   width: 200px;
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 5;
-  line-clamp: 5;
+  /* Always reserve exactly 3 lines so every card is the same height; longer
+     descriptions truncate with an ellipsis. */
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
+  min-height: 72px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1335,11 +1376,19 @@
   align-items: center;
   justify-content: center;
   background: #f5f8f1;
-  border: 2px solid #e2e6dd;
+  border: 1px solid var(--hairline-color);
   border-radius: 50%;
   corner-shape: var(--corner-shape);
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0;
   padding: 0;
+  cursor: pointer;
+  transition: box-shadow 150ms var(--ease-exit),
+    transform 150ms var(--ease-exit);
+}
+.poi-screen__back:active {
+  box-shadow: var(--shadow-xs);
+  transform: translateY(1px);
 }
 
 /* Map-layer toggle — Paper map-stack-layer, same chip as the back button.
@@ -1353,13 +1402,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #f5f8f1;
-  border: 2px solid #e2e6dd;
+  background: #ffffff;
+  border: 1px solid var(--hairline-color);
   border-radius: 50%;
   corner-shape: var(--corner-shape);
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0;
   padding: 0;
   z-index: 3;
+  cursor: pointer;
+  transition: box-shadow 150ms var(--ease-exit),
+    transform 150ms var(--ease-exit);
+}
+.poi-screen__map-toggle:active {
+  box-shadow: var(--shadow-xs);
+  transform: translateY(1px);
 }
 
 .poi-screen__card .poi-screen__map-toggle {
@@ -2195,22 +2252,29 @@
   pointer-events: none;
 }
 
-/* Shared squircle button — matches poi-screen__back and poi-screen__map-toggle exactly */
+/* Shared squircle button — identical style to .route-screen__back and
+   .poi-screen__map-toggle: 44×44 white squircle, no border, ambient halo. */
 .nav-map-btn {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  box-shadow: 0 0 8px -2px rgba(26, 26, 26, 0.15);
+  box-shadow: var(--shadow-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: #ffffff;
-  border: 2px solid #e2e6dd;
+  border: 1px solid var(--hairline-color);
   border-radius: 50%;
   corner-shape: var(--corner-shape);
   padding: 0;
   cursor: pointer;
   pointer-events: auto;
+  transition: box-shadow 150ms var(--ease-exit),
+    transform 150ms var(--ease-exit);
+}
+.nav-map-btn:active {
+  box-shadow: var(--shadow-xs);
+  transform: translateY(1px);
 }
 
 /* Right-side vertical button stack */
@@ -2365,7 +2429,7 @@
   display: flex;
   background: rgba(240, 240, 240, 0.96);
   backdrop-filter: blur(8px);
-  box-shadow: 0 0 8px -2px rgba(26, 26, 26, 0.15);
+  box-shadow: var(--shadow-sm);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 50px;
   padding: 4px;

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Pre-push guard: refuse to push a build that boots to a white screen.
+#
+# Install:  cp scripts/pre-push.hook .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+#
+# Runs the headless smoke test (scripts/smoke-test.sh).
+#   exit 0 → app boots, allow push
+#   exit 1 → white-screen / boot error, BLOCK push
+#   exit 2 → no browser available, skip the check (don't block)
+ROOT="$(git rev-parse --show-toplevel)"
+bash "$ROOT/scripts/smoke-test.sh"
+rc=$?
+if [ "$rc" -eq 1 ]; then
+  echo "pre-push: BLOCKED — the app boots to a white screen. Fix it or push with --no-verify." >&2
+  exit 1
+fi
+exit 0

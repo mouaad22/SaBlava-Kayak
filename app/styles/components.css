@@ -526,12 +526,34 @@
 }
 
 /* Wind-direction arrow inline in the wind value — same glyph as the routes
-   conditions strip, nudged to sit on the text baseline. */
+   conditions strip, nudged to sit on the text baseline. Tinted by speed
+   (green/amber/red) via the verdict modifiers, overriding the strip's blue. */
 .weather-overlay__wind-arrow {
   display: inline-block;
   vertical-align: -2px;
   margin-right: 5px;
 }
+
+.weather-overlay__wind-arrow--green { color: var(--color-sage); }
+.weather-overlay__wind-arrow--coral { color: var(--color-accent); }
+.weather-overlay__wind-arrow--red   { color: var(--color-emergency); }
+
+/* Swell verdict dot — same traffic-light marker as the conditions summary line,
+   leading the wave height so the sea state reads at a glance. */
+.weather-overlay__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 8px;
+  background: var(--color-sage);
+}
+
+.weather-overlay__dot--green { background: var(--color-sage); }
+.weather-overlay__dot--coral { background: var(--color-accent); }
+.weather-overlay__dot--red   { background: var(--color-emergency); }
 
 .weather-overlay__status,
 .weather-overlay__note {

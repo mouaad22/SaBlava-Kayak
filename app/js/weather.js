@@ -140,6 +140,24 @@ export function windStrength(speed) {
   return "moltFort";
 }
 
+// Per-factor traffic-light verdict — "green" | "coral" | "red" — for the weather
+// overlay's wind-arrow tint and swell dot. Thresholds mirror the combined
+// verdict in conditionsSummary() below, so a single rough factor here reads the
+// same colour it contributes to the summary line. Keep the two in sync.
+export function windVerdict(speed) {
+  if (typeof speed !== "number") return "green";
+  if (speed > 18) return "red";
+  if (speed > 12) return "coral";
+  return "green";
+}
+
+export function waveVerdict(height) {
+  if (typeof height !== "number") return "green";
+  if (height > 0.8) return "red";
+  if (height > 0.5) return "coral";
+  return "green";
+}
+
 // Decide GO / CAUTION / NO-GO for a given route given current weather.
 // route.conditions = { wind: {ok, caution}, wave: {ok, caution} } in kn / m.
 export function statusForRoute(route, weather) {

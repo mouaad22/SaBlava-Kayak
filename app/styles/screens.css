@@ -930,7 +930,9 @@
 /* ============== SCREEN 3 — ROUTE DETAIL (Paper AZH-0 / AQB-0) ============== */
 
 .route-screen {
-  background: #ffffff;
+  /* Subtle off-white so the white POI cards and map illustration lift off the
+     page rather than dissolving into flat white. */
+  background: var(--color-page);
   font-synthesis: none;
   overflow: hidden;
 }
@@ -947,8 +949,11 @@
   justify-content: flex-start;
   gap: 16px;
   padding: max(env(safe-area-inset-top), 16px) 24px 0;
-  min-height: 56px;
-  background: unset;
+  /* Match .route-screen__scroll's top padding exactly so the white header's
+     bottom edge meets the map's title-bar gradient — no off-white page strip
+     peeking through between the header and the duration picker below. */
+  min-height: calc(max(env(safe-area-inset-top), 16px) + 48px);
+  background: #ffffff;
   isolation: isolate;
 }
 
@@ -1070,16 +1075,7 @@
   right: 0;
   z-index: 2;
   padding: 12px 24px 32px;
-  background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 1) 30%,
-    rgba(255, 255, 255, 0.94) 45%,
-    rgba(255, 255, 255, 0.78) 58%,
-    rgba(255, 255, 255, 0.5) 72%,
-    rgba(255, 255, 255, 0.2) 87%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  background: var(--header-fade);
 }
 
 /* Inline segmented duration control (Paper route-duration JVO-0) — lives in
@@ -1166,9 +1162,10 @@
   gap: 8px;
   scroll-snap-align: start;
   cursor: pointer;
-  /* A white card surface. Resting cards stay completely flat — no border, no
-     shadow; only the focused card lifts with a shadow. */
-  background: var(--color-surface);
+  /* Resting cards are completely flat — no background, no border, no shadow;
+     they sit directly on the page. Only the focused card gets a white surface
+     and lifts with a shadow. */
+  background: transparent;
   border: 0;
   border-radius: var(--radius-card);
   corner-shape: var(--corner-shape);
@@ -1180,6 +1177,7 @@
 
 /* Focused card lifts toward the user — clearly the elevated, in-focus item. */
 .route-screen .poi-card.is-active {
+  background: var(--color-surface);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
@@ -1263,12 +1261,8 @@
   justify-content: center;
   gap: 12px;
   padding: 32px 24px calc(env(safe-area-inset-bottom, 0px) + 24px);
-  background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 1) 14.69%,
-    rgba(255, 255, 255, 1) 100%
-  );
+  /* Same fade as the route header, flipped to sit solid at the bottom. */
+  background: var(--cta-fade);
 }
 
 /* Secondary CTA — "Mapa" (soft teal fill, no outline). */
@@ -1475,16 +1469,7 @@
   gap: 16px;
   padding: 0 24px 32px;
   pointer-events: none;
-  background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(255, 255, 255, 1) 30%,
-    rgba(255, 255, 255, 0.94) 45%,
-    rgba(255, 255, 255, 0.78) 58%,
-    rgba(255, 255, 255, 0.5) 72%,
-    rgba(255, 255, 255, 0.2) 87%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  background: var(--header-fade);
 }
 
 .map-screen__top .route-screen__back,
@@ -1500,9 +1485,10 @@
   padding-top: max(env(safe-area-inset-top), 16px);
 }
 
-/* CTA bar sits transparent over the live map — no white fade behind it. */
+/* CTA bar keeps the same white fade as the route screen, persisting over the
+   live map so the buttons stay legible against whatever's beneath them. */
 .poi-screen.map-screen .route-screen__cta {
-  background-image: none;
+  background: var(--cta-fade);
 }
 
 /* Layer 3 — POI card. iOS-style bottom sheet:

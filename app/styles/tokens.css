@@ -120,4 +120,42 @@
 
   --canvas-max: 402px;
   --page-margin: 24px;
+
+  /* Off-white page tint — a barely-there warm grey so white cards and the map
+     illustration lift off the route page instead of dissolving into flat white. */
+  --color-page: #f5f5f4;
+
+  /* White-to-transparent fade behind the floating header & CTA bars over the
+     route / map illustration. Both directions share identical stops; --fade-dither
+     is a faint grayscale noise tile composited on top to break up the 8-bit
+     banding that shows in the near-solid zone. Apply the whole stack in one go
+     with `background: var(--header-fade)` (solid at top) or `var(--cta-fade)`
+     (solid at bottom). */
+  --fade-dither: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  --header-fade:
+    var(--fade-dither) 0 0 / 160px 160px repeat,
+    linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 1) 0%,
+        rgba(255, 255, 255, 1) 30%,
+        rgba(255, 255, 255, 0.94) 45%,
+        rgba(255, 255, 255, 0.78) 58%,
+        rgba(255, 255, 255, 0.5) 72%,
+        rgba(255, 255, 255, 0.2) 87%,
+        rgba(255, 255, 255, 0) 100%
+      )
+      0 0 / 100% 100% no-repeat;
+  --cta-fade:
+    var(--fade-dither) 0 0 / 160px 160px repeat,
+    linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 1) 0%,
+        rgba(255, 255, 255, 1) 30%,
+        rgba(255, 255, 255, 0.94) 45%,
+        rgba(255, 255, 255, 0.78) 58%,
+        rgba(255, 255, 255, 0.5) 72%,
+        rgba(255, 255, 255, 0.2) 87%,
+        rgba(255, 255, 255, 0) 100%
+      )
+      0 0 / 100% 100% no-repeat;
 }

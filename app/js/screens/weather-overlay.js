@@ -6,7 +6,7 @@
 // lists wind / swell / air / sea / sunset. Closes on backdrop, ✕ or Escape.
 
 import { t, getLanguage } from "../i18n.js";
-import { getWeather } from "../weather.js";
+import { getWeather, windVerdict, waveVerdict } from "../weather.js";
 
 const ICON_CLOSE = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 
@@ -97,8 +97,11 @@ function renderRows(d, lang) {
     let wind = `${d.wind.speed} kn`;
     // Same rotated arrow as the routes conditions strip: `direction` is where
     // the wind blows FROM, so +180° points it the way the wind blows TOWARD.
+    // Tinted green/amber/red by speed so the arrow reads intensity at a glance.
     if (typeof d.wind.direction === "number") {
-      const arrow = `<svg class="conditions__arrow weather-overlay__wind-arrow" style="transform:rotate(${Math.round(
+      const arrow = `<svg class="conditions__arrow weather-overlay__wind-arrow weather-overlay__wind-arrow--${windVerdict(
+        d.wind.speed
+      )}" style="transform:rotate(${Math.round(
         d.wind.direction + 180
       )}deg)" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M12 3l-5 6M12 3l5 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
       wind = `${arrow}${wind}`;
@@ -110,9 +113,13 @@ function renderRows(d, lang) {
     out.push(row(t("weather.tab.wind"), wind));
   }
 
-  // Swell — height + period.
+  // Swell — a traffic-light dot (like the summary line) leads the height, so the
+  // sea state reads at a glance; then height + period.
   if (d.wave && typeof d.wave.height === "number") {
-    let wave = `${d.wave.height} m`;
+    const dot = `<span class="weather-overlay__dot weather-overlay__dot--${waveVerdict(
+      d.wave.height
+    )}" aria-hidden="true"></span>`;
+    let wave = `${dot}${d.wave.height} m`;
     if (typeof d.wave.period === "number")
       wave += ` <span class="weather-overlay__sub">${d.wave.period} s</span>`;
     out.push(row(t("weather.wave.label"), wave));

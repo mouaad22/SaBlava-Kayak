@@ -253,8 +253,11 @@ export function renderRouteScreen(host, routeId) {
 
   // --- POI cards → POI detail screen --------------------------------------
   carousel.querySelectorAll("[data-poi-index]").forEach((card) => {
-    const go = () =>
+    const go = () => {
+      // Opened from the route carousel → back from the POI returns here.
+      sessionStorage.setItem("sa-blava.poi.from", "route");
       navigate(`/route/${routeId}/poi/${card.dataset.poiIndex}`);
+    };
     card.addEventListener("click", go);
     card.addEventListener("keydown", (ev) => {
       if (ev.key === "Enter" || ev.key === " ") {

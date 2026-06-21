@@ -424,15 +424,20 @@ export function renderPoiScreen(host, routeId, poiIndex) {
     handleEl.addEventListener("pointercancel", finish);
   }
 
-  // Back button → previous route screen
+  // Back button → wherever this POI was opened from: the full-screen map if
+  // the user tapped a marker there, otherwise the route detail screen.
   headerEl
     .querySelector(".poi-screen__back")
-    .addEventListener("click", () => navigate(`/route/${routeId}`));
+    .addEventListener("click", () => {
+      const from = sessionStorage.getItem("sa-blava.poi.from");
+      navigate(from === "map" ? `/route/${routeId}/map` : `/route/${routeId}`);
+    });
 
-  // Swipe gesture on the card (left = next, right = prev)
+  // Horizontal swipe on the card scrubs the media carousel (left = next image,
+  // right = previous). Moving between POIs is done only via the nav buttons.
   attachSwipe(cardEl, {
-    onLeft: () => goTo(currentIndex + 1),
-    onRight: () => goTo(currentIndex - 1),
+    onLeft: () => carousel?.next(),
+    onRight: () => carousel?.prev(),
   });
 
   buildCard();
@@ -522,11 +527,11 @@ export function renderPoiScreen(host, routeId, poiIndex) {
 //     full-screen gallery at the currently visible slide.
 //   • destroy() must be called whenever the parent rebuilds (POI nav, screen
 //     teardown). It clears the timer, pauses videos, and detaches listeners.
-const SLIDE_MS = 3000;
+const SLIDE_MS = 5000;
 
 function attachCarousel(rootEl, gallery, onTapGallery) {
   if (!rootEl || gallery.length === 0) {
-    return { destroy() {}, current: () => 0 };
+    return { destroy() {}, current: () => 0, next() {}, prev() {} };
   }
 
   const slides = Array.from(rootEl.querySelectorAll(".poi-carousel__slide"));
@@ -562,6 +567,10 @@ function attachCarousel(rootEl, gallery, onTapGallery) {
 
   function next() {
     setActive(current + 1);
+  }
+
+  function prev() {
+    setActive(current - 1);
   }
 
   function schedule() {
@@ -619,6 +628,8 @@ function attachCarousel(rootEl, gallery, onTapGallery) {
       });
     },
     current: () => current,
+    next,
+    prev,
   };
 }
 

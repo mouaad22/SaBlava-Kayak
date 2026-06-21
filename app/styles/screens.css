@@ -1093,9 +1093,9 @@
 .duration-bar__label {
   font-family: var(--font-body);
   font-weight: 400;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 16px;
-  color: #1a1a1a;
+  color: var(--color-text-secondary);
 }
 
 .duration-bar__segments {
@@ -1116,10 +1116,10 @@
   border-radius: 8px;
   corner-shape: var(--corner-shape);
   font-family: var(--font-body);
-  font-weight: 400;
+  font-weight: 500;
   font-size: 14px;
   line-height: 16px;
-  color: #555555;
+  color: var(--color-text-primary);
   cursor: pointer;
 }
 
@@ -1129,8 +1129,8 @@
   background: #ffffff;
   border-color: var(--hairline-color);
   box-shadow: var(--shadow-sm);
-  color: var(--color-primary);
-  font-weight: 600;
+  color: var(--color-text-primary);
+  font-weight: 700;
 }
 
 /* Horizontal POI carousel — scoped to .route-screen because screen 4
@@ -1271,7 +1271,7 @@
   );
 }
 
-/* Secondary CTA — "Mapa" (white fill, teal outline). */
+/* Secondary CTA — "Mapa" (soft teal fill, no outline). */
 .map-cta-button {
   flex: 1;
   display: inline-flex;
@@ -1280,8 +1280,8 @@
   gap: 10px;
   height: 48px;
   padding: 12px 16px;
-  background: #ffffff;
-  border: 1.5px solid #2f6b89;
+  background: #e4eff3;
+  border: none;
   border-radius: 16px;
   corner-shape: var(--corner-shape);
 }
@@ -1298,6 +1298,27 @@
   line-height: 22.5px;
   color: #1e5670;
   text-align: center;
+}
+
+/* Route ⇄ map crossfade: the bottom CTA holds its position; only the left
+   button's icon + label swap (Mapa ⇄ Ruta). This brief pop on the swapped
+   content draws the eye to the one element that actually changed. */
+@keyframes cta-content-swap {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.is-cta-swap .map-cta-button__icon,
+.is-cta-swap .map-cta-button__label {
+  animation: cta-content-swap 420ms var(--ease-entrance) both;
 }
 
 /* Primary CTA — "Comença" (teal fill). */
@@ -1368,17 +1389,17 @@
   box-sizing: border-box;
 }
 
-/* Back button — 48×48, #F5F8F1 bg, 2px #E2E6DD border, full squircle. */
+/* Back button — matches the route screen's: 44×44 white chip, true circle
+   (no squircle corner-shape), subtle drop shadow. */
 .poi-screen__back {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #f5f8f1;
+  background: var(--color-surface);
   border: 1px solid var(--hairline-color);
   border-radius: 50%;
-  corner-shape: var(--corner-shape);
   box-shadow: var(--shadow-sm);
   flex-shrink: 0;
   padding: 0;
@@ -1427,8 +1448,61 @@
 
 .poi-screen.map-screen > .poi-screen__map-toggle {
   position: absolute;
-  bottom: 24px;
+  /* Sits just above the bottom CTA bar (48px buttons + 24px inset + gap). */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
   right: 24px;
+}
+
+/* Full-screen map screen — top overlay reuses the route header (round back +
+   title) and the interactive duration bar, faded over the live map with the
+   same white gradient as the route screen's title bar. The container ignores
+   pointer events so the map stays pannable beneath it; interactive children
+   re-enable them. */
+.map-screen__top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  /* Geometry mirrors the route screen so neither the header nor the duration
+     bar jumps during the route ⇄ map crossfade. The header row carries the
+     safe-area inset as its own padding-top (so the 44px back button's top lands
+     at the inset, centred exactly as under .route-screen__header), then a 16px
+     gap drops the duration bar to inset+60px — the same offset the route screen
+     produces via scroll-pad 48 + title-bar pad 12. */
+  gap: 16px;
+  padding: 0 24px 32px;
+  pointer-events: none;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 1) 30%,
+    rgba(255, 255, 255, 0.94) 45%,
+    rgba(255, 255, 255, 0.78) 58%,
+    rgba(255, 255, 255, 0.5) 72%,
+    rgba(255, 255, 255, 0.2) 87%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.map-screen__top .route-screen__back,
+.map-screen__top .duration-seg {
+  pointer-events: auto;
+}
+
+.map-screen__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  padding-top: max(env(safe-area-inset-top), 16px);
+}
+
+/* CTA bar sits transparent over the live map — no white fade behind it. */
+.poi-screen.map-screen .route-screen__cta {
+  background-image: none;
 }
 
 /* Layer 3 — POI card. iOS-style bottom sheet:
@@ -1586,19 +1660,27 @@
   flex-shrink: 0;
 }
 
+/* Prev/next POI buttons — same chip as the back button: 44×44 white true
+   circle, hairline border, subtle drop shadow. */
 .poi-card__nav-btn {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #f5f8f1;
-  border: 2px solid #e2e6dd;
+  background: var(--color-surface);
+  border: 1px solid var(--hairline-color);
   border-radius: 50%;
-  corner-shape: var(--corner-shape);
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0;
   padding: 0;
   cursor: pointer;
+  transition: box-shadow 150ms var(--ease-exit),
+    transform 150ms var(--ease-exit);
+}
+.poi-card__nav-btn:active {
+  box-shadow: var(--shadow-xs);
+  transform: translateY(1px);
 }
 
 /* Paper: 354x354 frame with overflow clip. The frame is a button so a tap

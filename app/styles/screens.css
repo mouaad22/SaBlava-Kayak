@@ -1970,7 +1970,13 @@
 .code-entry-screen {
   background: #e8ece4;
   padding-top: max(env(safe-area-inset-top), 16px);
-  padding-bottom: max(env(safe-area-inset-bottom), 24px);
+  /* --keyboard-inset is set from JS (visualViewport) while the on-screen
+     keyboard is open, so the bottom-anchored content — crucially the CTA —
+     is lifted clear of the keyboard instead of being hidden behind it. */
+  padding-bottom: calc(
+    max(env(safe-area-inset-bottom), 24px) + var(--keyboard-inset, 0px)
+  );
+  transition: padding-bottom 200ms var(--ease-entrance);
 }
 
 .code-entry-screen__header {

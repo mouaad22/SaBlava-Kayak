@@ -125,6 +125,20 @@ export function renderCodeEntryScreen(host, routeId) {
     input.addEventListener("focus", () => input.select());
   });
 
+  // Keep the bottom-anchored content (incl. the continue CTA) above the
+  // on-screen keyboard. dvh / 100% don't shrink when the soft keyboard opens,
+  // so we measure the overlap via visualViewport and lift the content by it.
+  const vv = window.visualViewport;
+  let syncKeyboardInset = null;
+  if (vv) {
+    syncKeyboardInset = () => {
+      const overlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      screen.style.setProperty("--keyboard-inset", `${overlap}px`);
+    };
+    vv.addEventListener("resize", syncKeyboardInset);
+    vv.addEventListener("scroll", syncKeyboardInset);
+  }
+
   continueBtn.addEventListener("click", () => {
     const parsed = validate();
     if (!parsed) return;
@@ -149,6 +163,10 @@ export function renderCodeEntryScreen(host, routeId) {
     name: "code",
     routeId,
     teardown() {
+      if (vv && syncKeyboardInset) {
+        vv.removeEventListener("resize", syncKeyboardInset);
+        vv.removeEventListener("scroll", syncKeyboardInset);
+      }
       screen.classList.remove("is-active");
       setTimeout(() => screen.remove(), 320);
     },

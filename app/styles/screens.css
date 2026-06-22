@@ -569,12 +569,19 @@
 /* Screen container — overflow:clip so the bottom sheet can extend to the
    bottom edge without triggering a scrollbar on the screen itself. */
 .routes-screen {
-  background: #ffffff;
+  background: var(--color-page);
   width: 100%;
   font-synthesis: none;
   overflow: clip;
   /* position:absolute + inset:0 comes from .screen in base.css — do NOT
      override it here, or absolutely-positioned children lose their anchor. */
+}
+
+/* The header is shared with the route detail screen (white there); on the
+   routes list it should match this page's off-white so it doesn't read as a
+   separate bar. */
+.routes-screen .route-screen__header {
+  background: var(--color-page);
 }
 
 /* Scrollable routes list — sits behind the bottom sheet. The header
@@ -587,7 +594,7 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding-top: calc(max(env(safe-area-inset-top), 16px) + 48px);
+  padding-top: calc(max(env(safe-area-inset-top), 16px) + 72px);
   padding-inline: 24px;
   padding-bottom: max(env(safe-area-inset-bottom), 48px);
   display: flex;
@@ -853,20 +860,19 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  background: transparent;
+  background: #ffffff;
   border: 0;
-  padding: 0;
+  border-radius: var(--radius-card);
+  padding: 16px;
+  box-shadow: var(--shadow-card);
   cursor: pointer;
   text-align: center;
   font: inherit;
   color: inherit;
+  box-sizing: border-box;
 }
 
-.route-tile--a {
-  width: 376px;
-  flex-shrink: 0;
-}
-
+.route-tile--a,
 .route-tile--b {
   align-self: stretch;
 }
@@ -899,7 +905,7 @@
   font-weight: 500;
   font-size: 18px;
   line-height: 24px;
-  color: var(--color-primary);
+  color: var(--color-text-primary);
   margin: 0;
 }
 

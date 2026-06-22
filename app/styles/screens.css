@@ -191,17 +191,6 @@
   gap: 12px;
 }
 
-/* Tertiary "Condicions d'avui" button — last element of the hero unit, centred
-   below the conditions summary. The 4px margin sits on top of the hero's 12px
-   gap (16px total) so the tappable action reads as distinct from the verdict. */
-.lang-screen__caption {
-  flex-shrink: 0;
-  margin: 4px 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Conditions summary — the smart "good to go / not" verdict line, the last
    element of the hero unit (below the Vent/Onatge tabs). A traffic-light dot
    leads, then verdict · live-number, then one short reason. The dot colour is
@@ -256,15 +245,21 @@
   white-space: nowrap;
 }
 
-/* Tertiary action below the rose — opens the weather details overlay. No fill
-   or border: just icon + label in the brand colour, sized to its content and
-   centred in its row. */
+/* Tertiary action stacked above the CTA — opens the weather details overlay. No
+   fill or border: just icon + label in the brand colour, sized to its content
+   and centred above the full-width "Veure rutes" button. */
 .lang-screen__details {
   flex: 0 0 auto;
+  align-self: center;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 4px 0;
+  /* Apple HIG: a tappable target is at least 44×44px. The label/icon stay
+     compact, so the height comes from the 44px floor (extra space pads the
+     tap area, not the visible content) while the width hugs the content. */
+  min-height: 44px;
+  padding: 4px 8px;
   border: 0;
   background: transparent;
   color: var(--color-primary);
@@ -399,17 +394,6 @@
   padding: max(env(safe-area-inset-top), 18px) 16px 18px;
 }
 
-/* "Tria el teu idioma" prompt above the flag cards. */
-.lang-screen__prompt {
-  align-self: stretch;
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 24px;
-  color: #5b5b5b;
-  margin: 0;
-  text-align: left;
-}
-
 /* Four evenly-spaced flag cards. The selected one lifts onto a white card with
    a soft shadow ("pressed"); the others sit flat on the grey panel. */
 .lang-cards {
@@ -469,13 +453,15 @@
   color: var(--color-text-primary);
 }
 
-/* CTA footer — holds the primary CTA, flush to the bottom edge and absorbing the
-   safe-area inset. The tertiary details button now lives in the hero unit. */
+/* CTA footer — the tertiary "Condicions d'avui" details button stacked 8px above
+   the primary "Veure rutes" CTA, flush to the bottom edge and absorbing the
+   safe-area inset. */
 .lang-screen__footer {
   flex-shrink: 0;
   align-self: stretch;
   display: flex;
   flex-direction: column;
+  gap: 8px;
   padding: 0 24px max(env(safe-area-inset-bottom), 24px);
   box-sizing: border-box;
 }
@@ -892,12 +878,12 @@
 }
 
 .route-tile--a .route-tile__media {
-  width: 376px;
-  height: 184px;
+  width: 301px;
+  height: 147px;
 }
 
 .route-tile--b .route-tile__media {
-  width: 100%;
+  width: 80%;
   aspect-ratio: 483 / 278;
 }
 
@@ -911,9 +897,9 @@
 .route-tile__title {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 24px;
-  line-height: 32px;
-  color: #1b6b8a;
+  font-size: 18px;
+  line-height: 24px;
+  color: var(--color-primary);
   margin: 0;
 }
 

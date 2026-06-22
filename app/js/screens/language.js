@@ -36,7 +36,6 @@ export function renderLanguageScreen(host) {
 
   screen.innerHTML = `
     <div class="lang-screen__langs">
-      <p class="lang-screen__prompt" data-i18n="lang.section">${t("lang.section")}</p>
       <div class="lang-cards" role="radiogroup" aria-label="${t("lang.section")}">
         ${LANGUAGES.map(
           (l) => `
@@ -88,17 +87,15 @@ export function renderLanguageScreen(host) {
           <p class="conditions-summary" data-conditions-summary hidden>
             <span class="conditions-summary__dot" aria-hidden="true"></span><span class="conditions-summary__verdict" data-summary-verdict></span><span class="conditions-summary__anchor" data-summary-anchor></span><span class="conditions-summary__reason" data-summary-reason></span>
           </p>
-          <p class="lang-screen__caption">
-            <button type="button" class="lang-screen__details" data-action="weather-details">
-              <span class="lang-screen__details-icon">${ICON_INFO}</span>
-              <span class="lang-screen__details-label" data-i18n="weather.details">${t("weather.details")}</span>
-            </button>
-          </p>
         </div>
       </div>
     </div>
 
     <div class="lang-screen__footer">
+      <button type="button" class="lang-screen__details" data-action="weather-details">
+        <span class="lang-screen__details-icon">${ICON_INFO}</span>
+        <span class="lang-screen__details-label" data-i18n="weather.details">${t("weather.details")}</span>
+      </button>
       <button class="lang-screen__cta" type="button" data-action="continue">
         <span data-i18n="lang.cta">${t("lang.cta")}</span>
       </button>

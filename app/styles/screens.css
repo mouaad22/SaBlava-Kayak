@@ -2316,14 +2316,17 @@
   pointer-events: none;
 }
 
-/* ── Map top gradient scrim — lifts header text off the map tiles ── */
+/* ── Map top gradient scrim — lifts header text off the map tiles ──
+   Same eased + dithered white fade the route/map screens use behind their
+   floating headers, so the nav header sits on the identical scrim instead of
+   a harder linear ramp. */
 .nav-map-gradient {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 150px;
-  background: linear-gradient(to bottom, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
+  background: var(--header-fade);
   z-index: 3;
   pointer-events: none;
 }
@@ -2419,7 +2422,7 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: #e8ece4;
+  background: var(--color-page);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2515,11 +2518,12 @@
 /* ── White bottom panel ── */
 .navigate-screen__panel {
   width: 100%;
-  background: #ffffff;
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 0 8px -2px rgba(26, 26, 26, 0.15);
+  background: var(--color-surface);
+  border-top-left-radius: var(--radius-sheet);
+  border-top-right-radius: var(--radius-sheet);
+  corner-shape: var(--corner-shape);
+  box-shadow: var(--shadow-sheet);
   padding-bottom: max(env(safe-area-inset-bottom), 16px);
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
   pointer-events: auto;
 }
 
@@ -2540,10 +2544,10 @@
 }
 
 .nav-tab-btn.is-active {
-  background: #ffffff;
-  color: var(--color-text-primary);
+  background: var(--color-surface);
+  color: var(--color-primary);
   font-weight: 600;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-tab);
 }
 
 /* ── Stats row ── */
@@ -2570,7 +2574,7 @@
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 500;
-  color: rgba(26, 26, 26, 0.70);
+  color: var(--color-text-secondary);
   white-space: nowrap;
 }
 
@@ -2605,8 +2609,8 @@
   font-size: 16px;
   font-weight: 600;
   color: var(--color-text-secondary);
-  background: #f0f0f0;
-  border-radius: 50px;
+  background: var(--color-track);
+  border-radius: var(--radius-pill);
   padding: 2px 8px;
   white-space: nowrap;
 }
@@ -2832,7 +2836,7 @@
   border-radius: var(--radius-card);
   corner-shape: var(--corner-shape);
   padding: 24px;
-  box-shadow: var(--shadow-sheet);
+  box-shadow: var(--shadow-xl);
 }
 
 .nav-end-dialog::backdrop {
@@ -2852,4 +2856,10 @@
 .nav-end-dialog__actions {
   display: flex;
   gap: 12px;
+}
+
+/* Cancel reads as the quiet, secondary action — no outline, just the brand
+   label on a tinted press state. The danger "End" button carries the weight. */
+.nav-end-dialog__cancel {
+  border: 0;
 }

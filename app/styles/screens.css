@@ -1139,9 +1139,10 @@
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  /* Extra vertical padding gives the focused card's elevated shadow room to
-     fall before overflow-y: hidden clips it. */
-  padding: 24px 0;
+  /* Bottom padding gives the focused card's elevated shadow room to fall before
+     overflow-y: hidden clips it; the top stays tight to the map above since the
+     shadow barely reaches upward. */
+  padding-block: 8px 24px;
   margin: 0 -24px;
   padding-inline: 24px;
   /* Without this, mandatory snap pulls the first card flush to the scroll edge
@@ -1169,7 +1170,7 @@
   border: 0;
   border-radius: var(--radius-card);
   corner-shape: var(--corner-shape);
-  padding: 16px;
+  padding: 16px 16px 20px;
   box-shadow: none;
   transition: box-shadow 200ms var(--ease-entrance),
     transform 200ms var(--ease-entrance);
@@ -1237,7 +1238,8 @@
   color: #5b5b5b;
   text-align: center;
   width: 200px;
-  margin: 0;
+  /* Tighten the gap to the title above (flex gap is 8px) by 4px. */
+  margin: -4px 0 0;
   display: -webkit-box;
   /* Always reserve exactly 3 lines so every card is the same height; longer
      descriptions truncate with an ellipsis. */
@@ -1260,7 +1262,7 @@
   align-items: flex-end;
   justify-content: center;
   gap: 12px;
-  padding: 32px 24px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  padding: 56px 24px calc(env(safe-area-inset-bottom, 0px) + 24px);
   /* Same fade as the route header, flipped to sit solid at the bottom. */
   background: var(--cta-fade);
 }

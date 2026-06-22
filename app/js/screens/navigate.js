@@ -59,6 +59,13 @@ export function renderNavigateScreen(host, routeId) {
   let lastTickMs       = 0;
   const firedThresholds = new Set(); // "t30" | "t15" | "t5" | "t0"
 
+  // Trip phase. "out" = anada (heading through the POIs), "back" = tornada
+  // (returning to base, no more POIs). Flips once when the last POI is reached.
+  let phase            = "out";
+  let returnStartDistM = null;  // straight-line distance to base at turnaround
+  let turnaroundFired  = false; // last-POI announcement plays exactly once
+  let shortWarned      = false; // "not enough time to get back" warned once
+
   // ── DOM ───────────────────────────────────────────────────────────────────
   const screen = document.createElement("section");
   screen.className = "screen navigate-screen";
@@ -422,15 +429,47 @@ export function renderNavigateScreen(host, routeId) {
     const nextPoi = activePois[activePOIIdx];
     const dist = haversineM(userCoords, nextPoi.coords);
     if (dist <= NAV_ARRIVAL_THRESHOLD_M) {
-      // Chime, then a warm spoken "you've arrived at <POI>" in the user's language.
-      announceArrival(nextPoi.name[lang] ?? nextPoi.name.ca, lang);
+      const isLast = activePOIIdx === activePois.length - 1;
+      const name = nextPoi.name[lang] ?? nextPoi.name.ca;
       advancePOI();
+      if (isLast) {
+        // Anada complete (progress is now 100%). Switch to the tornada.
+        startReturn(name);
+      } else {
+        // Chime, then a warm spoken "you've arrived at <POI>" in the user's language.
+        announceArrival(name, lang);
+      }
     }
   }
 
   function advancePOI() {
     activePOIIdx = Math.min(activePOIIdx + 1, activePois.length);
     highlightActivePOI();
+  }
+
+  // Turnaround at the last POI: chime + a spoken cue that ALWAYS states the
+  // remaining time and tells the paddler to head back. If the wall-clock can't
+  // cover the paddle home (remaining < distance-to-base ÷ paddling speed), the
+  // urgent variant plays and the live time stat goes red (see updateUI).
+  function startReturn(lastName) {
+    if (turnaroundFired) return;
+    turnaroundFired = true;
+    phase = "back";
+    returnStartDistM = userCoords ? haversineM(userCoords, MARINA.coords) : null;
+
+    const remMs      = timeRemainingMs();
+    const remMin     = Math.max(0, Math.round(remMs / 60_000));
+    const etaBackMs  = returnStartDistM != null
+      ? (returnStartDistM / 1000) / KAYAK_SPEED_KMH * 3_600_000
+      : 0;
+    const short      = remMs < etaBackMs;
+    shortWarned      = short; // suppress the duplicate mid-return warning
+
+    const key = short ? "nav.voice.turnaround.short" : "nav.voice.turnaround";
+    chime();
+    // Let the chime ring first, then speak — same two-beat feel as arrivals.
+    setTimeout(() => speak(key, lang, lastName, remMin), 1200);
+    flashBanner(t(key, lastName, remMin));
   }
 
   // ── rAF tick loop (~1/sec) ────────────────────────────────────────────────
@@ -454,10 +493,21 @@ export function renderNavigateScreen(host, routeId) {
     const timeHtml = h > 0
       ? `${isOver ? "+" : ""}${h}${u("h")} ${String(m).padStart(2, "0")}${u("m")}`
       : `${isOver ? "+" : ""}${m}${u("m")}`;
+    // Plain-text twin of timeHtml for the Dades tab (set via textContent).
+    const timeText = h > 0
+      ? `${isOver ? "+" : ""}${h}h ${String(m).padStart(2, "0")}m`
+      : `${isOver ? "+" : ""}${m}m`;
+
+    // Distance to base + whether the remaining time still covers the paddle
+    // home (distance ÷ paddling speed). On the tornada a shortfall paints the
+    // time stat red, same treatment as being overtime.
+    const baseDistM = userCoords ? haversineM(userCoords, MARINA.coords) : null;
+    const etaBackMs = baseDistM != null ? (baseDistM / 1000) / KAYAK_SPEED_KMH * 3_600_000 : 0;
+    const timeShort = phase === "back" && !isOver && baseDistM != null && remMs < etaBackMs;
 
     // Time stat.
     statusTime.innerHTML = timeHtml;
-    statusTime.classList.toggle("is-overtime", isOver);
+    statusTime.classList.toggle("is-overtime", isOver || timeShort);
 
     const poi = activePois[activePOIIdx];
 
@@ -470,20 +520,26 @@ export function renderNavigateScreen(host, routeId) {
       floatPoiName.textContent  = "";
     }
 
-    // Next-point distance stat.
+    // Next-point distance stat. After the last POI, this targets the base.
     if (poi) {
       const dist = userCoords ? Math.round(haversineM(userCoords, poi.coords)) : null;
       statusDist.innerHTML = dist !== null ? `${dist}${u("m")}` : "--";
     } else {
-      const baseDist = userCoords ? Math.round(haversineM(userCoords, MARINA.coords)) : null;
-      statusDist.innerHTML = baseDist !== null ? `${baseDist}${u("m")}` : "--";
+      statusDist.innerHTML = baseDistM !== null ? `${Math.round(baseDistM)}${u("m")}` : "--";
     }
 
-    // Progress stat + direction badge.
-    const progressPct = Math.round((activePOIIdx / activePois.length) * 100);
+    // Progress stat + direction badge. Anada fills 0→100% across the POIs; the
+    // tornada resets to 0% and fills as the paddler closes the distance to base.
+    let progressPct;
+    if (phase === "out") {
+      progressPct = Math.round((activePOIIdx / activePois.length) * 100);
+    } else if (returnStartDistM && baseDistM != null) {
+      progressPct = Math.round(Math.min(1, Math.max(0, 1 - baseDistM / returnStartDistM)) * 100);
+    } else {
+      progressPct = 0;
+    }
     statusProgress.innerHTML = `${progressPct}${u("%")}`;
-    const isReturn = activePOIIdx >= Math.ceil(activePois.length / 2);
-    dirBadge.textContent = isReturn ? t("nav.direction.back") : t("nav.direction.out");
+    dirBadge.textContent = phase === "back" ? t("nav.direction.back") : t("nav.direction.out");
 
     // Timeline — hidden while broken (see TODO above).
     // updateTimeline();
@@ -498,8 +554,8 @@ export function renderNavigateScreen(host, routeId) {
 
     // Dades view.
     if (activeTab === TABS.DATA) {
-      dadesTime.textContent = displayStr;
-      dadesTime.classList.toggle("is-overtime", isOver);
+      dadesTime.textContent = timeText;
+      dadesTime.classList.toggle("is-overtime", isOver || timeShort);
 
       if (poi) {
         const distM = userCoords ? Math.round(haversineM(userCoords, poi.coords)) : null;
@@ -510,10 +566,9 @@ export function renderNavigateScreen(host, routeId) {
         dadesDist.textContent = "";
       }
 
-      const baseDist = userCoords ? Math.round(haversineM(userCoords, MARINA.coords)) : null;
-      if (baseDist !== null) {
-        const baseMin = Math.round((baseDist / 1000) / KAYAK_SPEED_KMH * 60);
-        dadesBase.textContent = t("nav.dades.base", baseMin, baseDist);
+      if (baseDistM !== null) {
+        const baseMin = Math.round((baseDistM / 1000) / KAYAK_SPEED_KMH * 60);
+        dadesBase.textContent = t("nav.dades.base", baseMin, Math.round(baseDistM));
       } else {
         dadesBase.textContent = "";
       }
@@ -533,6 +588,19 @@ export function renderNavigateScreen(host, routeId) {
         fireWarning(threshMin);
       }
     }
+
+    // Tornada safety net: if a shortfall develops mid-return (and wasn't already
+    // flagged at the turnaround), warn once. The red time stat is live-driven
+    // in updateUI; this just adds the one-time voice + banner.
+    if (phase === "back" && !shortWarned && userCoords) {
+      const etaBackMs = (haversineM(userCoords, MARINA.coords) / 1000) / KAYAK_SPEED_KMH * 3_600_000;
+      if (remMs < etaBackMs) {
+        shortWarned = true;
+        const m = Math.max(0, Math.round(remMs / 60_000));
+        speak("nav.voice.short", lang, m);
+        flashBanner(t("nav.voice.short", m));
+      }
+    }
   }
 
   function fireWarning(threshMin) {
@@ -543,10 +611,14 @@ export function renderNavigateScreen(host, routeId) {
 
     if (threshMin === 0) chime();
     speak(voiceKey, lang);
+    flashBanner(t(voiceKey));
+  }
 
+  // Transient centered banner that fades itself out after 4s.
+  function flashBanner(text) {
     const banner = document.createElement("div");
     banner.className = "nav-threshold-banner";
-    banner.textContent = t(voiceKey);
+    banner.textContent = text;
     screen.appendChild(banner);
     requestAnimationFrame(() => banner.classList.add("is-visible"));
     setTimeout(() => {

@@ -4,11 +4,11 @@ xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/
 xmlns="http://www.topografix.com/GPX/1/1"               
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" > 
     <metadata>                                
-      <name>Platja-d_Aiguablava---Aigua-Xelida-costejant-semidirecta</name>                      
-      <time>2026-05-12T20:20:37Z</time>   
+      <name>Platja-d_Aiguablava---Aigua-Xelida-costejant</name>                      
+      <time>2026-06-22T10:54:50Z</time>   
     </metadata>                               
     <trk>                                     
-        <name>Platja-d_Aiguablava---Aigua-Xelida-costejant-semidirecta</name>                    
+        <name>Platja-d_Aiguablava---Aigua-Xelida-costejant</name>                    
         <trkseg>                            
             <trkpt lat="41.93411319727" lon="3.2162771025764" >
                 <ele>0</ele>
@@ -475,94 +475,79 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" >
             <trkpt lat="41.922656331874" lon="3.2185828818127" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.92269133187" lon="3.2188211995435" >
+            <trkpt lat="41.922696967141" lon="3.2189605739523" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.922697389373" lon="3.2190776501906" >
+            <trkpt lat="41.922511500378" lon="3.2189418789126" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.922651958091" lon="3.2192445466447" >
+            <trkpt lat="41.92247904364" lon="3.2191599877085" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.922591382997" lon="3.2193788779357" >
+            <trkpt lat="41.92247904364" lon="3.2195650469008" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.9224732614" lon="3.2192608292256" >
+            <trkpt lat="41.922469770283" lon="3.2197582289771" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.922470232638" lon="3.2191142859982" >
+            <trkpt lat="41.922594960488" lon="3.2201383614498" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.922467203876" lon="3.2189026124475" >
+            <trkpt lat="41.922581050477" lon="3.2204374820841" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.922506109749" lon="3.2187847801677" >
+            <trkpt lat="41.922390946694" lon="3.220443713764" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.922380924375" lon="3.218588490101" >
+            <trkpt lat="41.922200842344" lon="3.2204000920048" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.922322504449" lon="3.2182688177046" >
+            <trkpt lat="41.921880909355" lon="3.2197706923368" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.922243220179" lon="3.2179547535976" >
+            <trkpt lat="41.921514607295" lon="3.2196896804984" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.922172281539" lon="3.2177248138043" >
+            <trkpt lat="41.921319863572" lon="3.2192783896262" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921906668147" lon="3.2178949303791" >
+            <trkpt lat="41.921157576683" lon="3.2191163659493" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921850061654" lon="3.2177892661846" >
+            <trkpt lat="41.921162213457" lon="3.2186863800375" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921780875873" lon="3.2172778514839" >
+            <trkpt lat="41.921250312099" lon="3.2182003090068" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.92175257258" lon="3.2170327105482" >
+            <trkpt lat="41.921792811583" lon="3.2172655570245" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921677097063" lon="3.2169735385997" >
+            <trkpt lat="41.921820631945" lon="3.2172032402257" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921557593978" lon="3.2168721009734" >
+            <trkpt lat="41.921764991209" lon="3.2171471551068" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.92146324928" lon="3.2167030382621" >
+            <trkpt lat="41.921737170822" lon="3.2167234008749" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921434945843" lon="3.2164790301697" >
+            <trkpt lat="41.921625889156" lon="3.216929046311" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921403497566" lon="3.2161958501289" >
+            <trkpt lat="41.921440419281" lon="3.2170349848689" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921400352737" lon="3.2159676154691" >
+            <trkpt lat="41.921101935368" lon="3.2169477413506" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921475828581" lon="3.2157943261903" >
+            <trkpt lat="41.921069477913" lon="3.2163245733625" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921582752541" lon="3.2156633025893" >
+            <trkpt lat="41.921324500335" lon="3.2158011122513" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.921541869871" lon="3.2155576383947" >
-                <ele>0</ele>
-            </trkpt>
-            <trkpt lat="41.9214492454" lon="3.2156890392112" >
-                <ele>0</ele>
-            </trkpt>
-            <trkpt lat="41.920331909006" lon="3.2194529075797" >
-                <ele>0</ele>
-            </trkpt>
-            <trkpt lat="41.936321046903" lon="3.2210545672935" >
-                <ele>0</ele>
-            </trkpt>
-            <trkpt lat="41.936000410921" lon="3.2180134385649" >
-                <ele>0</ele>
-            </trkpt>
-            <trkpt lat="41.934076561175" lon="3.2166006307293" >
+            <trkpt lat="41.921607342193" lon="3.2155705400957" >
                 <ele>0</ele>
             </trkpt>
         </trkseg>

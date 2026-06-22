@@ -5,7 +5,7 @@ xmlns="http://www.topografix.com/GPX/1/1"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" > 
     <metadata>                                
       <name>Platja-d_Aiguablava---Punta-d_es-Falco-costejant</name>                      
-      <time>2026-05-13T16:47:23Z</time>   
+      <time>2026-06-22T10:56:15Z</time>   
     </metadata>                               
     <trk>                                     
         <name>Platja-d_Aiguablava---Punta-d_es-Falco-costejant</name>                    
@@ -346,10 +346,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" >
             <trkpt lat="41.947345152915" lon="3.2280361435769" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.937829280257" lon="3.2185132669974" >
+            <trkpt lat="41.94758957467" lon="3.2278587433809" >
                 <ele>0</ele>
             </trkpt>
-            <trkpt lat="41.934156099675" lon="3.2168553984548" >
+            <trkpt lat="41.94783493151" lon="3.2273591967857" >
                 <ele>0</ele>
             </trkpt>
         </trkseg>

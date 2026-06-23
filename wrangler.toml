@@ -25,6 +25,6 @@ pages_build_output_dir = "app"
 [[d1_databases]]
 binding = "DB"
 database_name = "sablava-sessions"
-# Replace with the real id after creating the DB (`wrangler d1 create sablava-sessions`).
-# For purely-local `wrangler pages dev` this placeholder is fine — state lives in .wrangler/.
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+# Real production D1 id (from `wrangler d1 create sablava-sessions`).
+# Local `wrangler pages dev` ignores this and keeps state in .wrangler/.
+database_id = "3970fd9c-c208-4b25-9da9-da4a7bad4ff2"

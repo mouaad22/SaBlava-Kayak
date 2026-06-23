@@ -15,9 +15,10 @@ import {
   getSession, endSession, timeRemainingMs, isActive,
 } from "../nav/session.js";
 import { haversineM, trackThroughPois, watchFilteredPosition, geoPermissionState } from "../nav/geo.js";
+import { createTripProgress } from "../nav/trip-progress.js";
 import { speak, chime, announceArrival } from "../nav/audio.js";
 import { acquire, release, attachVisibilityHandler } from "../nav/wake-lock.js";
-import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, OVERTIME_WARNINGS_MIN, NAV_ARRIVAL_THRESHOLD_M, KAYAK_SPEED_KMH } from "../config.js";
+import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, OVERTIME_WARNINGS_MIN, KAYAK_SPEED_KMH } from "../config.js";
 import { addRouteTrack } from "./map.js";
 import { mountNavTweakpane } from "../dev/nav-tweakpane.js";
 
@@ -59,12 +60,22 @@ export function renderNavigateScreen(host, routeId) {
   let lastTickMs       = 0;
   const firedThresholds = new Set(); // "t30" | "t15" | "t5" | "t0"
 
-  // Trip phase. "out" = anada (heading through the POIs), "back" = tornada
-  // (returning to base, no more POIs). Flips once when the last POI is reached.
+  // Trip phase mirrors the reducer below: "out" = anada (heading through the
+  // POIs), "back" = tornada (returning to base). updateUI and the threshold net
+  // read these; trip-progress.js owns the authoritative transitions.
   let phase            = "out";
-  let returnStartDistM = null;  // straight-line distance to base at turnaround
-  let turnaroundFired  = false; // last-POI announcement plays exactly once
   let shortWarned      = false; // "not enough time to get back" warned once
+
+  // ── Trip-progress state machine (pure; owns arrival/turnaround/progress) ────
+  // navigate.js only feeds it accepted fixes and renders/announces its output.
+  const progress = createTripProgress({
+    track: route.track && route.track.length > 1 ? route.track : null,
+    activePois,
+    marinaCoords: MARINA.coords,
+    durationMs: (session.durationHours ?? 0) * 3_600_000,
+    startedAtMs: session.startedAtMs,
+  });
+  let snap = progress.getSnapshot(); // latest reducer snapshot, read by updateUI
 
   // ── DOM ───────────────────────────────────────────────────────────────────
   const screen = document.createElement("section");
@@ -490,48 +501,54 @@ export function renderNavigateScreen(host, routeId) {
   }
 
   // ── Proximity check ───────────────────────────────────────────────────────
+  // Feed each accepted fix into the trip-progress reducer, mirror the bits the
+  // rest of the screen reads (phase, activePOIIdx), and turn its events into the
+  // chimes / voice cues / banners. All arrival + turnaround LOGIC lives in
+  // trip-progress.js; navigate.js only does the DOM/announce wiring.
   function checkProximity() {
-    if (!userCoords || activePOIIdx >= activePois.length) return;
-    const nextPoi = activePois[activePOIIdx];
-    const dist = haversineM(userCoords, nextPoi.coords);
-    if (dist <= NAV_ARRIVAL_THRESHOLD_M) {
-      const isLast = activePOIIdx === activePois.length - 1;
-      const name = nextPoi.name[lang] ?? nextPoi.name.ca;
-      advancePOI();
-      if (isLast) {
-        // Anada complete (progress is now 100%). Switch to the tornada.
-        startReturn(name);
-      } else {
-        // Chime, then a warm spoken "you've arrived at <POI>" in the user's language.
-        announceArrival(name, lang);
+    if (!userCoords) return;
+    snap = progress.update({ coords: userCoords, tMs: Date.now() });
+    activePOIIdx = snap.activePOIIdx;
+    phase = snap.phase;
+    highlightActivePOI();
+    snap.events.forEach(handleProgressEvent);
+  }
+
+  function handleProgressEvent(ev) {
+    switch (ev.type) {
+      case "arrival":
+      case "pass": {
+        // Both mean the paddler genuinely got to / past this POI — warm cue.
+        const poi = activePois[ev.poiIdx];
+        if (poi) announceArrival(poi.name[lang] ?? poi.name.ca, lang);
+        return;
+      }
+      case "turnaround":
+        announceTurnaround(ev);
+        return;
+      case "return-unsafe": {
+        // Decoupled safety net: fires even if the last POI was never reached
+        // within 50 m. One-time voice + banner; suppress the legacy net.
+        shortWarned = true;
+        const m = Math.max(0, Math.round(ev.remainingMs / 60_000));
+        speak("nav.voice.short", lang, m);
+        flashBanner(t("nav.voice.short", m));
+        return;
       }
     }
   }
 
-  function advancePOI() {
-    activePOIIdx = Math.min(activePOIIdx + 1, activePois.length);
-    highlightActivePOI();
-  }
+  // Turnaround cue: chime + a spoken line that ALWAYS states the remaining time
+  // and tells the paddler to head back. The reducer decides `short` (the
+  // wall-clock can't cover the paddle home) — the urgent variant plays and the
+  // live time stat goes red (see updateUI).
+  function announceTurnaround(ev) {
+    const lastPoi  = activePois[ev.poiIdx];
+    const lastName = lastPoi ? (lastPoi.name[lang] ?? lastPoi.name.ca) : "";
+    const remMin   = Math.max(0, Math.round(timeRemainingMs() / 60_000));
+    shortWarned    = ev.short; // a short turnaround already warns → suppress the mid-return net
 
-  // Turnaround at the last POI: chime + a spoken cue that ALWAYS states the
-  // remaining time and tells the paddler to head back. If the wall-clock can't
-  // cover the paddle home (remaining < distance-to-base ÷ paddling speed), the
-  // urgent variant plays and the live time stat goes red (see updateUI).
-  function startReturn(lastName) {
-    if (turnaroundFired) return;
-    turnaroundFired = true;
-    phase = "back";
-    returnStartDistM = userCoords ? haversineM(userCoords, MARINA.coords) : null;
-
-    const remMs      = timeRemainingMs();
-    const remMin     = Math.max(0, Math.round(remMs / 60_000));
-    const etaBackMs  = returnStartDistM != null
-      ? (returnStartDistM / 1000) / KAYAK_SPEED_KMH * 3_600_000
-      : 0;
-    const short      = remMs < etaBackMs;
-    shortWarned      = short; // suppress the duplicate mid-return warning
-
-    const key = short ? "nav.voice.turnaround.short" : "nav.voice.turnaround";
+    const key = ev.short ? "nav.voice.turnaround.short" : "nav.voice.turnaround";
     chime();
     // Let the chime ring first, then speak — same two-beat feel as arrivals.
     setTimeout(() => speak(key, lang, lastName, remMin), 1200);
@@ -575,7 +592,9 @@ export function renderNavigateScreen(host, routeId) {
     statusTime.innerHTML = timeHtml;
     statusTime.classList.toggle("is-overtime", isOver || timeShort);
 
-    const poi = activePois[activePOIIdx];
+    // On the tornada the target is the base, so there is no "current POI":
+    // header, next-dist, and dades all switch to the return-to-base view.
+    const poi = phase === "back" ? null : activePois[activePOIIdx];
 
     // Floating header: current target POI.
     if (poi) {
@@ -594,17 +613,10 @@ export function renderNavigateScreen(host, routeId) {
       statusDist.innerHTML = baseDistM !== null ? `${Math.round(baseDistM)}${u("m")}` : "--";
     }
 
-    // Progress stat + direction badge. Anada fills 0→100% across the POIs; the
-    // tornada resets to 0% and fills as the paddler closes the distance to base.
-    let progressPct;
-    if (phase === "out") {
-      progressPct = Math.round((activePOIIdx / activePois.length) * 100);
-    } else if (returnStartDistM && baseDistM != null) {
-      progressPct = Math.round(Math.min(1, Math.max(0, 1 - baseDistM / returnStartDistM)) * 100);
-    } else {
-      progressPct = 0;
-    }
-    statusProgress.innerHTML = `${progressPct}${u("%")}`;
+    // Progress stat + direction badge. The reducer owns the two-period model:
+    // anada fills 0→100% as the paddler advances ALONG the track, then the
+    // tornada resets and fills as the remaining track distance to base shrinks.
+    statusProgress.innerHTML = `${snap.progressPct}${u("%")}`;
     dirBadge.textContent = phase === "back" ? t("nav.direction.back") : t("nav.direction.out");
 
     // Timeline — hidden while broken (see TODO above).

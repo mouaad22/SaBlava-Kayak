@@ -5,7 +5,7 @@
   "summary": "Fix the five high-risk failure modes in the GPS navigation flow that prevent us from assuring real-world trip behavior: (1) timed events stop when the screen sleeps / app is backgrounded, (2) 'notifications' are only TTS+audio with no fallback that reaches a hidden page, (3) GPS permission has no recovery path + the 5s timeout shows a false 'denied' banner + no accuracy filtering, (4) progress uses two inconsistent models (discrete anada / straight-line tornada), (5) arrival + turnaround are order-dependent and the return-safety warning is gated behind reaching the last POI within 50m. Backend (app/server.py) is frozen. Work is split into ordered sessions, each = one agent in one fresh session. The shared file is app/js/screens/navigate.js; each session also owns a distinct NEW module so logic is unit-testable and conflict surface is minimal.",
   "owner": "mouaad22",
   "created_on": "2026-06-23",
-  "last_updated": "2026-06-23 (pre-work P1/P2 done; session-1 code complete + unit-tested; real-device QA + commit pending)",
+  "last_updated": "2026-06-24 (session-2 code complete + unit-tested: trip-progress.js reducer + navigate.js rewired; two-period progress model confirmed with owner; real-device/sim QA pending)",
 
   "constraints": {
     "backend": {
@@ -138,12 +138,12 @@
       "id": "session-2",
       "name": "Trip-progress state machine — continuous progress + tolerant arrival + reliable turnaround",
       "risk_items": ["#4 progress models", "#5 ordered-arrival + turnaround gating"],
-      "status": "todo",
-      "started_at": null,
-      "finished_at": null,
-      "tested": false,
-      "committed": false,
-      "commit_sha": null,
+      "status": "done — code committed; pure reducer fully unit-tested (8/8); browser/sim happy-path replay + device QA pending (folded into session-5, same as session-1)",
+      "started_at": "2026-06-24",
+      "finished_at": "2026-06-24",
+      "tested": true,
+      "committed": true,
+      "commit_sha": "PENDING_FILL_AFTER_COMMIT",
       "depends_on": ["session-1"],
       "files_in_scope": [
         "app/js/nav/trip-progress.js (NEW — pure, testable: no DOM, no globals)",
@@ -153,25 +153,32 @@
       ],
       "navigate_js_region": "Arrival/advance/turnaround functions + the progressPct/dirBadge block in updateUI. Do NOT touch the threshold/tick code (session 3 owns it).",
       "tasks": [
-        { "id": "S2.T1", "title": "Create nav/trip-progress.js exporting a pure reducer: given {track, activePois, marinaCoords, durationMs, startedAtMs} and a stream of {coords, tMs} fixes, return {phase, activePOIIdx, nextTarget, progressPct, events:[{type,poi?}], returnStartDistM}. No DOM. This becomes the single source of truth navigate.js renders.", "done": false },
-        { "id": "S2.T2", "title": "Continuous anada progress: project the live position onto the route track (geo helper) and compute progressPct = cumulative distance along track to the projection ÷ total anada distance. Replaces the discrete activePOIIdx/length step model. Tornada stays distance-to-base but measured ALONG the track, not straight-line, so a curving coast reads correctly.", "done": false },
-        { "id": "S2.T3", "title": "Tolerant arrival: mark a POI 'reached' when within NAV_ARRIVAL_THRESHOLD_M for ARRIVAL_DEBOUNCE_FIXES consecutive accepted fixes, OR when the paddler is already closer to a later POI / past it along the track by ARRIVAL_SKIP_MARGIN_M (so a skipped or GPS-drifted POI never jams the chain). Announce only genuinely-passed POIs.", "done": false },
-        { "id": "S2.T4", "title": "Reliable turnaround: flip phase to 'back' on ANY of — last active POI reached, OR furthest-point-along-track passed and now closing toward the marina, OR remaining time low enough that returning is the priority. Decouple the return-safety warning so it can fire even if the last POI was never reached within 50m.", "done": false },
-        { "id": "S2.T5", "title": "Rewire navigate.js: checkProximity/advancePOI/startReturn and the progress block call into trip-progress.js. navigate.js keeps only DOM/announce wiring. Verify the floating header, next-dist stat, direction badge, and dades view still read correctly from the reducer output.", "done": false },
-        { "id": "S2.T6", "title": "Unit tests for trip-progress.js: replay synthetic tracks — normal full loop, a skipped POI, GPS drift spikes, an early turnaround, and a too-slow return — asserting phase/progress/events.", "done": false }
+        { "id": "S2.T1", "title": "Create nav/trip-progress.js exporting a pure reducer: given {track, activePois, marinaCoords, durationMs, startedAtMs} and a stream of {coords, tMs} fixes, return {phase, activePOIIdx, nextTarget, progressPct, events:[{type,poi?}], returnStartDistM}. No DOM. This becomes the single source of truth navigate.js renders.", "done": true, "note": "Implemented as createTripProgress(cfg) → { update(fix), getSnapshot() }. A factory holding closure state (debounce counters, phase, fired flags) but with NO DOM/globals and NO wall-clock reads (time arrives via each fix's tMs = durationMs - (tMs - startedAtMs)), so it is fully deterministic/unit-testable. Snapshot adds nextTarget, baseDistM, distAlongM, totalAnadaM, returnSafety{remainingMs,etaBackMs,safe} alongside the planned fields. Events: arrival|pass|turnaround|return-unsafe." },
+        { "id": "S2.T2", "title": "Continuous anada progress: project the live position onto the route track (geo helper) and compute progressPct = cumulative distance along track to the projection ÷ total anada distance. Replaces the discrete activePOIIdx/length step model. Tornada stays distance-to-base but measured ALONG the track, not straight-line, so a curving coast reads correctly.", "done": true, "note": "Added geo.js projectOntoTrack(track,coord,cum?) (per-segment equirectangular projection → {distAlongM, crossDistM, segIdx, t, point}) + cumulativeDistancesM(track). Anada progressPct = (distAlong - marinaAlong) / totalAnadaM; totalAnadaM = max(poiAlong) - marinaAlong (max, not list-last, to stay honest if POIs aren't monotonic along the track). Tornada progressPct = 1 - (distAlong - marinaAlong) / (returnStartAlong - marinaAlong) — i.e. remaining track distance to base, not straight-line. Two-period model (owner confirmed 2026-06-24). Unit test 'anada progress is continuous' asserts >5 distinct values (vs 3 the old discrete model could yield)." },
+        { "id": "S2.T3", "title": "Tolerant arrival: mark a POI 'reached' when within NAV_ARRIVAL_THRESHOLD_M for ARRIVAL_DEBOUNCE_FIXES consecutive accepted fixes, OR when the paddler is already closer to a later POI / past it along the track by ARRIVAL_SKIP_MARGIN_M (so a skipped or GPS-drifted POI never jams the chain). Announce only genuinely-passed POIs.", "done": true, "note": "Two paths: (1) debounced proximity — N consecutive accepted fixes within NAV_ARRIVAL_THRESHOLD_M → 'arrival' event; (2) a while-loop that advances past any POI whose along-track distance is exceeded by ARRIVAL_SKIP_MARGIN_M → 'pass' event. A single drifted fix can't false-arrive (debounce); a skipped/drifted POI can't jam the chain (margin-skip). navigate.js announces both arrival and pass (both are genuinely-passed) via announceArrival." },
+        { "id": "S2.T4", "title": "Reliable turnaround: flip phase to 'back' on ANY of — last active POI reached, OR furthest-point-along-track passed and now closing toward the marina, OR remaining time low enough that returning is the priority. Decouple the return-safety warning so it can fire even if the last POI was never reached within 50m.", "done": true, "note": "Turnaround flips on ANY of: allPoisDone (idx>=len — includes a margin-skipped last POI), timeCritical (remaining <= etaBack), or closingEarly (got >=50% of the anada AND now closing back by >ARRIVAL_SKIP_MARGIN_M from the furthest point reached). Return-safety is a separate 'return-unsafe' event keyed on remaining < etaBack * RETURN_SAFETY_MARGIN_RATIO while phase==='back' — fires regardless of ever reaching the last POI within 50m. A 'short' turnaround (remaining<etaBack at the flip) pre-sets returnUnsafeFired so the urgent turnaround cue isn't duplicated by return-unsafe." },
+        { "id": "S2.T5", "title": "Rewire navigate.js: checkProximity/advancePOI/startReturn and the progress block call into trip-progress.js. navigate.js keeps only DOM/announce wiring. Verify the floating header, next-dist stat, direction badge, and dades view still read correctly from the reducer output.", "done": true, "note": "checkProximity() now feeds progress.update({coords,tMs}), mirrors snap.activePOIIdx/phase into the locals the rest of updateUI reads, and routes snap.events through handleProgressEvent (arrival/pass→announceArrival, turnaround→announceTurnaround, return-unsafe→speak/banner). advancePOI/startReturn deleted. updateUI progress block reads snap.progressPct; the POI target is now `phase==='back' ? null : activePois[idx]` so header/next-dist/dades switch to the return-to-base view on the tornada (covers early turnaround, where idx may be < len). NAV_ARRIVAL_THRESHOLD_M import removed from navigate.js (now owned by the reducer)." },
+        { "id": "S2.T6", "title": "Unit tests for trip-progress.js: replay synthetic tracks — normal full loop, a skipped POI, GPS drift spikes, an early turnaround, and a too-slow return — asserting phase/progress/events.", "done": true, "note": "app/js/dev/trip-progress.test.mjs — 8 tests, all pass (node --test). Covers: totalAnadaM geometry, full loop (in-order arrivals + ~100% at turnaround + tornada home), continuous/monotonic progress, skipped POI ('pass' + no jam + still turns around), GPS-drift single-fix debounce, early turnaround (reason 'early'), too-slow return (exactly one return-unsafe), and return-safety decoupled from the 50m last-POI gate." }
       ],
       "verification": [
-        { "check": "Anada progress moves smoothly between POIs (not in N discrete jumps); reaches ~100% at turnaround.", "passed": false, "note": "" },
-        { "check": "Skipping/missing one POI no longer freezes next-target, progress, or turnaround.", "passed": false, "note": "" },
-        { "check": "Turning back BEFORE the last POI still flips to tornada and still fires the return-safety warning.", "passed": false, "note": "" },
-        { "check": "Tornada progress follows the track distance to base and does not read falsely-optimistic on the curved sections.", "passed": false, "note": "" },
-        { "check": "trip-progress.js unit tests pass; ESM link check passes; happy path unaffected.", "passed": false, "note": "" }
+        { "check": "Anada progress moves smoothly between POIs (not in N discrete jumps); reaches ~100% at turnaround.", "passed": true, "note": "Unit-verified: 'anada progress is continuous' asserts >5 distinct progress values across the out leg (the old discrete model yields only ~3); 'normal full loop' asserts maxOutPct >= 90 just before the turnaround. Browser-visual still pending sim/device QA." },
+        { "check": "Skipping/missing one POI no longer freezes next-target, progress, or turnaround.", "passed": true, "note": "Unit-verified: 'skipped POI' test never goes within 50m of POI 1 — a 'pass' event fires, the chain advances, and turnaround still happens at the end." },
+        { "check": "Turning back BEFORE the last POI still flips to tornada and still fires the return-safety warning.", "passed": true, "note": "Unit-verified: 'early turnaround' (reason 'early') and 'return-safety decoupled' (reason 'time', activePOIIdx still 2 = last POI never reached, warning still fired) tests both pass." },
+        { "check": "Tornada progress follows the track distance to base and does not read falsely-optimistic on the curved sections.", "passed": "partial", "note": "Tornada progress is computed as remaining ALONG-TRACK distance to base (projectOntoTrack distAlong), not straight-line — verified on a straight synthetic track ('normal full loop' reaches ~100% at base). The specifically-curved-coast read is a visual check best confirmed on TRACK_SUD via the sim/device (folded into session-5)." },
+        { "check": "trip-progress.js unit tests pass; ESM link check passes; happy path unaffected.", "passed": true, "note": "node --test trip-progress.test.mjs → 8/8. node scripts/check-esm-links.mjs → OK (43 modules). node --check passes on geo.js/trip-progress.js/navigate.js. geo.test.mjs regression → 11/11. Runtime happy-path still needs a browser pass (sim)." }
       ],
-      "manual_qa": { "tested_in_browser": false, "viewport": "402x866", "notes": "" },
-      "discoveries": [],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x866", "notes": "NOT run in a browser by this agent (no browser/Python in this environment). The pure reducer is the bulk of the risk and is fully unit-tested. PENDING for session-5 / a dev-server run: sim replay of a full Sud-route loop to confirm the live progress %, arrival chimes, turnaround cue, and the tornada return-to-base header all render from the reducer; plus the curved-coast tornada read. The sim (app/js/dev/sim.js) CAN drive this happy path (it replays a moving accuracy:4 track)." },
+      "discoveries": [
+        "ONEDRIVE REVERT HAZARD: the working clone at C:\\Users\\Mouaad\\Documents\\GitHub\\SaBlava-Kayak is under a OneDrive-synced Documents folder. Mid-session, OneDrive silently reverted app/js/screens/navigate.js to its pre-edit state (the brand-new files geo.js edits + trip-progress.js survived). Re-applied the edits and committed immediately. LESSON for future sessions: commit early/often; treat git as the source of truth, not the working tree; re-verify a file right before committing in case OneDrive clobbered it.",
+        "On an EARLY turnaround the floating header now shows the 'route done' label (nav.float.poi.done) + base distance rather than a 'returning' string, because phase==='back' nulls the current POI. Functionally correct (next target IS the base) but the wording reads 'completed' even when POIs were skipped. Minor; a dedicated 'tornant a base' header key would be a nice polish (candidate i18n addition, left out to keep session-2 additive-free on i18n).",
+        "highlightActivePOI() still marks activePois[activePOIIdx] as the active marker; on an early turnaround idx can point at an un-visited forward POI, so a forward marker stays highlighted on the tornada. Cosmetic only.",
+        "The legacy mid-return safety net inside checkThresholds (session-3's region) is left intact; it stays dormant because handleProgressEvent sets shortWarned=true whenever the reducer's turnaround.short or return-unsafe fires. No double-fire. Session-3 will likely fold this into the wall-clock scheduler.",
+        "projectOntoTrack uses a per-segment equirectangular (planar-metres) approximation for the within-segment fraction while cumulativeDistancesM uses haversine for vertex spacing — sub-0.5% inconsistency at kayak scale, negligible. Documented in geo.js."
+      ],
       "open_questions": [
-        "Define 'furthest point along track' for routes whose POIs are not monotonic in track distance — confirm with TRACK_SUD/TRACK_NORD geometry.",
-        "Should progress be one 0–100% across the whole loop, or two 0–100% periods (anada then tornada) as today? Current plan keeps two periods; confirm with user."
+        "RESOLVED (owner, 2026-06-24): progress stays TWO 0–100% periods (anada then tornada), not a single whole-loop bar. Reducer + UI implement this.",
+        "'closingEarly' turnaround currently requires reaching >=50% of the anada length before a back-track can flip the phase, to avoid false flips near the start. Confirm 50% feels right on a real early-return; tune if needed.",
+        "Define 'furthest point along track' for routes whose POIs are not monotonic in track distance — implemented as max(poiAlong); confirm against TRACK_SUD/TRACK_NORD geometry on a device."
       ]
     },
 
@@ -288,7 +295,7 @@
   ],
 
   "global_open_questions": [
-    "Two-period vs single progress bar (see session-2 S2.T2 / its open_questions) — needs a user call before session-2 locks the model.",
+    "RESOLVED (owner, 2026-06-24): two-period progress (anada 0–100% then tornada 0–100%), not a single whole-loop bar. Locked in session-2's trip-progress.js.",
     "PWA install for iOS background notifications — likely a separate phase; flagged in session-4.",
     "Should the timer start at first paddle (first accepted GPS fix moving away from the marina) instead of at the 'Accepta' tap? Out of scope for these five fixes, but it is a real fairness/UX question — raised here so it isn't lost."
   ]

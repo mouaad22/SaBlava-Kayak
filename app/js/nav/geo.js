@@ -241,3 +241,26 @@ export function watchFilteredPosition(onFix, onState, opts = {}) {
 
   return () => navigator.geolocation.clearWatch(id);
 }
+
+/**
+ * Current geolocation permission state via the Permissions API.
+ *
+ * Distinguishes a hard "Block" (state "denied" — JS can no longer surface the
+ * native prompt, the user must re-enable it in browser settings) from a merely
+ * dismissed prompt (state "prompt" — calling watchPosition again WILL re-prompt).
+ * The geolocation error callback reports `code 1` for both, so this is the only
+ * way to tell them apart and offer the right recovery UI.
+ *
+ * @returns {Promise<"granted"|"denied"|"prompt"|"unknown">} "unknown" when the
+ *   Permissions API is unavailable (older iOS Safari) — callers should then
+ *   assume a retry might still work.
+ */
+export async function geoPermissionState() {
+  if (!navigator.permissions?.query) return "unknown";
+  try {
+    const status = await navigator.permissions.query({ name: "geolocation" });
+    return status.state; // "granted" | "denied" | "prompt"
+  } catch {
+    return "unknown";
+  }
+}

@@ -14,7 +14,7 @@ import { navigate } from "../router.js";
 import {
   getSession, endSession, timeRemainingMs, isActive,
 } from "../nav/session.js";
-import { haversineM, trackThroughPois, watchFilteredPosition } from "../nav/geo.js";
+import { haversineM, trackThroughPois, watchFilteredPosition, geoPermissionState } from "../nav/geo.js";
 import { speak, chime, announceArrival } from "../nav/audio.js";
 import { acquire, release, attachVisibilityHandler } from "../nav/wake-lock.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, OVERTIME_WARNINGS_MIN, NAV_ARRIVAL_THRESHOLD_M, KAYAK_SPEED_KMH } from "../config.js";
@@ -362,12 +362,23 @@ export function renderNavigateScreen(host, routeId) {
         showGpsBanner(t("nav.gps.unavailable"), { tone: "warn", retry: true });
         return;
       case "denied":
-        showGpsBanner(t("nav.gps.denied"), {
-          tone: "warn",
-          retry: true,
-          help: t("nav.gps.denied.help"),
-        });
+        // err.code 1 fires for BOTH a hard "Block" and a merely dismissed
+        // prompt. Only the Permissions API can tell them apart, so refine the
+        // banner async: offer a retry button only when it can actually re-prompt.
+        refineDeniedBanner();
         return;
+    }
+  }
+
+  // Hard-denied → a retry can't re-surface the native prompt, so drop the button
+  // and point the paddler at browser settings. Dismissed/unknown → the prompt
+  // can still reappear, so show the retry button instead.
+  async function refineDeniedBanner() {
+    const state = await geoPermissionState();
+    if (state === "denied") {
+      showGpsBanner(t("nav.gps.denied"), { tone: "warn", help: t("nav.gps.denied.help") });
+    } else {
+      showGpsBanner(t("nav.permission.denied"), { tone: "warn", retry: true });
     }
   }
 

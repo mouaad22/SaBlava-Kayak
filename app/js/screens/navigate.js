@@ -233,7 +233,7 @@ export function renderNavigateScreen(host, routeId) {
 
   // ── SOS button ────────────────────────────────────────────────────────────
   screen.querySelector(".nav-sos-btn").addEventListener("click", () => {
-    window.location.href = "tel:112";
+    window.location.href = "tel:+34615243384";
   });
 
   endDialog.querySelector(".nav-end-dialog__cancel").addEventListener("click", () => {

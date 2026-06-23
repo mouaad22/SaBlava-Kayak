@@ -78,6 +78,11 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   if (url.includes("events.mapbox.com")) return;
 
+  // Never touch the session-tracking API — the staff board polls /api/panel/board
+  // every ~15s and must always hit the network for live data; caching JSON here
+  // would serve stale boards and bloat the shell cache. Pass through to network.
+  if (isSameOrigin(url) && new URL(url).pathname.startsWith("/api/")) return;
+
   // Mapbox tile URLs → network-first with tile cache fallback.
   if (isTileRequest(url)) {
     e.respondWith(networkFirst(req, TILE_CACHE));

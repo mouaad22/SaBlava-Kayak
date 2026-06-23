@@ -1,0 +1,30 @@
+# Cloudflare Pages config for Sa Blava Kayak.
+#
+# The customer app is the static site in app/ (unchanged — the existing Pages
+# project already serves `app` as the build output dir). This file adds the
+# server-authoritative session tracking backend: Pages Functions in functions/
+# and a D1 database bound as `DB`.
+#
+# Local dev:  npm run dev   (== wrangler pages dev app)
+#   Functions in functions/ are auto-detected; a LOCAL SQLite stands in for D1.
+#   Local-only secrets/flags go in .dev.vars (gitignored) — see .dev.vars.example.
+#
+# Owner setup (dashboard, one-time — see docs/staff-panel.md):
+#   1. Create the D1 DB, paste its id into database_id below.
+#   2. Bind `DB` to the Pages project (Settings → Functions → D1 bindings).
+#   3. Apply schema.sql:  npm run db:init        (local)
+#                         npm run db:init:remote (production)
+#   4. Set secrets STAFF_PASSCODE and PANEL_SECRET (Settings → Functions, or
+#      `wrangler pages secret put STAFF_PASSCODE`).
+#   5. Leave ALLOW_SEED UNSET in production (it gates the dev seed endpoint).
+
+name = "sablava-kayak"
+compatibility_date = "2024-11-01"
+pages_build_output_dir = "app"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sablava-sessions"
+# Real production D1 id (from `wrangler d1 create sablava-sessions`).
+# Local `wrangler pages dev` ignores this and keeps state in .wrangler/.
+database_id = "3970fd9c-c208-4b25-9da9-da4a7bad4ff2"

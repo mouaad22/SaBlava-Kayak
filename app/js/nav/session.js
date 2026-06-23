@@ -12,6 +12,8 @@
 // Wall-clock countdown: timeRemainingMs = (startedAtMs + durationHours*3_600_000) - Date.now()
 // Refreshing / re-opening the app continues the same countdown automatically.
 
+import { getKayakId } from "../kayak.js";
+
 const SESSION_KEY = "sa-blava.session";
 const DRAFT_PREFIX = "sa-blava.draft.";
 
@@ -73,6 +75,46 @@ export function timeRemainingMs() {
   const s = getSession();
   if (!s) return NaN;
   return s.startedAtMs + s.durationHours * 3_600_000 - Date.now();
+}
+
+/**
+ * Reconcile the local timer with the server's authoritative clock.
+ *
+ * The reset bug this fixes: the countdown used to live only in localStorage, so
+ * a reload / re-scan / dead phone restarted it. The server records `started_at`
+ * once (POST /api/session/start); here we read it back and adopt it, so the
+ * countdown continues from the true start no matter how many times the page
+ * reloads. Purely additive and best-effort: with no kayak id, no local session,
+ * or the API down, the local timer is left exactly as it is today (offline
+ * fallback). Safe to call unawaited — `timeRemainingMs()` re-reads storage each
+ * tick, so the corrected start time is picked up on the next second.
+ */
+export async function rehydrateFromServer() {
+  const local = getSession();
+  if (!local) return; // nothing started on this phone — nothing to reconcile
+
+  const kayakId = getKayakId();
+  if (!kayakId) return; // no QR scanned — the server has no row to match
+
+  try {
+    const res = await fetch(
+      `/api/session/current?kayak_id=${encodeURIComponent(kayakId)}`,
+      { headers: { accept: "application/json" } },
+    );
+    if (!res.ok) return;
+    const { session } = await res.json();
+    if (!session?.started_at) return; // kayak at dock / no open session
+
+    // Server is the source of truth for the clock. Keep the local route + POI
+    // selection (the server doesn't track those); adopt only the timing.
+    const durationHours = session.duration_min
+      ? session.duration_min / 60
+      : local.durationHours;
+    const merged = { ...local, startedAtMs: session.started_at, durationHours };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(merged));
+  } catch {
+    // Offline / API unreachable — keep the local timer, exactly as today.
+  }
 }
 
 // ─── Draft ────────────────────────────────────────────────────────────────────

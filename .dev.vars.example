@@ -1,0 +1,12 @@
+# Local-only env for `wrangler pages dev`. Copy to `.dev.vars` (gitignored).
+# These are NOT used in production — set production values as Pages secrets.
+
+# Gate for POST /api/dev/seed. Set to "1" locally to enable seeding fake data.
+# MUST stay unset in production so the seed endpoint is disabled there.
+ALLOW_SEED="1"
+
+# Staff login passcode for the panel (POST /api/panel/login).
+STAFF_PASSCODE="0000"
+
+# HMAC key used to sign the staff session cookie. Use a long random string.
+PANEL_SECRET="dev-only-not-secret-change-me"

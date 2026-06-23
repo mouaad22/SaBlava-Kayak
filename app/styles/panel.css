@@ -1,0 +1,252 @@
+/* panel.css — staff control panel. Layers on top of tokens.css (palette, fonts,
+   spacing, shadows, radii). Mobile-first; legibility in sunlight is the priority
+   (high contrast, large tap targets). Catalan-only copy. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background: var(--color-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+#panel-root {
+  min-height: 100dvh;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+
+.panel-btn {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-md);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-control);
+  padding: var(--space-3) var(--space-5);
+  min-height: 44px;
+  cursor: pointer;
+  transition: transform 0.12s var(--ease-spring), opacity 0.15s ease;
+}
+.panel-btn:active {
+  transform: scale(0.97);
+}
+.panel-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.panel-btn--primary {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-cta);
+  width: 100%;
+}
+.panel-btn--ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  padding: var(--space-2) var(--space-3);
+  min-height: 36px;
+  font-weight: 500;
+  font-size: var(--fs-body-sm);
+}
+
+/* ── Login ───────────────────────────────────────────────────────────────── */
+
+.panel-login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--page-margin);
+}
+.panel-login__card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--color-surface);
+  border-radius: var(--radius-sheet);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+}
+.panel-login__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-md);
+  margin: 0 0 var(--space-2);
+}
+.panel-login__subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--fs-body-sm);
+  margin: 0 0 var(--space-6);
+}
+.panel-login__input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 28px;
+  letter-spacing: 0.4em;
+  text-align: center;
+  padding: var(--space-4);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  margin-bottom: var(--space-4);
+  background: var(--color-surface-tinted);
+}
+.panel-login__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--ring);
+}
+.panel-login__error {
+  color: var(--color-emergency);
+  font-size: var(--fs-body-sm);
+  margin: 0 0 var(--space-4);
+}
+
+/* ── Board shell ─────────────────────────────────────────────────────────── */
+
+.panel {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-10);
+}
+.panel__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.panel__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-lg);
+  margin: 0;
+}
+.panel__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.panel__status {
+  font-size: var(--fs-label-md);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Kayak card ──────────────────────────────────────────────────────────── */
+
+.kayak-card {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-4);
+  /* a left status rail tinted by state */
+  border-left: 4px solid var(--color-track);
+  transition: border-color 0.3s ease, opacity 0.3s ease;
+}
+
+.kayak-card__num {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.kayak-card__main {
+  min-width: 0;
+}
+.kayak-card__track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-track);
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+}
+.kayak-card__fill {
+  height: 100%;
+  width: 0%;
+  border-radius: var(--radius-pill);
+  background: var(--color-sage);
+  transition: width 0.6s linear, background-color 0.3s ease;
+}
+.kayak-card__label {
+  font-size: var(--fs-body-sm);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.kayak-card__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  min-width: 116px;
+}
+.kayak-card__pill {
+  font-size: var(--fs-label-md);
+  font-weight: 600;
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  background: var(--color-track);
+  color: var(--color-text-secondary);
+}
+.kayak-card__action {
+  font-size: var(--fs-body-sm);
+  padding: var(--space-2) var(--space-4);
+  min-height: 40px;
+  background: var(--color-surface-tinted);
+  color: var(--color-primary);
+  border: 1.5px solid transparent;
+}
+
+/* ── State variants (driven by data-state) ──────────────────────────────── */
+
+.kayak-card[data-state="active"] {
+  border-left-color: var(--color-sage);
+}
+.kayak-card[data-state="active"] .kayak-card__fill {
+  background: var(--color-sage);
+}
+.kayak-card[data-state="active"] .kayak-card__pill {
+  background: rgba(74, 155, 114, 0.16);
+  color: #2f7853;
+}
+
+.kayak-card[data-state="time_off"] {
+  border-left-color: var(--color-accent);
+}
+.kayak-card[data-state="time_off"] .kayak-card__fill {
+  background: var(--color-accent);
+}
+.kayak-card[data-state="time_off"] .kayak-card__pill {
+  background: var(--color-accent-soft);
+  color: #b8502f;
+}
+.kayak-card[data-state="time_off"] .kayak-card__action {
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.kayak-card[data-state="available"] {
+  opacity: 0.72;
+}
+.kayak-card[data-state="available"] .kayak-card__num {
+  color: var(--color-text-secondary);
+}

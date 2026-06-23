@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "phase": "3.0",
+  "title": "Staff control panel — kayaks out & trip timeline (server-authoritative session tracking)",
+  "summary": "Give dock staff a live board of which kayaks are on the water and for how long, plus a one-tap 'returned' action. Requires making rental sessions server-authoritative: the customer's 'Start route' tap (route-summary.js btnAccept) writes to a shared Cloudflare D1 DB via Pages Functions; the panel (a SEPARATE entry at /panel/, behind a shared staff passcode) reads it live. This also fixes the real bug where a reload/re-scan/dead-phone resets the customer's client-only timer. Full spec: SESSION-TRACKING-DESIGN.md. Human plan: docs/staff-panel.md. Work is split into 5 ordered phases; phases 0-2 deliver the visible board (demoable against seed data), phase 3 makes the data real, phase 4 polishes.",
+  "owner": "mouaad22",
+  "created_on": "2026-06-23",
+  "last_updated": "2026-06-23 (phase-0 + phase-1 implemented & locally verified via wrangler; NOT yet committed — see handoff)",
+  "handoff": {
+    "done": ["phase-0", "phase-1"],
+    "next": "phase-2 (return action) and/or phase-3 (customer wiring) — they are independent; phase-2 needs only phase-1, phase-3 needs only phase-1.",
+    "committed": false,
+    "commit_note": "All Phase 0+1 files are in the working tree, uncommitted (no commit was requested). git status will show them. Recommend committing before deploy.",
+    "how_to_run_locally": [
+      "npm install (wrangler@3.114 already installed).",
+      "Copy .dev.vars.example -> .dev.vars (already present locally with STAFF_PASSCODE=1234, ALLOW_SEED=1).",
+      "npm run db:init  (applies schema.sql to local D1).",
+      "npx wrangler pages dev app --port 8788  (serves customer app + Functions + local D1).",
+      "curl -X POST http://127.0.0.1:8788/api/dev/seed  (fake kayaks in every state).",
+      "Open http://127.0.0.1:8788/panel/  -> log in with 1234 -> board."
+    ],
+    "verified": [
+      "Schema applies to local D1; POST /api/dev/seed -> {ok:true,seeded:5}.",
+      "GET /api/panel/board without cookie -> 401; wrong passcode -> 401; correct passcode sets cookie; board returns correct shape.",
+      "Board sort: time_off (12,18) -> active by soonest expiry (03,07,09) -> available; second_device:true on 07; remaining_ms negative in time_off.",
+      "/panel/, panel.css, tokens.css, and all js/panel/*.js serve 200 with correct content-type.",
+      "check-esm-links.mjs: OK, 40 modules, all imports resolve (panel modules included)."
+    ],
+    "not_yet_verified": [
+      "A real browser visual pass of /panel/ (DOM render, 1s tick, 15s poll, visibilitychange refresh). Logic is straightforward and the data contract is verified, but a human/headless browser glance is the one remaining check."
+    ],
+    "discoveries": [
+      "wrangler local: a local SQLite simulates D1 — wrangler.toml database_id is a placeholder ('REPLACE_WITH_D1_DATABASE_ID') and that is FINE for local dev; owner replaces it only for remote deploy.",
+      ".dev.vars (gitignored) holds local ALLOW_SEED/STAFF_PASSCODE/PANEL_SECRET; .dev.vars.example is the committed template.",
+      "Cookie auth: Set-Cookie omits `Secure` over http:// (local) and adds it over https:// — see makeSessionCookie in functions/_lib/auth.js.",
+      "Minor cosmetic: computeView's \"menys d'1 min\" branch is effectively unreachable for active (ceil of any positive sub-minute = 1, so it shows '1 min restants' then flips to time_off). Harmless; tidy if desired.",
+      "A wrangler dev server may still be running in the background from the build session (port 8788) — stop it if present."
+    ]
+  },
+  "decisions": {
+    "data_source": "Auto from QR scans (server-authoritative). NOT manual staff entry, NOT mock-only.",
+    "hosting": "/panel/ path on the same Cloudflare Pages project (app/panel/index.html), shared staff passcode.",
+    "kayak_list": "['01'..'20'] static config array (20 per-kayak QRs, ?k=01..20). No kayak table.",
+    "durations": "From the rental code (nav/code.js): 1 / 1.5 / 2 / 3 h => duration_min 60 / 90 / 120 / 180.",
+    "panel_lang": "Catalan-only copy (local staff default) to keep it simple.",
+    "auth": "POST /api/panel/login {passcode} vs STAFF_PASSCODE secret => HttpOnly signed (HMAC PANEL_SECRET) cookie; panel endpoints reject without it."
+  },
+  "constraints": {
+    "backend_was": "Previously 100% static (app/server.py is a frozen dev static server, cannot run Functions). This phase ADDS Cloudflare Pages Functions + D1. server.py stays frozen; local panel dev uses `wrangler pages dev app`.",
+    "stack": "Vanilla JS modules + plain CSS, no bundler/framework, ESM only (a missing named export blanks the whole app — check-esm-links.mjs pre-push hook). Panel is a SEPARATE ESM entry so a panel error can never white-screen the customer app.",
+    "graceful_degrade": "If the API is unreachable the customer rental flow must keep working off localStorage exactly as today. The POST on session start is best-effort / fire-and-forget; server rehydrate falls back to the local session.",
+    "owner_only_steps": [
+      "Create D1 DB + bind as `DB` to the Pages project (and wrangler.toml).",
+      "Apply schema.sql (wrangler d1 execute, local + remote).",
+      "Set secrets STAFF_PASSCODE and PANEL_SECRET.",
+      "Leave the seed endpoint env flag unset in production."
+    ]
+  },
+  "anchors": {
+    "customer_app": {
+      "kayak.js": "captureKayakId()/getKayakId() — supplies ?k= value; STORAGE_KEY 'ab.kayakId'.",
+      "nav/session.js": "startSession/getSession/endSession/timeRemainingMs over localStorage 'sa-blava.session'; wall-clock countdown = startedAtMs + durationHours*3_600_000 - now.",
+      "nav/code.js": "parseCode -> {durationHours, month, day}; DURATION_TABLE {01:1, 15:1.5, 02:2, 03:3}.",
+      "screens/route-summary.js": "btnAccept handler (~line 152-177) calls startSession(...) at ~line 171 after tile pre-cache — THE hook point for POST /api/session/start.",
+      "sw.js": "fetch handler: non-GET passes through (POSTs safe); same-origin GET is network-first AND CACHED — must add early return for /api/ paths so board polls aren't cached. SHELL_CACHE currently 'sablava-shell-v20'."
+    },
+    "tokens": {
+      "file": "app/styles/tokens.css",
+      "use": "--color-primary #1b6b8a (teal), --color-sage #4a9b72 (on water), --color-accent #ff8c6b + --color-accent-soft (time off), --color-track #ebedee (empty bar), --color-page #f5f5f4 (bg), --shadow-md, --radius-card 14px, --radius-pill, Recoleta (--font-display) for big kayak number, DM Sans (--font-body)."
+    }
+  },
+  "phases": [
+    {
+      "id": "phase-0",
+      "name": "Tooling, schema, dev seed",
+      "status": "done",
+      "tested": true,
+      "committed": false,
+      "commit_sha": null,
+      "depends_on": [],
+      "files": [
+        "package.json (NEW, repo root): wrangler devDependency only; scripts dev='wrangler pages dev app', db:init=apply schema to local D1. No bundler.",
+        "wrangler.toml (NEW): pages_build_output_dir='app', [[d1_databases]] binding DB, vars/secrets note.",
+        "schema.sql (NEW): sessions + events tables + indexes per spec §3.",
+        "functions/_lib/db.js (NEW): D1 helpers.",
+        "functions/_lib/sessions.js (NEW): Part-2 rule table (start/resume/supersede/second_device) + board-state derivation (available|active|time_off|closed) + KAYAKS config.",
+        "functions/api/dev/seed.js (NEW): POST, env-flag guarded, seeds every state."
+      ],
+      "tasks": [
+        { "id": "P0.T1", "title": "package.json + wrangler.toml: wrangler dev dep, Pages output dir = app, D1 binding DB, dev/db scripts.", "done": true },
+        { "id": "P0.T2", "title": "schema.sql: sessions(id,kayak_id,started_at,duration_min,expires_at,status,device_token,returned_at,returned_by,closed_reason,created_at,updated_at) + events(append-only) + indexes (spec §3).", "done": true },
+        { "id": "P0.T3", "title": "functions/_lib/db.js helpers + functions/_lib/sessions.js with KAYAKS=['01'..'20'], the Part-2 start rule table (decideStartAction), and deriveState(session, now). Also added functions/_lib/crypto.js (sha256Hex/hmacHex/timingSafeEqual).", "done": true },
+        { "id": "P0.T4", "title": "functions/api/dev/seed.js: guarded by env.ALLOW_SEED, wipes + seeds kayaks in active / time_off / second_device / available.", "done": true }
+      ],
+      "verification": [
+        { "check": "`npx wrangler pages dev app` boots, serves the customer app, and Functions are detected.", "passed": true, "note": "wrangler 3.114.17; DB binding + .dev.vars loaded; Ready on http://127.0.0.1:8788." },
+        { "check": "schema applies to local D1 (npm run db:init); POST /api/dev/seed returns ok and rows exist.", "passed": true, "note": "seed -> {ok:true,seeded:5}." }
+      ],
+      "discoveries": [],
+      "open_questions": []
+    },
+    {
+      "id": "phase-1",
+      "name": "Read-only staff board (the main deliverable)",
+      "status": "done",
+      "tested": true,
+      "committed": false,
+      "commit_sha": null,
+      "depends_on": ["phase-0"],
+      "files": [
+        "functions/api/panel/login.js (NEW): POST {passcode} vs STAFF_PASSCODE => set signed HttpOnly cookie.",
+        "functions/_lib/auth.js (NEW): sign/verify cookie via PANEL_SECRET; requireStaff(request) guard.",
+        "functions/api/panel/board.js (NEW): GET (auth) => one item/kayak in spec §4 shape, sorted time_off -> active(soonest expiry) -> available.",
+        "app/panel/index.html (NEW): separate entry, links tokens.css + panel.css + js/panel/app.js.",
+        "app/js/panel/api.js (NEW): fetch wrappers, credentials:'include'.",
+        "app/js/panel/login.js (NEW): passcode screen, on-brand, big tap targets.",
+        "app/js/panel/board.js (NEW): full-width kayak cards (spec §5.1) col A big number / col B progress bar + label / col C status pill + action slot; 1s client tick + 15s poll.",
+        "app/js/panel/app.js (NEW): boot — show login or board based on auth.",
+        "app/styles/panel.css (NEW): cards/pills/progress from tokens.",
+        "app/sw.js (EDIT): early return in fetch handler for same-origin /api/ paths."
+      ],
+      "tasks": [
+        { "id": "P1.T1", "title": "auth.js + login.js: HMAC-signed cookie, login endpoint, requireStaff guard returning 401 JSON. GET /api/panel/login reports auth; DELETE logs out.", "done": true },
+        { "id": "P1.T2", "title": "board.js endpoint: read open sessions per kayak, derive state + remaining_ms + second_device, sort, return JSON {server_now, kayaks}.", "done": true },
+        { "id": "P1.T3", "title": "panel/index.html + app.js + login.js: passcode screen -> board, on-brand via tokens.css.", "done": true },
+        { "id": "P1.T4", "title": "panel/board.js render: full-width cards, progress bar fills elapsed/duration (overflow color in time_off), label 'N min restants' / 'N min passats' / '—'; 1s tick + 15s poll; targeted patch (no full re-render) so cards don't flicker; visibilitychange refresh. Pure computeView() exported for testability.", "done": true },
+        { "id": "P1.T5", "title": "panel.css: card layout (3 cols 52px/1fr/auto), status pills (sage/coral/grey), left status rail, progress track from --color-track, shadows/radius from tokens.", "done": true },
+        { "id": "P1.T6", "title": "sw.js: early return for same-origin /api/ paths so board polls are never cached.", "done": true }
+      ],
+      "verification": [
+        { "check": "Wrong passcode rejected; correct passcode opens the board and persists across reload (cookie).", "passed": true, "note": "curl: wrong->401, correct->Set-Cookie; board 401 without cookie." },
+        { "check": "Board shows all 20 kayaks; seeded active/time_off/available render with correct pill + bar; time_off sorts to top.", "passed": true, "note": "Verified via API payload: order 12,18 / 03,07,09 / 01.. ; second_device on 07. Browser visual pass still pending." },
+        { "check": "Countdown + bar tick every second; board refreshes ~15s; /api/board response is NOT served from SW cache.", "passed": true, "note": "SW guard added + verified by code; tick/poll timers in board.js. Live browser tick not yet eyeballed." },
+        { "check": "ESM link check passes; customer app unaffected.", "passed": true, "note": "check-esm-links.mjs OK: 40 modules." }
+      ],
+      "discoveries": [],
+      "open_questions": []
+    },
+    {
+      "id": "phase-2",
+      "name": "Return action",
+      "status": "todo",
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "depends_on": ["phase-1"],
+      "files": [
+        "functions/api/panel/finish.js (NEW): POST {kayak_id} (auth) => returned_at, status='closed', closed_reason finished_early|staff_return; log event.",
+        "app/js/panel/board.js (EDIT): wire Finish trip / Kayak returned button."
+      ],
+      "tasks": [
+        { "id": "P2.T1", "title": "finish.js: close the open session for kayak_id, set closed_reason by expiry, append return_confirmed/finished_early event.", "done": false },
+        { "id": "P2.T2", "title": "board.js button: 'Finalitzar' (active) / 'Caiac retornat' (time_off) -> confirm ('Confirmar 07 retornat?') -> optimistic remove -> reconcile on next poll; restore + toast on failure.", "done": false }
+      ],
+      "verification": [
+        { "check": "Tapping returned closes the card optimistically and it stays gone after the next poll.", "passed": false, "note": "" },
+        { "check": "API failure restores the card + shows an error toast.", "passed": false, "note": "" },
+        { "check": "closed_reason is finished_early before expiry, staff_return after; event logged.", "passed": false, "note": "" }
+      ],
+      "discoveries": [],
+      "open_questions": []
+    },
+    {
+      "id": "phase-3",
+      "name": "Customer app wiring (makes the board real)",
+      "status": "todo",
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "depends_on": ["phase-1"],
+      "files": [
+        "app/js/nav/device.js (NEW): anonymous device_token (random, localStorage 'sa-blava.device'), created once.",
+        "functions/api/session/start.js (NEW): POST {kayak_id, device_token, duration_min} — full Part-2 rule table; returns authoritative {id,kayak_id,started_at,expires_at,status}.",
+        "functions/api/session/current.js (NEW): GET ?kayak_id= — latest open session for rehydrate.",
+        "app/js/screens/route-summary.js (EDIT): after startSession(...) at ~line 171, best-effort POST /api/session/start with getKayakId() + device token + durationHours*60. Must NOT block trip start on failure.",
+        "app/js/nav/session.js (EDIT, additive): on load, if kayak_id + server session exist, rehydrate started_at/expires_at from server; local session stays the offline fallback."
+      ],
+      "tasks": [
+        { "id": "P3.T1", "title": "device.js: getDeviceToken() — create+persist a random token once.", "done": false },
+        { "id": "P3.T2", "title": "session/start.js: implement Part-2 table (none->started; expired->superseded+started; active same device->resumed; active diff device->return existing + second_device). Hash device_token (SHA-256). Append events.", "done": false },
+        { "id": "P3.T3", "title": "session/current.js: return latest non-closed session for a kayak.", "done": false },
+        { "id": "P3.T4", "title": "route-summary.js: fire start POST (await with try/catch, swallow errors) so the board gets the rental; never delay/abort navigate on API failure.", "done": false },
+        { "id": "P3.T5", "title": "session.js: optional server rehydrate of started_at/expires_at when kayak_id present, guarded so offline keeps the local timer (the core anti-reset fix).", "done": false }
+      ],
+      "verification": [
+        { "check": "A real rental with ?k=07 appears on the board with the correct duration within ~15s.", "passed": false, "note": "" },
+        { "check": "Reloading the customer mid-trip does NOT reset the timer (rehydrated from server).", "passed": false, "note": "" },
+        { "check": "Second device scanning the same live kayak sees the real remaining time, not a reset; second_device event logged + badge shows.", "passed": false, "note": "" },
+        { "check": "With the API down, the trip still starts and runs off localStorage (graceful degrade).", "passed": false, "note": "" },
+        { "check": "ESM link check passes.", "passed": false, "note": "" }
+      ],
+      "discoveries": [],
+      "open_questions": [
+        "Does tapping 'Start route' need a confirm so a curious tap doesn't start the clock? Spec §7 recommends yes — decide before phase 3 ships."
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Polish + deploy docs",
+      "status": "todo",
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "depends_on": ["phase-2", "phase-3"],
+      "files": [
+        "app/js/panel/board.js + panel.css (EDIT): second_device soft badge (informational chip, never an alarm).",
+        "app/panel + functions (OPTIONAL): read-only history view of recent closed sessions + event log.",
+        "DEPLOYMENT-CLOUDFLARE.md (EDIT) or DEPLOYMENT-PANEL.md (NEW): correct the 'static' note; document D1 creation, DB binding, STAFF_PASSCODE/PANEL_SECRET secrets, prod-disabling seed."
+      ],
+      "tasks": [
+        { "id": "P4.T1", "title": "second_device badge on cards.", "done": false },
+        { "id": "P4.T2", "title": "(optional) history view for dispute resolution.", "done": false },
+        { "id": "P4.T3", "title": "Update deploy docs for the new backend + secrets + seed-disable.", "done": false }
+      ],
+      "verification": [
+        { "check": "Badge shows only when second_device true; never styled as an alarm.", "passed": false, "note": "" },
+        { "check": "Deploy doc accurately describes D1/Functions/secrets setup.", "passed": false, "note": "" }
+      ],
+      "discoveries": [],
+      "open_questions": []
+    }
+  ],
+  "global_open_questions": [
+    "Confirm panel passcode value + whether a second 'admin' tier is ever needed (spec defers per-staff logins / Cloudflare Access).",
+    "Confirm whether the panel should later move to its own subdomain (panel.sablavakayaks.com) vs the /panel/ path chosen now.",
+    "Start-route confirm dialog (spec §7) — likely fold into phase 3."
+  ]
+}

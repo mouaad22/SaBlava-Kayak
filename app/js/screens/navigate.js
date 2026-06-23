@@ -14,7 +14,7 @@ import { navigate } from "../router.js";
 import {
   getSession, endSession, timeRemainingMs, isActive,
 } from "../nav/session.js";
-import { haversineM, trackThroughPois } from "../nav/geo.js";
+import { haversineM, trackThroughPois, watchFilteredPosition } from "../nav/geo.js";
 import { speak, chime, announceArrival } from "../nav/audio.js";
 import { acquire, release, attachVisibilityHandler } from "../nav/wake-lock.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, OVERTIME_WARNINGS_MIN, NAV_ARRIVAL_THRESHOLD_M, KAYAK_SPEED_KMH } from "../config.js";
@@ -166,7 +166,9 @@ export function renderNavigateScreen(host, routeId) {
     </dialog>
 
     <div class="navigate-screen__gps-banner" hidden>
-      ${t("nav.permission.denied")}
+      <span class="nav-gps-banner__msg"></span>
+      <span class="nav-gps-banner__help" hidden></span>
+      <button class="nav-gps-banner__retry" type="button" hidden>${t("nav.gps.retry")}</button>
     </div>
   `;
 
@@ -193,6 +195,9 @@ export function renderNavigateScreen(host, routeId) {
   const dadesBase        = screen.querySelector(".dades-base-label");
   const overtimeBanner   = screen.querySelector(".navigate-screen__overtime-banner");
   const gpsBanner        = screen.querySelector(".navigate-screen__gps-banner");
+  const gpsBannerMsg     = screen.querySelector(".nav-gps-banner__msg");
+  const gpsBannerHelp    = screen.querySelector(".nav-gps-banner__help");
+  const gpsBannerRetry   = screen.querySelector(".nav-gps-banner__retry");
   const endDialog        = screen.querySelector(".nav-end-dialog");
   const tabBtns          = screen.querySelectorAll(".nav-tab-btn");
 
@@ -213,8 +218,17 @@ export function renderNavigateScreen(host, routeId) {
   });
 
   // ── Recenter button ───────────────────────────────────────────────────────
+  // With a fix in hand it recenters the map on the paddler. With no fix yet —
+  // GPS still acquiring, or permission accidentally denied — it doubles as a
+  // permission re-trigger: restarting the watch re-requests geolocation (the
+  // same path as the banner's retry button). Browsers that have hard-denied
+  // won't re-prompt, but a dismissed/soft "no" gets another chance.
   recenterBtn.addEventListener("click", () => {
-    if (userCoords && mapInstance) mapInstance.flyTo({ center: userCoords, zoom: 15, duration: 600 });
+    if (userCoords && mapInstance) {
+      mapInstance.flyTo({ center: userCoords, zoom: 15, duration: 600 });
+    } else {
+      startWatch();
+    }
   });
 
   // ── SOS button ────────────────────────────────────────────────────────────
@@ -325,26 +339,61 @@ export function renderNavigateScreen(host, routeId) {
   }
 
   // ── GPS watch ─────────────────────────────────────────────────────────────
-  if (navigator.geolocation) {
-    watchCleanup = (() => {
-      const id = navigator.geolocation.watchPosition(
-        (pos) => {
-          userCoords = [pos.coords.longitude, pos.coords.latitude];
-          gpsBanner.hidden = true;
-          updatePositionMarker();
-          checkProximity();
-        },
-        (err) => {
-          gpsBanner.hidden = false;
-          console.warn("[Sa Blava] GPS error", err.code, err.message);
-        },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 5_000 }
-      );
-      return () => navigator.geolocation.clearWatch(id);
-    })();
-  } else {
-    gpsBanner.hidden = false;
+  // Reflect a coarse GPS state to the banner. "acquiring" is non-alarming and
+  // auto-hides on the first accepted fix; timeout/unavailable/denied surface an
+  // honest message, and the recoverable cases offer a "Tornar a provar" button
+  // (denied also shows one line of OS guidance, since most browsers won't
+  // re-prompt once a permission is set).
+  function setGpsState(state) {
+    switch (state) {
+      case "ok":
+        gpsBanner.hidden = true;
+        return;
+      case "acquiring":
+        showGpsBanner(t("nav.gps.acquiring"), { tone: "info" });
+        return;
+      case "low-accuracy":
+        showGpsBanner(t("nav.gps.weak"), { tone: "info" });
+        return;
+      case "timeout":
+        showGpsBanner(t("nav.gps.timeout"), { tone: "warn" });
+        return;
+      case "unavailable":
+        showGpsBanner(t("nav.gps.unavailable"), { tone: "warn", retry: true });
+        return;
+      case "denied":
+        showGpsBanner(t("nav.gps.denied"), {
+          tone: "warn",
+          retry: true,
+          help: t("nav.gps.denied.help"),
+        });
+        return;
+    }
   }
+
+  function showGpsBanner(msg, { tone = "warn", retry = false, help = "" } = {}) {
+    gpsBannerMsg.textContent  = msg;
+    gpsBannerHelp.textContent = help;
+    gpsBannerHelp.hidden      = !help;
+    gpsBannerRetry.hidden     = !retry;
+    gpsBanner.classList.toggle("is-info", tone === "info");
+    gpsBanner.hidden          = false;
+  }
+
+  function startWatch() {
+    if (watchCleanup) { watchCleanup(); watchCleanup = null; }
+    watchCleanup = watchFilteredPosition(
+      (pos) => {
+        userCoords = [pos.coords.longitude, pos.coords.latitude];
+        updatePositionMarker();
+        checkProximity();
+      },
+      setGpsState,
+    );
+  }
+
+  gpsBannerRetry.addEventListener("click", startWatch);
+  startWatch();
 
   // ── Dev panel ─────────────────────────────────────────────────────────────
   if (!window.mapboxgl || !MAPBOX_TOKEN) mountNavTweakpane(null);
@@ -399,21 +448,27 @@ export function renderNavigateScreen(host, routeId) {
         new mapboxgl.Marker({ element: el }).setLngLat(poi.coords).addTo(mapInstance);
       });
 
-      // Live position marker (blue dot with pulse).
-      const posEl = document.createElement("div");
-      posEl.className = "nav-position-marker";
-      positionMarker = new mapboxgl.Marker({ element: posEl })
-        .setLngLat(userCoords ?? MARINA.coords)
-        .addTo(mapInstance);
-
-      if (userCoords) mapInstance.flyTo({ center: userCoords, zoom: 15 });
+      // Live position marker is created lazily on the first accepted GPS fix
+      // (see updatePositionMarker) so the marina dot is never mistaken for the
+      // paddler's position while GPS is still acquiring.
+      updatePositionMarker();
       highlightActivePOI();
       mountNavTweakpane(mapInstance);
     });
   }
 
   function updatePositionMarker() {
-    if (!mapReady || !userCoords || !positionMarker) return;
+    if (!mapReady || !userCoords || !mapInstance) return;
+    // Create the blue dot on the first accepted fix, then just move it.
+    if (!positionMarker) {
+      const posEl = document.createElement("div");
+      posEl.className = "nav-position-marker";
+      positionMarker = new mapboxgl.Marker({ element: posEl })
+        .setLngLat(userCoords)
+        .addTo(mapInstance);
+      mapInstance.flyTo({ center: userCoords, zoom: 15 });
+      return;
+    }
     positionMarker.setLngLat(userCoords);
   }
 

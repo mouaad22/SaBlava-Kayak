@@ -250,3 +250,26 @@ body {
 .kayak-card[data-state="available"] .kayak-card__num {
   color: var(--color-text-secondary);
 }
+
+/* ── Toast (return-action failure) ───────────────────────────────────────── */
+
+.panel__toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-5));
+  transform: translateX(-50%);
+  max-width: min(92vw, 420px);
+  z-index: 20;
+  background: var(--color-text-primary);
+  color: #fff;
+  font-size: var(--fs-body-sm);
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg);
+}
+.panel__toast[hidden] {
+  display: none;
+}

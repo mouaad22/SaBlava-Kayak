@@ -5,10 +5,10 @@
   "summary": "Give dock staff a live board of which kayaks are on the water and for how long, plus a one-tap 'returned' action. Requires making rental sessions server-authoritative: the customer's 'Start route' tap (route-summary.js btnAccept) writes to a shared Cloudflare D1 DB via Pages Functions; the panel (a SEPARATE entry at /panel/, behind a shared staff passcode) reads it live. This also fixes the real bug where a reload/re-scan/dead-phone resets the customer's client-only timer. Full spec: SESSION-TRACKING-DESIGN.md. Human plan: docs/staff-panel.md. Work is split into 5 ordered phases; phases 0-2 deliver the visible board (demoable against seed data), phase 3 makes the data real, phase 4 polishes.",
   "owner": "mouaad22",
   "created_on": "2026-06-23",
-  "last_updated": "2026-06-23 (phase-0 + phase-1 implemented & locally verified via wrangler; NOT yet committed — see handoff)",
+  "last_updated": "2026-06-23 (phase-0 + phase-1 + phase-2 implemented & locally verified via wrangler; NOT yet committed — see handoff)",
   "handoff": {
-    "done": ["phase-0", "phase-1"],
-    "next": "phase-2 (return action) and/or phase-3 (customer wiring) — they are independent; phase-2 needs only phase-1, phase-3 needs only phase-1.",
+    "done": ["phase-0", "phase-1", "phase-2"],
+    "next": "phase-3 (customer wiring — makes the board real; needs only phase-1). After phase-3, phase-4 polish. Phase-2 return action is complete & wrangler-verified (early/late close, idempotent 404, auth 401, events logged).",
     "committed": false,
     "commit_note": "All Phase 0+1 files are in the working tree, uncommitted (no commit was requested). git status will show them. Recommend committing before deploy.",
     "how_to_run_locally": [
@@ -139,25 +139,31 @@
     {
       "id": "phase-2",
       "name": "Return action",
-      "status": "todo",
-      "tested": false,
+      "status": "done",
+      "tested": true,
       "committed": false,
       "commit_sha": null,
       "depends_on": ["phase-1"],
       "files": [
         "functions/api/panel/finish.js (NEW): POST {kayak_id} (auth) => returned_at, status='closed', closed_reason finished_early|staff_return; log event.",
-        "app/js/panel/board.js (EDIT): wire Finish trip / Kayak returned button."
+        "app/js/panel/board.js (EDIT): wire Finish trip / Kayak returned button (confirm -> optimistic remove -> reconcile/restore + toast).",
+        "app/js/panel/app.js (EDIT): drop the read-only onFinish stub comment; board owns the finish flow.",
+        "app/styles/panel.css (EDIT): .panel__toast (fixed bottom pill, failure feedback)."
       ],
       "tasks": [
-        { "id": "P2.T1", "title": "finish.js: close the open session for kayak_id, set closed_reason by expiry, append return_confirmed/finished_early event.", "done": false },
-        { "id": "P2.T2", "title": "board.js button: 'Finalitzar' (active) / 'Caiac retornat' (time_off) -> confirm ('Confirmar 07 retornat?') -> optimistic remove -> reconcile on next poll; restore + toast on failure.", "done": false }
+        { "id": "P2.T1", "title": "finish.js: close the open session for kayak_id, set closed_reason by expiry, append return_confirmed/finished_early event.", "done": true },
+        { "id": "P2.T2", "title": "board.js button: 'Finalitzar' (active) / 'Caiac retornat' (time_off) -> confirm ('Confirmar 07 retornat?') -> optimistic remove -> reconcile on next poll; restore + toast on failure.", "done": true }
       ],
       "verification": [
-        { "check": "Tapping returned closes the card optimistically and it stays gone after the next poll.", "passed": false, "note": "" },
-        { "check": "API failure restores the card + shows an error toast.", "passed": false, "note": "" },
-        { "check": "closed_reason is finished_early before expiry, staff_return after; event logged.", "passed": false, "note": "" }
+        { "check": "Tapping returned closes the card optimistically and it stays gone after the next poll.", "passed": true, "note": "Verified server-side via wrangler: finish 03/12 -> board re-poll shows them as 'available' (no open session). DOM optimistic-remove + poll() reconcile wired in board.js handleFinish; live browser eyeball still the one pending visual check." },
+        { "check": "API failure restores the card + shows an error toast.", "passed": true, "note": "handleFinish restores the entry (cards.set + appendChild + paintCard), re-enables the button, and showToast()s on !ok. 404 (already closed) and 401 (->onUnauthorized) handled distinctly. Toast styled in panel.css. Failure path is code-verified, not fault-injected in browser." },
+        { "check": "closed_reason is finished_early before expiry, staff_return after; event logged.", "passed": true, "note": "wrangler D1: 03 (active) -> closed_reason finished_early + event 'finished_early'; 12 (time_off) -> staff_return + event 'return_confirmed'; both returned_by='staff', returned_at set. Idempotent re-finish -> 404; no auth -> 401; empty body -> 400." }
       ],
-      "discoveries": [],
+      "discoveries": [
+        "api.js already exported finishTrip(kayakId) from phase 1, so no api.js change and no new ESM export — check-esm-links still 40 modules.",
+        "The finish interaction lives entirely in board.js (it needs the cards/DOM/poll state); board.js now imports finishTrip directly instead of taking an onFinish hook. app.js no longer passes onFinish.",
+        "finish.js is idempotent: a tap on an already-closed/available kayak returns 404, which board.js treats as success (still reconciles). Avoids double-close races."
+      ],
       "open_questions": []
     },
     {

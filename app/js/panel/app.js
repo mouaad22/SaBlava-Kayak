@@ -28,8 +28,8 @@ function showBoard() {
       await logout();
       showLogin();
     },
-    // onFinish (the return action) is wired in phase 2; without it the board is
-    // read-only and the action buttons render disabled.
+    // The return action lives inside board.js (it needs the card/DOM state);
+    // the board POSTs /api/panel/finish itself.
   });
 }
 

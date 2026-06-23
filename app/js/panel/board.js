@@ -4,12 +4,18 @@
 // col C status pill + action button. Polls /api/panel/board every 15s and ticks
 // the countdown/bar locally every 1s (no per-second server calls). Cards are
 // built once per poll; ticks only patch the dynamic bits so a card never flickers
-// or loses an in-flight action (phase 2).
+// or loses an in-flight action.
 //
-// Hooks (wired by app.js): onFinish(kayakId, cardEl) — phase 2 return action;
-// onUnauthorized() — cookie expired, bounce to login.
+// Return action (phase 2): tapping Finalitzar / Caiac retornat confirms, removes
+// the card optimistically, then POSTs /api/panel/finish. On success the next poll
+// reconciles (the kayak reappears as available); on failure the card is restored
+// and a toast explains. The whole interaction lives here because it needs the
+// board's card/DOM state; api.js owns only the bare request.
+//
+// Hooks (wired by app.js): onUnauthorized() — cookie expired, bounce to login;
+// onLogout() — the Sortir button.
 
-import { getBoard } from "./api.js";
+import { getBoard, finishTrip } from "./api.js";
 
 const POLL_MS = 15_000;
 const TICK_MS = 1_000;
@@ -60,7 +66,7 @@ export function computeView(item, now) {
 }
 
 export function renderBoard(host, hooks = {}) {
-  const { onFinish, onUnauthorized } = hooks;
+  const { onUnauthorized } = hooks;
 
   host.innerHTML = `
     <div class="panel">
@@ -73,17 +79,20 @@ export function renderBoard(host, hooks = {}) {
       </header>
       <div class="panel__list" data-list aria-live="polite"></div>
     </div>
+    <div class="panel__toast" data-toast role="status" hidden></div>
   `;
 
   const listEl = host.querySelector("[data-list]");
   const statusEl = host.querySelector("[data-status]");
   const logoutBtn = host.querySelector("[data-logout]");
+  const toastEl = host.querySelector("[data-toast]");
 
   logoutBtn.addEventListener("click", () => hooks.onLogout?.());
 
   // kayak_id -> { el, item, refs }
   const cards = new Map();
   let lastSync = 0;
+  let toastTimer = null;
 
   function buildCard(item) {
     const el = document.createElement("article");
@@ -106,12 +115,9 @@ export function renderBoard(host, hooks = {}) {
       pill: el.querySelector("[data-pill]"),
       action: el.querySelector("[data-action]"),
     };
-    if (onFinish) {
-      refs.action.addEventListener("click", () => onFinish(item.kayak_id, el));
-    } else {
-      refs.action.disabled = true; // phase 1: read-only
-    }
-    cards.set(item.kayak_id, { el, item, refs });
+    const entry = { el, item, refs };
+    refs.action.addEventListener("click", () => handleFinish(entry));
+    cards.set(item.kayak_id, entry);
     return el;
   }
 
@@ -155,6 +161,46 @@ export function renderBoard(host, hooks = {}) {
     }
   }
 
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastEl.hidden = true;
+    }, 4000);
+  }
+
+  // Return action: confirm -> optimistic remove -> POST -> reconcile / restore.
+  async function handleFinish(entry) {
+    const { item, el, refs } = entry;
+    const v = computeView(item, Date.now());
+    const verb = v.state === "time_off" ? "retornat" : "finalitzat";
+    if (!confirm(`Confirmar caiac ${item.kayak_id} ${verb}?`)) return;
+
+    // Optimistic: drop the card now so the board feels instant.
+    refs.action.disabled = true;
+    el.remove();
+    cards.delete(item.kayak_id);
+
+    const { ok, status } = await finishTrip(item.kayak_id);
+    if (status === 401) {
+      onUnauthorized?.();
+      return;
+    }
+    // 404 (no open session) means it was already closed — treat as success.
+    if (ok || status === 404) {
+      poll(); // re-sync: the kayak reappears as available
+      return;
+    }
+
+    // Failure: put the card back and let the user retry.
+    refs.action.disabled = false;
+    cards.set(item.kayak_id, entry);
+    listEl.appendChild(el);
+    paintCard(entry, Date.now());
+    showToast(`No s'ha pogut tancar el caiac ${item.kayak_id} — torna-ho a provar`);
+  }
+
   function tick() {
     const now = Date.now();
     for (const entry of cards.values()) paintCard(entry, now);
@@ -194,6 +240,7 @@ export function renderBoard(host, hooks = {}) {
     stop() {
       clearInterval(pollTimer);
       clearInterval(tickTimer);
+      clearTimeout(toastTimer);
       document.removeEventListener("visibilitychange", onVisible);
     },
   };

@@ -1,4 +1,6 @@
 import { loadLanguage } from "./i18n.js";
+import { captureKayakId } from "./kayak.js";
+import { rehydrateFromServer } from "./nav/session.js";
 import { parseHash, onRouteChange } from "./router.js";
 import { renderLoadingScreen } from "./screens/loading.js";
 import { renderLanguageScreen } from "./screens/language.js";
@@ -195,6 +197,14 @@ function render(route) {
 }
 
 loadLanguage();
+
+// Capture the kayak id from the QR's ?k= (falls back to the last scanned one in
+// storage) so the session API can report which kayak is on the water. Then
+// best-effort reconcile the rental clock with the server: a reload mid-trip
+// re-reads the authoritative started_at instead of restarting the countdown.
+captureKayakId();
+rehydrateFromServer();
+
 renderLoadingScreen(host, () => {
   render(parseHash());
   onRouteChange(render);

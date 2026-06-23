@@ -10,6 +10,8 @@ import { navigate } from "../router.js";
 import { getDraft, saveDraft, startSession, clearDraft } from "../nav/session.js";
 import { totalPathKm } from "../nav/geo.js";
 import { precacheBbox } from "../nav/tile-cache.js";
+import { getKayakId } from "../kayak.js";
+import { getDeviceToken } from "../nav/device.js";
 
 const ICON_BACK = `<img src="./assets/icons/regular/CaretLeft.svg" width="24" height="24" alt="" aria-hidden="true" />`;
 
@@ -171,6 +173,12 @@ export function renderRouteSummaryScreen(host, routeId) {
     startSession({ routeId, durationHours, code: draftCode, includedPoiIndices: sortedIndices });
     clearDraft(routeId);
 
+    // Best-effort: tell the server this rental started so it shows on the staff
+    // board and becomes the authoritative clock. Fire-and-forget — the local
+    // session above is the offline source of truth, and a slow/failed API must
+    // never delay or abort navigation into the trip.
+    reportSessionStart(durationHours);
+
     if (!cacheOk) showToast(screen, "Mapa pot no estar disponible sense xarxa", 4000);
 
     navigate(`/route/${routeId}/navigate`);
@@ -197,6 +205,29 @@ export function renderRouteSummaryScreen(host, routeId) {
 function formatDuration(hours) {
   if (hours === 1.5) return "1h 30m";
   return `${hours}h`;
+}
+
+// Report the rental start to the session API. No-op when no QR was scanned
+// (getKayakId() is null), and intentionally not awaited: the request is
+// dispatched immediately (keepalive lets it outlive the screen teardown) and
+// any failure is swallowed so the trip starts regardless of the network.
+function reportSessionStart(durationHours) {
+  const kayakId = getKayakId();
+  if (!kayakId) return;
+  try {
+    fetch("/api/session/start", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        kayak_id: kayakId,
+        device_token: getDeviceToken(),
+        duration_min: Math.round(durationHours * 60),
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* fetch unavailable — ignore, local session still runs the trip */
+  }
 }
 
 function showToast(parent, message, durationMs = 3000) {

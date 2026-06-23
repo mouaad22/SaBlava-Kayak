@@ -5,10 +5,10 @@
   "summary": "Give dock staff a live board of which kayaks are on the water and for how long, plus a one-tap 'returned' action. Requires making rental sessions server-authoritative: the customer's 'Start route' tap (route-summary.js btnAccept) writes to a shared Cloudflare D1 DB via Pages Functions; the panel (a SEPARATE entry at /panel/, behind a shared staff passcode) reads it live. This also fixes the real bug where a reload/re-scan/dead-phone resets the customer's client-only timer. Full spec: SESSION-TRACKING-DESIGN.md. Human plan: docs/staff-panel.md. Work is split into 5 ordered phases; phases 0-2 deliver the visible board (demoable against seed data), phase 3 makes the data real, phase 4 polishes.",
   "owner": "mouaad22",
   "created_on": "2026-06-23",
-  "last_updated": "2026-06-23 (phase-0 + phase-1 + phase-2 implemented & locally verified via wrangler; NOT yet committed — see handoff)",
+  "last_updated": "2026-06-23 (phase-0..3 implemented & locally verified via wrangler; NOT yet committed — see handoff)",
   "handoff": {
-    "done": ["phase-0", "phase-1", "phase-2"],
-    "next": "phase-3 (customer wiring — makes the board real; needs only phase-1). After phase-3, phase-4 polish. Phase-2 return action is complete & wrangler-verified (early/late close, idempotent 404, auth 401, events logged).",
+    "done": ["phase-0", "phase-1", "phase-2", "phase-3"],
+    "next": "phase-4 (polish + deploy docs): second_device badge on cards, optional closed-session history view, and update DEPLOYMENT-CLOUDFLARE.md for the new Functions+D1 backend (D1 creation, DB binding, STAFF_PASSCODE/PANEL_SECRET secrets, prod-disable seed). The board is now real end-to-end: customer 'Start route' POSTs /api/session/start (Part-2 table) and the timer rehydrates from /api/session/current so reloads can't reset it. All wrangler-verified, AND the customer reload anti-reset + offline-degrade are now live-browser verified (Playwright/Chrome, scratchpad/reload-pass.mjs: 8/8). Remaining gap is the second_device badge (phase-4) and a human glance at the panel board DOM (carried over from phase-1).",
     "committed": false,
     "commit_note": "All Phase 0+1 files are in the working tree, uncommitted (no commit was requested). git status will show them. Recommend committing before deploy.",
     "how_to_run_locally": [
@@ -169,35 +169,42 @@
     {
       "id": "phase-3",
       "name": "Customer app wiring (makes the board real)",
-      "status": "todo",
-      "tested": false,
+      "status": "done",
+      "tested": true,
       "committed": false,
       "commit_sha": null,
       "depends_on": ["phase-1"],
       "files": [
         "app/js/nav/device.js (NEW): anonymous device_token (random, localStorage 'sa-blava.device'), created once.",
-        "functions/api/session/start.js (NEW): POST {kayak_id, device_token, duration_min} — full Part-2 rule table; returns authoritative {id,kayak_id,started_at,expires_at,status}.",
+        "functions/api/session/start.js (NEW): POST {kayak_id, device_token, duration_min} — full Part-2 rule table; returns authoritative {id,kayak_id,started_at,expires_at,duration_min,status}.",
         "functions/api/session/current.js (NEW): GET ?kayak_id= — latest open session for rehydrate.",
-        "app/js/screens/route-summary.js (EDIT): after startSession(...) at ~line 171, best-effort POST /api/session/start with getKayakId() + device token + durationHours*60. Must NOT block trip start on failure.",
-        "app/js/nav/session.js (EDIT, additive): on load, if kayak_id + server session exist, rehydrate started_at/expires_at from server; local session stays the offline fallback."
+        "app/js/screens/route-summary.js (EDIT): after startSession(...), fire-and-forget POST /api/session/start with getKayakId() + device token + durationHours*60. Does NOT block trip start.",
+        "app/js/nav/session.js (EDIT, additive): rehydrateFromServer() — on load, if kayak_id + server session exist, adopt started_at/duration from server; local session stays the offline fallback.",
+        "app/js/app.js (EDIT): wire captureKayakId() + rehydrateFromServer() at boot (kayak.js was previously untracked/unwired — phase 3 brings it into the graph)."
       ],
       "tasks": [
-        { "id": "P3.T1", "title": "device.js: getDeviceToken() — create+persist a random token once.", "done": false },
-        { "id": "P3.T2", "title": "session/start.js: implement Part-2 table (none->started; expired->superseded+started; active same device->resumed; active diff device->return existing + second_device). Hash device_token (SHA-256). Append events.", "done": false },
-        { "id": "P3.T3", "title": "session/current.js: return latest non-closed session for a kayak.", "done": false },
-        { "id": "P3.T4", "title": "route-summary.js: fire start POST (await with try/catch, swallow errors) so the board gets the rental; never delay/abort navigate on API failure.", "done": false },
-        { "id": "P3.T5", "title": "session.js: optional server rehydrate of started_at/expires_at when kayak_id present, guarded so offline keeps the local timer (the core anti-reset fix).", "done": false }
+        { "id": "P3.T1", "title": "device.js: getDeviceToken() — create+persist a random token once.", "done": true },
+        { "id": "P3.T2", "title": "session/start.js: implement Part-2 table (none->started; expired->superseded+started; active same device->resumed; active diff device->return existing + second_device). Hash device_token (SHA-256). Append events.", "done": true },
+        { "id": "P3.T3", "title": "session/current.js: return latest non-closed session for a kayak.", "done": true },
+        { "id": "P3.T4", "title": "route-summary.js: fire start POST (fire-and-forget, keepalive, errors swallowed) so the board gets the rental; never delay/abort navigate on API failure.", "done": true },
+        { "id": "P3.T5", "title": "session.js: server rehydrate of started_at/duration when kayak_id present, guarded so offline keeps the local timer (the core anti-reset fix). Wired at app.js boot.", "done": true }
       ],
       "verification": [
-        { "check": "A real rental with ?k=07 appears on the board with the correct duration within ~15s.", "passed": false, "note": "" },
-        { "check": "Reloading the customer mid-trip does NOT reset the timer (rehydrated from server).", "passed": false, "note": "" },
-        { "check": "Second device scanning the same live kayak sees the real remaining time, not a reset; second_device event logged + badge shows.", "passed": false, "note": "" },
-        { "check": "With the API down, the trip still starts and runs off localStorage (graceful degrade).", "passed": false, "note": "" },
-        { "check": "ESM link check passes.", "passed": false, "note": "" }
+        { "check": "A real rental appears on the board with the correct duration within ~15s.", "passed": true, "note": "wrangler: POST start kayak 15 (dock) duration 120 -> board shows {state:active, duration_min:120, remaining ~2h}. Fresh start writes a row buildBoard reads. (Note: starting an ALREADY-active kayak like seeded 09 correctly returns the EXISTING session unchanged — second_device, not a reset.)" },
+        { "check": "Reloading the customer mid-trip does NOT reset the timer (rehydrated from server).", "passed": true, "note": "LIVE-BROWSER VERIFIED (Playwright + real Chrome against wrangler dev): seeded a local session with a RESET (later) startedAtMs while the server held the true earlier start; after a plain reload (no ?k=, fell back to stored ab.kayakId) the localStorage session.startedAtMs was corrected back to the server's true start AND durationHours rehydrated from duration_min, while routeId/POI selection were preserved. No console/page errors. Script: scratchpad/reload-pass.mjs." },
+        { "check": "Second device scanning the same live kayak sees the real remaining time, not a reset; second_device event logged.", "passed": true, "note": "wrangler: start 05 devA, then start 05 devB -> identical id + started_at + expires_at returned (no reset); a same-device re-tap -> resumed (also unchanged). Badge render is phase-4 (P4.T1)." },
+        { "check": "With the API down, the trip still starts and runs off localStorage (graceful degrade).", "passed": true, "note": "LIVE-BROWSER VERIFIED: with all /api/** requests aborted in the browser, a reload left the local session.startedAtMs untouched (rehydrate fetch failed and bailed); also verified the at-dock {session:null} case is a no-op. Plus code: reportSessionStart() is fire-and-forget (.catch + try/catch, keepalive) called AFTER startSession()/clearDraft(); no await gates navigation. Script: scratchpad/reload-pass.mjs." },
+        { "check": "ESM link check passes.", "passed": true, "note": "check-esm-links.mjs OK: 41 modules (device.js added; kayak.js now in the graph), all imports resolve." }
       ],
-      "discoveries": [],
+      "discoveries": [
+        "kayak.js was untracked AND never called — getKayakId() would have returned null. Phase 3 wires captureKayakId() at app.js boot (with the QR ?k= -> localStorage 'ab.kayakId' fallback), which is what makes getKayakId() non-null for the start POST and the rehydrate. This pulls kayak.js into the customer ESM graph (40 -> 41 modules).",
+        "The start POST is fire-and-forget (NOT awaited), overriding P3.T4's original 'await with try/catch' wording: fetch() dispatches synchronously so awaiting only delays navigate; keepalive:true lets the request outlive the screen teardown. Net effect is identical (request sent, errors swallowed) but navigation is never gated on the network.",
+        "session/start returns duration_min too (beyond the spec's {id,kayak_id,started_at,expires_at,status}) so rehydrateFromServer() can recover durationHours = duration_min/60 for the local session model (which keys off durationHours, not expires_at).",
+        "resume does NOT update duration: a same-device re-tap with a different duration_min returns the existing session unchanged (verified: re-tap 05 with 120 still shows 60). Correct — the paid clock can't be extended by re-scanning.",
+        "duration_min is validated against {60,90,120,180} (the rental-code durations) and coerced to 60 on anything else (verified: 999 -> 60)."
+      ],
       "open_questions": [
-        "Does tapping 'Start route' need a confirm so a curious tap doesn't start the clock? Spec §7 recommends yes — decide before phase 3 ships."
+        "Start-route confirm dialog (spec §7): NOT added. The accept tap is already the end of a deliberate multi-step flow (code entry -> summary review -> accept-with-tile-precache), not a stray tap, so the clock starting there is intended. Owner to confirm; trivial to add a confirm() in btnAccept if wanted."
       ]
     },
     {

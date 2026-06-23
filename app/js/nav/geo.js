@@ -63,6 +63,90 @@ export function totalPathKm(pts) {
 }
 
 /**
+ * Cumulative along-track distance (metres) at each vertex of a polyline.
+ * `cum[0]` is 0; `cum[i]` is the summed segment length from the start to
+ * vertex `i`. Used as the metric base for projecting a live position onto a
+ * route track (see {@link projectOntoTrack}).
+ * @param {Array<[number, number]>} track
+ * @returns {number[]}
+ */
+export function cumulativeDistancesM(track) {
+  const cum = new Array(track.length);
+  cum[0] = 0;
+  for (let i = 1; i < track.length; i++) {
+    cum[i] = cum[i - 1] + haversineM(track[i - 1], track[i]);
+  }
+  return cum;
+}
+
+/**
+ * Project a [lng, lat] position onto a polyline track and report where, and how
+ * far along, it lands. This is the geometric core of continuous trip progress:
+ * "how far along the coast am I" is the distance along the track to the nearest
+ * point ON the track, not the straight-line distance to a POI (which reads
+ * falsely on a curving coast).
+ *
+ * Each segment uses a local equirectangular approximation (metres relative to
+ * the segment's start), which is accurate to well under a metre at kayak scale
+ * (sub-kilometre segments, ~42°N).
+ *
+ * @param {Array<[number, number]>} track — dense [lng, lat] polyline
+ * @param {[number, number]} coord — live position [lng, lat]
+ * @param {number[]} [cum] — precomputed {@link cumulativeDistancesM}(track) for perf
+ * @returns {{ distAlongM: number, crossDistM: number, segIdx: number, t: number, point: [number, number] }}
+ *   distAlongM — metres along the track to the projection;
+ *   crossDistM — perpendicular metres from `coord` to the track;
+ *   segIdx — index of the segment start vertex; t — 0..1 position within it;
+ *   point — the projected [lng, lat] on the track.
+ */
+export function projectOntoTrack(track, coord, cum = cumulativeDistancesM(track)) {
+  if (!track || track.length === 0) {
+    return { distAlongM: 0, crossDistM: Infinity, segIdx: 0, t: 0, point: coord };
+  }
+  if (track.length === 1) {
+    return { distAlongM: 0, crossDistM: haversineM(coord, track[0]), segIdx: 0, t: 0, point: track[0] };
+  }
+
+  const M_PER_DEG_LAT = 111_320;
+  // Convert a point to local metres relative to `origin` ([lng, lat]).
+  const toXY = ([lng, lat], [lng0, lat0]) => {
+    const mPerDegLng = M_PER_DEG_LAT * Math.cos((lat0 * Math.PI) / 180);
+    return [(lng - lng0) * mPerDegLng, (lat - lat0) * M_PER_DEG_LAT];
+  };
+
+  let best = {
+    distAlongM: 0,
+    crossDistM: Infinity,
+    segIdx: 0,
+    t: 0,
+    point: track[0],
+  };
+
+  for (let i = 0; i < track.length - 1; i++) {
+    const a = track[i];
+    const b = track[i + 1];
+    const [bx, by] = toXY(b, a);
+    const [px, py] = toXY(coord, a);
+    const segLen2 = bx * bx + by * by;
+    const t = segLen2 === 0 ? 0 : Math.min(1, Math.max(0, (px * bx + py * by) / segLen2));
+    const cx = t * bx;
+    const cy = t * by;
+    const crossDistM = Math.hypot(px - cx, py - cy);
+    if (crossDistM < best.crossDistM) {
+      const segLenM = Math.sqrt(segLen2);
+      best = {
+        distAlongM: cum[i] + t * segLenM,
+        crossDistM,
+        segIdx: i,
+        t,
+        point: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t],
+      };
+    }
+  }
+  return best;
+}
+
+/**
  * Estimated paddling time for a given distance.
  * @param {number} km
  * @param {number} [speedKmh] — defaults to config value

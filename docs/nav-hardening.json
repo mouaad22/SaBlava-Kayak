@@ -143,7 +143,7 @@
       "finished_at": "2026-06-24",
       "tested": true,
       "committed": true,
-      "commit_sha": "f170756 (branch feat/nav-hardening-session-2, NOT yet on main; manifest sha-backfill commit follows). Like session-1 this lands on a feature branch — getting it to prod (Cloudflare auto-deploys from main) needs a merge decision by the owner.",
+      "commit_sha": "f170756 (+30d3a3d sha-backfill); MERGED to main as c0c3ad0 and PUSHED 2026-06-24 → Cloudflare auto-deploy from main triggered. Sim happy-path QA passed before merge (owner confirmed smooth continuous progress, arrival chimes, turnaround→Tornada, clean console; the straight POI-to-POI dot is a sim artifact, not the app). Merge auto-resolved cleanly with main's SOS-number commit f39c179.",
       "depends_on": ["session-1"],
       "files_in_scope": [
         "app/js/nav/trip-progress.js (NEW — pure, testable: no DOM, no globals)",

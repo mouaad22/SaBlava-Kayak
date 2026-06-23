@@ -6,30 +6,43 @@
 import { checkAuth, logout } from "./api.js";
 import { renderLogin } from "./login.js";
 import { renderBoard } from "./board.js";
+import { renderHistory } from "./history.js";
 
 const host = document.getElementById("panel-root");
-let board = null;
+let screen = null; // the live board/history handle, so we can stop its timers
 
-function stopBoard() {
-  board?.stop();
-  board = null;
+function stopScreen() {
+  screen?.stop?.();
+  screen = null;
+}
+
+async function doLogout() {
+  await logout();
+  showLogin();
 }
 
 function showLogin() {
-  stopBoard();
+  stopScreen();
   renderLogin(host, showBoard);
 }
 
 function showBoard() {
-  stopBoard();
-  board = renderBoard(host, {
+  stopScreen();
+  screen = renderBoard(host, {
     onUnauthorized: showLogin,
-    onLogout: async () => {
-      await logout();
-      showLogin();
-    },
+    onHistory: showHistory,
+    onLogout: doLogout,
     // The return action lives inside board.js (it needs the card/DOM state);
     // the board POSTs /api/panel/finish itself.
+  });
+}
+
+function showHistory() {
+  stopScreen();
+  screen = renderHistory(host, {
+    onUnauthorized: showLogin,
+    onBack: showBoard,
+    onLogout: doLogout,
   });
 }
 

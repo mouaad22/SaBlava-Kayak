@@ -272,6 +272,107 @@ body {
   color: var(--color-text-secondary);
 }
 
+/* ── History view ────────────────────────────────────────────────────────── */
+
+.panel__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.panel__back {
+  font-size: 24px;
+  line-height: 1;
+  padding: 0 var(--space-2);
+  min-height: 36px;
+}
+.panel__empty {
+  color: var(--color-text-secondary);
+  font-size: var(--fs-body-sm);
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  margin: 0;
+}
+
+.history-card {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: start;
+  gap: var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-4);
+  border-left: 4px solid var(--color-track);
+}
+.history-card[data-reason="early"] {
+  border-left-color: var(--color-sage);
+}
+.history-card[data-reason="returned"] {
+  border-left-color: var(--color-primary);
+}
+.history-card[data-reason="handover"] {
+  border-left-color: var(--color-track);
+}
+
+.history-card__num {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+.history-card__main {
+  min-width: 0;
+}
+.history-card__row {
+  font-size: var(--fs-body-sm);
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 2px;
+}
+.history-card__t {
+  display: inline-block;
+  min-width: 48px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+.history-card__dur {
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+.history-card__events {
+  margin-top: var(--space-2);
+  font-size: var(--fs-label-md);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.history-card__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+.history-card__pill {
+  font-size: var(--fs-label-md);
+  font-weight: 600;
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.history-card__pill--early {
+  background: rgba(74, 155, 114, 0.16);
+  color: #2f7853;
+}
+.history-card__pill--returned {
+  background: rgba(27, 107, 138, 0.12);
+  color: var(--color-primary);
+}
+.history-card__pill--handover {
+  background: var(--color-track);
+  color: var(--color-text-secondary);
+}
+
 /* ── Toast (return-action failure) ───────────────────────────────────────── */
 
 .panel__toast {

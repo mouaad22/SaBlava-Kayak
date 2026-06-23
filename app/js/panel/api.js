@@ -33,6 +33,10 @@ export function getBoard() {
   return request("/api/panel/board", { method: "GET" });
 }
 
+export function getHistory() {
+  return request("/api/panel/history", { method: "GET" });
+}
+
 export function finishTrip(kayakId) {
   return request("/api/panel/finish", { method: "POST", body: JSON.stringify({ kayak_id: kayakId }) });
 }

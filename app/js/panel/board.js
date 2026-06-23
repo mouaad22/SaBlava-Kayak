@@ -74,6 +74,7 @@ export function renderBoard(host, hooks = {}) {
         <h1 class="panel__title">Caiacs</h1>
         <div class="panel__meta">
           <span class="panel__status" data-status>Carregant…</span>
+          <button class="panel-btn panel-btn--ghost" data-history type="button">Historial</button>
           <button class="panel-btn panel-btn--ghost" data-logout type="button">Sortir</button>
         </div>
       </header>
@@ -85,9 +86,11 @@ export function renderBoard(host, hooks = {}) {
   const listEl = host.querySelector("[data-list]");
   const statusEl = host.querySelector("[data-status]");
   const logoutBtn = host.querySelector("[data-logout]");
+  const historyBtn = host.querySelector("[data-history]");
   const toastEl = host.querySelector("[data-toast]");
 
   logoutBtn.addEventListener("click", () => hooks.onLogout?.());
+  historyBtn.addEventListener("click", () => hooks.onHistory?.());
 
   // kayak_id -> { el, item, refs }
   const cards = new Map();

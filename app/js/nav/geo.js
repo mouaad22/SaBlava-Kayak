@@ -3,7 +3,12 @@
 // All coordinate pairs are [longitude, latitude] (GeoJSON / Mapbox convention).
 // Distance is always in metres unless the function name says otherwise.
 
-import { KAYAK_SPEED_KMH } from "../config.js";
+import {
+  KAYAK_SPEED_KMH,
+  GPS_MAX_ACCURACY_M,
+  GPS_ACQUIRE_TIMEOUT_MS,
+  GPS_STALE_FIX_MS,
+} from "../config.js";
 
 /** Earth radius in metres (WGS-84 mean). */
 const R = 6_371_000;
@@ -155,5 +160,84 @@ export function watchPosition(onUpdate, onError) {
     maximumAge: 0,
     timeout: 5_000,
   });
+  return () => navigator.geolocation.clearWatch(id);
+}
+
+/**
+ * Accuracy-filtered GPS watch with typed state reporting.
+ *
+ * Wraps `navigator.geolocation.watchPosition`, DROPS fixes whose
+ * `coords.accuracy` is worse than the accuracy threshold (so a noisy fix never
+ * jumps the marker or falsely "arrives" at a POI), and reports a coarse state
+ * to the caller so the UI can show honest banners instead of always blaming a
+ * denied permission.
+ *
+ * States emitted via `onState`:
+ *   - "acquiring"    — watching, no usable fix yet (initial state)
+ *   - "ok"           — a fix within the accuracy threshold was just delivered
+ *   - "low-accuracy" — fixes arrive but stay worse than the threshold for
+ *                      longer than GPS_STALE_FIX_MS
+ *   - "timeout"      — no fix within the acquire timeout (err.code 3)
+ *   - "unavailable"  — position unavailable / geolocation unsupported (err.code 2)
+ *   - "denied"       — permission denied (err.code 1)
+ *
+ * @param {(pos: GeolocationPosition) => void} onFix   — called only for accepted fixes
+ * @param {(state: string) => void}           onState — coarse state changes
+ * @param {{ maxAccuracyM?: number, acquireTimeoutMs?: number, staleFixMs?: number }} [opts]
+ * @returns {() => void} cleanup function (clears the watch)
+ */
+export function watchFilteredPosition(onFix, onState, opts = {}) {
+  const maxAccuracyM     = opts.maxAccuracyM     ?? GPS_MAX_ACCURACY_M;
+  const acquireTimeoutMs = opts.acquireTimeoutMs ?? GPS_ACQUIRE_TIMEOUT_MS;
+  const staleFixMs       = opts.staleFixMs       ?? GPS_STALE_FIX_MS;
+
+  if (!navigator.geolocation) {
+    onState?.("unavailable");
+    return () => {};
+  }
+
+  let gotUsableFix   = false;
+  let lowAccuracyAt  = null; // timestamp of the first sustained over-threshold fix
+  let lastState      = null;
+
+  // Collapse repeated identical states so the UI isn't churned every second.
+  const emit = (state) => {
+    if (state === lastState) return;
+    lastState = state;
+    onState?.(state);
+  };
+
+  emit("acquiring");
+
+  const id = navigator.geolocation.watchPosition(
+    (pos) => {
+      const acc = pos.coords?.accuracy;
+      if (typeof acc === "number" && acc > maxAccuracyM) {
+        // A fix arrived but it is too imprecise to trust — drop it.
+        const now = Date.now();
+        if (lowAccuracyAt == null) lowAccuracyAt = now;
+        if (now - lowAccuracyAt >= staleFixMs) emit("low-accuracy");
+        return;
+      }
+      // Accepted fix.
+      lowAccuracyAt = null;
+      gotUsableFix  = true;
+      emit("ok");
+      onFix?.(pos);
+    },
+    (err) => {
+      // While usable fixes are flowing, transient errors are noise — ignore them.
+      if (gotUsableFix && err.code !== 1) return;
+      if (err.code === 1) emit("denied");
+      else if (err.code === 3) emit("timeout");
+      else emit("unavailable");
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: acquireTimeoutMs,
+    }
+  );
+
   return () => navigator.geolocation.clearWatch(id);
 }

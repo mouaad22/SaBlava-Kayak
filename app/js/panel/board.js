@@ -102,7 +102,10 @@ export function renderBoard(host, hooks = {}) {
       <div class="kayak-card__num">${item.kayak_id}</div>
       <div class="kayak-card__main">
         <div class="kayak-card__track"><div class="kayak-card__fill"></div></div>
-        <div class="kayak-card__label" data-label></div>
+        <div class="kayak-card__meta">
+          <span class="kayak-card__label" data-label></span>
+          <span class="kayak-card__badge" data-badge hidden>2 dispositius</span>
+        </div>
       </div>
       <div class="kayak-card__side">
         <span class="kayak-card__pill" data-pill></span>
@@ -112,6 +115,7 @@ export function renderBoard(host, hooks = {}) {
     const refs = {
       fill: el.querySelector(".kayak-card__fill"),
       label: el.querySelector("[data-label]"),
+      badge: el.querySelector("[data-badge]"),
       pill: el.querySelector("[data-pill]"),
       action: el.querySelector("[data-action]"),
     };
@@ -127,6 +131,10 @@ export function renderBoard(host, hooks = {}) {
     el.dataset.state = v.state;
     refs.fill.style.width = `${v.fillPct}%`;
     refs.label.textContent = v.label;
+    // Soft, informational only: more than one phone scanned this live kayak
+    // (two paddlers sharing a code, or a re-scan). Never an alarm — the clock
+    // is never reset or blocked (SESSION-TRACKING-DESIGN.md §2 anti-fraud rule).
+    refs.badge.hidden = !(item.second_device && v.state !== "available");
     refs.pill.textContent = v.pill;
     if (v.showAction) {
       refs.action.hidden = false;

@@ -143,7 +143,7 @@
       "finished_at": "2026-06-24",
       "tested": true,
       "committed": true,
-      "commit_sha": "PENDING_FILL_AFTER_COMMIT",
+      "commit_sha": "f170756 (branch feat/nav-hardening-session-2, NOT yet on main; manifest sha-backfill commit follows). Like session-1 this lands on a feature branch — getting it to prod (Cloudflare auto-deploys from main) needs a merge decision by the owner.",
       "depends_on": ["session-1"],
       "files_in_scope": [
         "app/js/nav/trip-progress.js (NEW — pure, testable: no DOM, no globals)",

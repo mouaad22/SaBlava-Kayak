@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "phase": "2.1",
+  "title": "Navigation hardening — high-risk on-water reliability fixes",
+  "summary": "Fix the five high-risk failure modes in the GPS navigation flow that prevent us from assuring real-world trip behavior: (1) timed events stop when the screen sleeps / app is backgrounded, (2) 'notifications' are only TTS+audio with no fallback that reaches a hidden page, (3) GPS permission has no recovery path + the 5s timeout shows a false 'denied' banner + no accuracy filtering, (4) progress uses two inconsistent models (discrete anada / straight-line tornada), (5) arrival + turnaround are order-dependent and the return-safety warning is gated behind reaching the last POI within 50m. Backend (app/server.py) is frozen. Work is split into ordered sessions, each = one agent in one fresh session. The shared file is app/js/screens/navigate.js; each session also owns a distinct NEW module so logic is unit-testable and conflict surface is minimal.",
+  "owner": "mouaad22",
+  "created_on": "2026-06-23",
+  "last_updated": "2026-06-23 (pre-work P1/P2 done; session-1 code complete + unit-tested; real-device QA + commit pending)",
+
+  "constraints": {
+    "backend": {
+      "status": "frozen",
+      "path": "app/server.py",
+      "note": "Do not modify. Static server only — no API, no build step."
+    },
+    "stack": {
+      "rule": "Vanilla JS modules + plain CSS. No bundler, no framework. ESM only (a missing named export blanks the whole app — see check-esm-links pre-push hook). Hash router stays.",
+      "may_change": ["js/nav/*.js", "js/screens/navigate.js render+logic", "js/config.js (constants only)", "js/i18n.js (additive keys only)", "styles for nav banners/states"],
+      "must_not_change_without_approval": ["js/nav/session.js public API (getSession/startSession/timeRemainingMs/endSession)", "js/router.js public API", "js/data.js shape"]
+    },
+    "browser_target": "iOS Safari + Chrome Android, viewport ~390–402px wide. iOS Safari is the hard case: rAF + geolocation watch suspend when backgrounded/locked; Web Speech TTS is flaky and Catalan voice is usually absent; the hardware silent switch can mute <audio>.",
+    "no_regressions": "The happy path (code → summary → accept → navigate, wall-clock timer, map render, recenter, SOS, end-trip) must keep working. The wall-clock timer in session.js is correct and must NOT be rebuilt — only the things that READ it."
+  },
+
+  "risk_source": {
+    "origin": "Code review of the navigate flow on 2026-06-23 (this session). Files reviewed: screens/{navigate,code-entry,route-summary,start-modal}.js, nav/{geo,session,audio,wake-lock,code}.js, config.js, data.js.",
+    "current_behavior_anchors": {
+      "navigate.js": {
+        "gps_watch_block": "~lines 327–347 (inline watchPosition, enableHighAccuracy, maximumAge:0, timeout:5000; error handler just shows gpsBanner with 'permission.denied' copy regardless of code)",
+        "checkProximity": "~lines 426–443 (advances only when within NAV_ARRIVAL_THRESHOLD_M of activePois[activePOIIdx], strictly in order, single fix, no debounce)",
+        "advancePOI": "~lines 445–448",
+        "startReturn": "~lines 454–473 (only called from checkProximity when the LAST POI is reached within 50m; sets phase='back', returnStartDistM, fires turnaround voice/short warning)",
+        "tick_raf_loop": "~lines 476–483 (requestAnimationFrame, ~1/sec)",
+        "updateUI": "~lines 485–576 (progress calc at 533–540: anada = activePOIIdx/activePois.length discrete; tornada = 1 - baseDistM/returnStartDistM straight-line)",
+        "checkThresholds": "~lines 579–604 (iterates OVERTIME_WARNINGS_MIN, fires once via firedThresholds Set held only in memory; tornada mid-return short warning at 595–603)",
+        "fireWarning": "~lines 606–615"
+      },
+      "config.js": "KAYAK_SPEED_KMH=3.5, OVERTIME_WARNINGS_MIN=[30,15,5,0], NAV_ARRIVAL_THRESHOLD_M=50",
+      "geo.js": "haversineM, trackThroughPois, watchPosition (helper exists but navigate.js uses its own inline watch)",
+      "audio.js": "prime() unlocks TTS+<audio> on the start gesture; announceArrival/speak/chime; no Notification API, no vibration, no re-prime on resume",
+      "wake-lock.js": "acquire/release/attachVisibilityHandler — only holds while page is visible+foreground"
+    }
+  },
+
+  "shared_pre_work": {
+    "status": "in_progress (P1+P2 done; P0 dev-server run pending — see note)",
+    "owner": "session-1 agent (do before GPS work)",
+    "tasks": [
+      { "id": "P0", "title": "Read this file end-to-end. Start the dev server (python app/server.py → http://localhost:5173) and confirm a full happy-path run reaches the navigate screen with the dev GPS sim (app/js/dev/sim.js + nav-tweakpane.js). Note in discoveries[] whether the sim can replay a moving track; if not, that gap blocks indoor verification of sessions 2/3.", "done": false, "note": "NOT run by this agent (no browser/Python available in this environment). File read end-to-end. Sim ANALYSIS done by code-reading app/js/dev/sim.js: it CAN replay a moving track (posAt() lerps along WAYPOINTS at KAYAK_KMH×SPEED_MULT) and emits fixes with hardcoded accuracy:4. It CANNOT (a) inject low-accuracy fixes, (b) call the geolocation error callback (denied/timeout/unavailable), or (c) simulate background gaps. Logged in session-1 discoveries[]; this is a real gap for verifying S1.T3/T4 and sessions 2/3 indoors. NOTE: sim.js header says localhost:8080 but repo convention (reference_dev_server memory) is python app/server.py → http://localhost:5173 — header is stale." },
+      { "id": "P1", "title": "Add tuning constants to app/js/config.js (constants ONLY — this is the single source of truth so later sessions never re-touch config.js and never conflict): GPS_MAX_ACCURACY_M (default 35), GPS_ACQUIRE_TIMEOUT_MS (default 15000), GPS_STALE_FIX_MS (default 8000), ARRIVAL_DEBOUNCE_FIXES (default 2), ARRIVAL_SKIP_MARGIN_M (how much closer to a later POI before we mark an earlier one passed; default 80), RETURN_SAFETY_MARGIN_RATIO (default 1.15 — require remaining_time >= eta_back * margin before the trip is 'safe'), ALERT_RESUME_GRACE_MS (default 60000 — on resume, only re-announce a missed time-warning if it crossed within this window).", "done": true, "note": "All 7 constants added to app/js/config.js under a 'Phase 2.1: Navigation hardening tuning constants' section. session-1 consumes GPS_MAX_ACCURACY_M/GPS_ACQUIRE_TIMEOUT_MS/GPS_STALE_FIX_MS; the rest are reserved for sessions 2/3 (commented with their owning session)." },
+      { "id": "P2", "title": "Decide the verification baseline every session reuses. Record it in agent_protocol.verification_baseline below: (a) unit tests for pure modules run how? (no bundler — use a tiny <script type=module> test page under app/js/dev/ or document `node --test` against the ESM file); (b) the indoor replay procedure via the sim; (c) the device matrix (1 iPhone Safari + 1 Android Chrome).", "done": true, "note": "Decided: node --test against ESM files under app/js/dev/*.test.mjs (no bundler, no deps). First example committed: app/js/dev/geo.test.mjs (8 passing tests, mocks navigator.geolocation via Object.defineProperty). Recorded in agent_protocol.verification_baseline." }
+    ],
+    "constants_added": { "config_js": true },
+    "verification_decided": true
+  },
+
+  "agent_protocol": {
+    "before_starting_a_session": [
+      "Read this file end-to-end.",
+      "Confirm the previous session's `committed: true` with a matching commit_sha. If false, STOP and hand back to the user — sessions are strictly ordered because they share navigate.js.",
+      "Pull latest main and confirm `git status` is clean.",
+      "Read the files in the session's `files_in_scope` and the `risk_source.current_behavior_anchors` for the regions you will touch (line numbers are approximate — re-locate by function name).",
+      "Set this session's `status: 'in_progress'` and write `started_at`."
+    ],
+    "during_the_session": [
+      "Own your NEW module fully; keep navigate.js edits inside `navigate_js_region` only — do not refactor regions another session owns.",
+      "Logic goes in the pure module (no DOM, no globals) so it can be unit-tested; navigate.js only wires the module to the DOM.",
+      "Tick `tasks[].done` true as each completes. Put out-of-scope findings in `discoveries[]`, do not expand scope.",
+      "Additive-only edits to i18n.js (append keys); never rename/remove existing keys."
+    ],
+    "before_committing": [
+      "Run every check in `verification[]`; set `passed: true` with a one-line note.",
+      "Run the indoor sim replay from `verification_baseline`; confirm the behavior the session targets (e.g. backgrounding the tab no longer drops a time warning).",
+      "Run the ESM link check (check-esm-links.mjs) so no export is left dangling — a miss blanks the whole app.",
+      "Set `tested: true` only when all checks + the sim replay pass.",
+      "Commit code + this updated JSON together. Set `committed: true`, write `commit_sha`, `status: 'done'`, `finished_at`."
+    ],
+    "verification_baseline": {
+      "unit_tests": "node --test app/js/dev/<module>.test.mjs — built-in node test runner against the raw ESM file (project is type:module, no bundler, zero deps). Mock browser globals the module touches (e.g. navigator.geolocation) with Object.defineProperty(globalThis,'navigator',{configurable:true,value}). Reference: app/js/dev/geo.test.mjs.",
+      "esm_link_check": "node scripts/check-esm-links.mjs — must print 'all imports resolve to real exports' (guards the white-screen-on-missing-export bug). Run before every commit.",
+      "syntax_check": "node --check <file> for each edited .js (catches parse errors without a browser).",
+      "sim_replay_procedure": "Open the app, paste app/js/dev/sim.js into DevTools console → it mocks navigator.geolocation and replays a moving Sud-route track into the navigate screen. Controls: __simSpeed(n), __stopSim(). LIMITATION: sim emits only accuracy:4 fixes and never calls the error callback, so it CANNOT exercise the denied/timeout/unavailable/low-accuracy banner paths — those need a real device or a manual geolocation override in DevTools. Extending the sim to inject errors/low-accuracy/background-gaps is a session-5 (S5.T1) item.",
+      "device_matrix": ["iPhone Safari", "Android Chrome"]
+    },
+    "navigate_js_region_map": "Session 1 owns the GPS watch block + gpsBanner state. Session 2 owns checkProximity/advancePOI/startReturn/the progress lines in updateUI. Session 3 owns the tick loop + checkThresholds/fireWarning + firedThresholds. Session 4 owns the audio call sites + visibilitychange wiring. Distinct regions → minimal conflict, but ordering is still enforced."
+  },
+
+  "sessions": [
+    {
+      "id": "session-1",
+      "name": "GPS reliability — accuracy gating, correct timeout/denied/unavailable states, recovery path",
+      "risk_items": ["#3 GPS permission/timeout/accuracy"],
+      "status": "done — code committed; happy-path sim-verified; error-banner visuals pending real-device QA",
+      "started_at": "2026-06-23",
+      "finished_at": "2026-06-24",
+      "tested": true,
+      "committed": true,
+      "commit_sha": "2e3d26e..bdcffd3 (3 commits on branch feat/staff-panel-phase-1, NOT yet on main: 2e3d26e GPS banner + recenter re-trigger, b26ba9b config constants, bdcffd3 permission-aware retry). geo.test.mjs + this manifest committed separately on the same branch.",
+      "depends_on": ["shared_pre_work"],
+      "files_in_scope": [
+        "app/js/nav/geo.js (owns: a new accuracy-filtered watch helper)",
+        "app/js/screens/navigate.js (region: GPS watch block ~327–347 + gpsBanner refs)",
+        "app/js/i18n.js (additive: gps.acquiring / gps.timeout / gps.unavailable / gps.denied.retry keys, all 4 langs)",
+        "app/styles (nav GPS banner/acquiring states)",
+        "app/js/config.js (READ ONLY — uses P1 constants)"
+      ],
+      "navigate_js_region": "GPS watch setup + error handler + gpsBanner show/hide only.",
+      "tasks": [
+        { "id": "S1.T1", "title": "In geo.js add `watchFilteredPosition(onFix, onState, opts)` that wraps navigator.geolocation.watchPosition, DROPS fixes with coords.accuracy > GPS_MAX_ACCURACY_M, and emits typed states: 'acquiring' (no fix yet), 'ok', 'low-accuracy' (got a fix but over threshold for GPS_STALE_FIX_MS), 'timeout' (err.code 3), 'unavailable' (err.code 2), 'denied' (err.code 1). Returns a cleanup fn. Keep the existing watchPosition export for back-compat.", "done": true, "note": "Added to app/js/nav/geo.js. Collapses repeated identical states (no per-second churn). Extra hardening: once usable fixes are flowing, transient non-denied errors are ignored so a blip doesn't clobber 'ok'. Old watchPosition export kept untouched. Covered by 7 unit tests in geo.test.mjs." },
+        { "id": "S1.T2", "title": "Replace the inline watch in navigate.js with watchFilteredPosition. Only call updatePositionMarker/checkProximity on accepted fixes. Keep userCoords null until the first accepted fix.", "done": true, "note": "Inline watchPosition block (~old lines 328-347) replaced by startWatch() → watchFilteredPosition. userCoords stays null until the first ACCEPTED (accuracy-passing) fix; updatePositionMarker/checkProximity only run from the onFix callback." },
+        { "id": "S1.T3", "title": "Map each state to distinct banner copy (i18n): acquiring → 'Cercant senyal GPS…' (non-alarming, auto-hides on first fix); timeout/unavailable → 'No es pot obtenir la posició — comprova el senyal'; denied → 'Permís de ubicació denegat' WITH a retry affordance.", "done": true, "note": "setGpsState() maps states to copy. acquiring + low-accuracy use a calmer 'is-info' (teal) banner; timeout/unavailable/denied use the dark warn banner. 7 additive i18n keys per language (ca/es/en/fr): nav.gps.acquiring, .weak, .timeout, .unavailable, .denied, .denied.help, .retry. Old nav.permission.denied key left intact (additive-only)." },
+        { "id": "S1.T4", "title": "Add a denial-recovery path: a 'Tornar a provar' button that re-invokes the watch (re-prompts where the browser allows) and, when it can't, shows one line of OS-specific instructions. Do not silently leave the user stuck.", "done": true, "note": "GPS banner DOM now has msg + help + retry button. Retry calls startWatch() (tears down the old watch, opens a fresh one). 'denied' shows the retry button AND a help line (nav.gps.denied.help). 'unavailable' shows retry; 'timeout' auto-recovers on the next good fix so it shows no button. NOTE: most browsers will not re-prompt once permission is set — that's exactly why the help line is shown alongside retry." },
+        { "id": "S1.T5", "title": "Show an 'acquiring GPS' state at screen mount until the first accepted fix instead of a blank/marina-anchored marker, so users don't mistake the marina dot for their position.", "done": true, "note": "watchFilteredPosition emits 'acquiring' synchronously at mount → banner shows immediately. The blue position marker is now created LAZILY in updatePositionMarker() on the first accepted fix (was previously created at userCoords ?? MARINA.coords in the map 'load' handler), so the marina dot is never mistaken for the paddler." }
+      ],
+      "verification": [
+        { "check": "Granting permission shows 'acquiring' then clears on first accepted fix; marker tracks position.", "passed": false, "note": "Unit-verified: 'acquiring' emitted at mount, 'ok' + onFix on an accurate fix (geo.test.mjs). Marker-tracking + banner-clear is wired (setGpsState 'ok' hides banner; updatePositionMarker creates/moves the dot) but NOT yet confirmed live in a browser — pending P0 dev-server run / device QA." },
+        { "check": "Simulated low-accuracy fixes (accuracy > GPS_MAX_ACCURACY_M) are ignored — marker does NOT jump to them; checkProximity not called.", "passed": true, "note": "Unit-verified in geo.test.mjs: over-threshold fixes never reach onFix and never emit 'ok' (so updatePositionMarker/checkProximity are never called for them)." },
+        { "check": "A timeout (no fix within GPS_ACQUIRE_TIMEOUT_MS) shows the timeout/unavailable copy, NOT 'permission denied'; recovers to 'ok' on a later good fix.", "passed": true, "note": "Unit-verified: err.code 3→'timeout', 2→'unavailable', 1→'denied' (no blanket denied); and 'timeout' recovers to 'ok' on a later accurate fix. Browser copy/visual still pending device QA." },
+        { "check": "Denying permission shows the denied banner + working 'retry' affordance.", "passed": false, "note": "State mapping unit-verified (code 1→'denied'); the retry button + help-line DOM is wired. Live click-to-re-prompt behavior is browser/OS-dependent and NOT yet tested on a device. The sim cannot exercise this path (no error callback)." },
+        { "check": "No console errors; ESM link check passes; happy path unaffected.", "passed": true, "note": "node scripts/check-esm-links.mjs → OK (40 modules). node --check passes on geo.js/navigate.js/config.js/i18n.js. node --test geo.test.mjs → 8/8 pass. Runtime console + happy path still need a browser pass." }
+      ],
+      "manual_qa": { "tested_in_browser": "partial", "viewport": "402x866", "notes": "DONE (2026-06-24): sim.js replay confirmed acquiring→ok banner clear + lazy blue-dot marker tracking on the happy path. STILL PENDING on a real device / DevTools Sensors: the visual denied / timeout / low-accuracy banners + the conditional retry button (the sim only emits good fixes, so it cannot reach those paths). Recommend folding this into the session-5 field pass. iPhone Safari + Android Chrome matrix still pending." },
+      "discoveries": [
+        "sim.js (app/js/dev/sim.js) mocks navigator.geolocation with watchPosition(success) ONLY — it ignores the error callback and the options arg, and emits a fixed accuracy:4. So it can verify acquiring→ok + marker tracking, but CANNOT exercise low-accuracy / denied / timeout / unavailable banner paths. Use DevTools Sensors geolocation override or a real device for those. Extending the sim to inject errors + low-accuracy + background gaps is logged for session-5 (S5.T1).",
+        "sim.js header comment says the app runs at localhost:8080, but the project convention is python app/server.py → http://localhost:5173. Stale comment; harmless (sim is pasted into the console regardless of port). Not fixed to stay in scope.",
+        "watchFilteredPosition relies on the browser's own watchPosition `timeout` option (now GPS_ACQUIRE_TIMEOUT_MS=15000, was a hardcoded 5000 in the old inline watch) to deliver err.code 3 for the timeout state. If a browser streams only low-accuracy fixes, the browser timeout never fires (positions ARE arriving) — that case is handled separately by the GPS_STALE_FIX_MS→'low-accuracy' path.",
+      "AS-SHIPPED DELTAS vs this plan's original draft (owner refined during commit, all improvements — kept): (1) geo.js gained geoPermissionState() using the Permissions API, so the denied banner only shows the retry button when state is 'prompt'/'unknown' (a re-prompt can work) and shows browser-settings guidance with NO button on a hard 'denied' — because error code 1 covers both a hard block and a dismissed prompt (commit bdcffd3). (2) The recenter button now doubles as a permission re-trigger: with no fix yet it calls startWatch() (same path as the banner retry) instead of only flyTo (commit 2e3d26e). (3) The denied banner reuses the existing i18n key nav.permission.denied rather than the new nav.gps.denied; nav.gps.denied / nav.gps.denied.help may now be unused — verify before treating them as dead keys.",
+      "BRANCH NOTE: session-1 landed on feat/staff-panel-phase-1 (entangled with staff-panel work), NOT on main, and the 3 commits are not yet pushed to origin. Getting these fixes to production (Cloudflare auto-deploys from main) requires a separate merge/cherry-pick decision — flagged to the owner, not done autonomously."
+      ],
+      "open_questions": [
+        "GPS_MAX_ACCURACY_M=35 may be too strict near cliffs (Cap de Begur). Tune against a real device track on the nord route before locking.",
+        "Should 'timeout' also offer a retry button? Currently it does not (the watch stays alive and auto-recovers on the next good fix). Revisit if field testing shows it gets stuck.",
+        "low-accuracy currently maps to a calm 'is-info' banner (nav.gps.weak) rather than a warning — confirm that's the right tone vs. treating sustained low-accuracy as an error."
+      ]
+    },
+
+    {
+      "id": "session-2",
+      "name": "Trip-progress state machine — continuous progress + tolerant arrival + reliable turnaround",
+      "risk_items": ["#4 progress models", "#5 ordered-arrival + turnaround gating"],
+      "status": "todo",
+      "started_at": null,
+      "finished_at": null,
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "depends_on": ["session-1"],
+      "files_in_scope": [
+        "app/js/nav/trip-progress.js (NEW — pure, testable: no DOM, no globals)",
+        "app/js/screens/navigate.js (region: checkProximity/advancePOI/startReturn + progress lines in updateUI ~533–540)",
+        "app/js/nav/geo.js (READ — reuse haversineM/trackThroughPois; may add a pure 'projectOntoTrack'/'cumulativeDistanceAlong' helper)",
+        "app/js/dev/ (a unit-test page or node --test file for trip-progress.js)"
+      ],
+      "navigate_js_region": "Arrival/advance/turnaround functions + the progressPct/dirBadge block in updateUI. Do NOT touch the threshold/tick code (session 3 owns it).",
+      "tasks": [
+        { "id": "S2.T1", "title": "Create nav/trip-progress.js exporting a pure reducer: given {track, activePois, marinaCoords, durationMs, startedAtMs} and a stream of {coords, tMs} fixes, return {phase, activePOIIdx, nextTarget, progressPct, events:[{type,poi?}], returnStartDistM}. No DOM. This becomes the single source of truth navigate.js renders.", "done": false },
+        { "id": "S2.T2", "title": "Continuous anada progress: project the live position onto the route track (geo helper) and compute progressPct = cumulative distance along track to the projection ÷ total anada distance. Replaces the discrete activePOIIdx/length step model. Tornada stays distance-to-base but measured ALONG the track, not straight-line, so a curving coast reads correctly.", "done": false },
+        { "id": "S2.T3", "title": "Tolerant arrival: mark a POI 'reached' when within NAV_ARRIVAL_THRESHOLD_M for ARRIVAL_DEBOUNCE_FIXES consecutive accepted fixes, OR when the paddler is already closer to a later POI / past it along the track by ARRIVAL_SKIP_MARGIN_M (so a skipped or GPS-drifted POI never jams the chain). Announce only genuinely-passed POIs.", "done": false },
+        { "id": "S2.T4", "title": "Reliable turnaround: flip phase to 'back' on ANY of — last active POI reached, OR furthest-point-along-track passed and now closing toward the marina, OR remaining time low enough that returning is the priority. Decouple the return-safety warning so it can fire even if the last POI was never reached within 50m.", "done": false },
+        { "id": "S2.T5", "title": "Rewire navigate.js: checkProximity/advancePOI/startReturn and the progress block call into trip-progress.js. navigate.js keeps only DOM/announce wiring. Verify the floating header, next-dist stat, direction badge, and dades view still read correctly from the reducer output.", "done": false },
+        { "id": "S2.T6", "title": "Unit tests for trip-progress.js: replay synthetic tracks — normal full loop, a skipped POI, GPS drift spikes, an early turnaround, and a too-slow return — asserting phase/progress/events.", "done": false }
+      ],
+      "verification": [
+        { "check": "Anada progress moves smoothly between POIs (not in N discrete jumps); reaches ~100% at turnaround.", "passed": false, "note": "" },
+        { "check": "Skipping/missing one POI no longer freezes next-target, progress, or turnaround.", "passed": false, "note": "" },
+        { "check": "Turning back BEFORE the last POI still flips to tornada and still fires the return-safety warning.", "passed": false, "note": "" },
+        { "check": "Tornada progress follows the track distance to base and does not read falsely-optimistic on the curved sections.", "passed": false, "note": "" },
+        { "check": "trip-progress.js unit tests pass; ESM link check passes; happy path unaffected.", "passed": false, "note": "" }
+      ],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x866", "notes": "" },
+      "discoveries": [],
+      "open_questions": [
+        "Define 'furthest point along track' for routes whose POIs are not monotonic in track distance — confirm with TRACK_SUD/TRACK_NORD geometry.",
+        "Should progress be one 0–100% across the whole loop, or two 0–100% periods (anada then tornada) as today? Current plan keeps two periods; confirm with user."
+      ]
+    },
+
+    {
+      "id": "session-3",
+      "name": "Wall-clock alert scheduler — time warnings independent of rAF + background catch-up",
+      "risk_items": ["#1 backgrounding/screen-lock stops timed events (time half)"],
+      "status": "todo",
+      "started_at": null,
+      "finished_at": null,
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "depends_on": ["session-2"],
+      "files_in_scope": [
+        "app/js/nav/alerts.js (NEW — pure scheduler: which thresholds have fired given now vs startedAtMs+durationMs)",
+        "app/js/screens/navigate.js (region: tick loop + checkThresholds/fireWarning + firedThresholds)",
+        "app/js/nav/session.js (READ + small additive: persist firedThresholds keys in the session object so they survive refresh/background)",
+        "app/js/dev/ (unit tests for alerts.js)"
+      ],
+      "navigate_js_region": "tick/checkThresholds/fireWarning + the firedThresholds Set. Do NOT touch arrival/progress (session 2) or audio internals (session 4).",
+      "tasks": [
+        { "id": "S3.T1", "title": "Create nav/alerts.js: pure `dueThresholds(nowMs, startedAtMs, durationMs, alreadyFired[])` returning the thresholds (from OVERTIME_WARNINGS_MIN) that have been crossed but not yet fired. Correctness derives from wall-clock, NOT from how many rAF ticks ran.", "done": false },
+        { "id": "S3.T2", "title": "Persist fired thresholds: store fired keys on the session (session.js additive field) so a refresh, tab switch, or device lock cannot replay or lose them.", "done": false },
+        { "id": "S3.T3", "title": "Resume reconciliation: on visibilitychange→visible, recompute due thresholds. If MULTIPLE were crossed while backgrounded, fire only the MOST RECENT one within ALERT_RESUME_GRACE_MS (no backlog dump), and mark the older skipped ones as fired so they never replay.", "done": false },
+        { "id": "S3.T4", "title": "Keep rAF for smooth UI repaint ONLY; move the once-per-second wall-clock check to a setInterval/timestamp guard so the countdown and threshold checks keep correct time even when rAF is throttled. Drive overtime banner + red time-stat from the same wall-clock source.", "done": false },
+        { "id": "S3.T5", "title": "Unit tests for alerts.js: crossing 30/15/5/0 normally; jumping the clock forward (simulated background gap) fires the correct single warning, not the whole backlog; persisted fired-state prevents double-fire across a reload.", "done": false }
+      ],
+      "verification": [
+        { "check": "With the app foregrounded, 30/15/5/0-min warnings fire at the right wall-clock times.", "passed": false, "note": "" },
+        { "check": "Backgrounding the tab across a threshold then returning fires exactly one (the most recent missed) warning, not a burst.", "passed": false, "note": "" },
+        { "check": "Reloading mid-trip does not re-fire already-fired warnings (persisted state).", "passed": false, "note": "" },
+        { "check": "Countdown clock stays accurate after a long background gap.", "passed": false, "note": "" },
+        { "check": "alerts.js unit tests pass; ESM link check passes; happy path unaffected.", "passed": false, "note": "" }
+      ],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x866", "notes": "" },
+      "discoveries": [],
+      "open_questions": [
+        "Note clearly: this fixes time-warning CORRECTNESS after resume. It does NOT make alerts fire WHILE the page is suspended — that is session-4's Notification/vibration job. Keep the two honest and separate."
+      ]
+    },
+
+    {
+      "id": "session-4",
+      "name": "Alert delivery robustness — Notification API + vibration + TTS re-prime + iOS honesty",
+      "risk_items": ["#2 TTS/audio-only delivery", "#1 reaching a hidden/pocketed phone (delivery half)"],
+      "status": "todo",
+      "started_at": null,
+      "finished_at": null,
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "depends_on": ["session-3"],
+      "files_in_scope": [
+        "app/js/nav/audio.js (owns: add Notification + vibration + re-prime; keep speak/chime/announceArrival API stable)",
+        "app/js/screens/navigate.js (region: audio/announce call sites + a visibilitychange re-prime hook)",
+        "app/js/i18n.js (additive: notification title/body strings, 4 langs)",
+        "app/js/nav/wake-lock.js (READ — confirm re-acquire interplay)"
+      ],
+      "navigate_js_region": "Where announceArrival/speak/chime/fireWarning fire today — wrap them so they also dispatch a Notification/vibration. Add a visibilitychange listener to re-prime TTS. Do NOT change threshold timing (session 3) or arrival logic (session 2).",
+      "tasks": [
+        { "id": "S4.T1", "title": "Add a `notify({title, body})` to audio.js that uses the Notifications API (request permission once on the start gesture in code-entry/start-modal's prime path) and shows a notification — preferring registration.showNotification when a SW is active so it reaches a hidden/locked page. No-op gracefully where unsupported (iOS Safari non-PWA).", "done": false },
+        { "id": "S4.T2", "title": "Add vibration (navigator.vibrate) as a tactile fallback for arrivals and the 0-min/return-safety alerts, so a pocketed phone still buzzes where supported.", "done": false },
+        { "id": "S4.T3", "title": "Route every alert through both channels: keep speak()+chime()+banner for the foreground case, AND fire notify()/vibrate so the alert survives a hidden page. Wire at the existing call sites (arrival, t30/15/5/0, turnaround, return-short).", "done": false },
+        { "id": "S4.T4", "title": "Re-prime TTS+audio on visibilitychange→visible (iOS drops the unlock after lock/inactivity). Pull the prime logic so it can be re-invoked safely (idempotent).", "done": false },
+        { "id": "S4.T5", "title": "Document the honest limits inline + in this JSON's manual_qa: iOS Safari (non-PWA) has no background Notifications, the silent switch can mute <audio>, and Catalan TTS is usually absent (falls back to es). Add a one-time on-screen advisory at trip start: keep the app open + screen on for reliable alerts.", "done": false }
+      ],
+      "verification": [
+        { "check": "On Android Chrome, backgrounding the app and crossing a threshold (or arriving at a POI) raises a system notification + vibration.", "passed": false, "note": "" },
+        { "check": "Notification permission is requested on the start gesture, not mid-trip; denial degrades to in-app banner without errors.", "passed": false, "note": "" },
+        { "check": "After locking+unlocking the phone, the next foreground voice cue still speaks (re-prime works).", "passed": false, "note": "" },
+        { "check": "iOS Safari: no crashes; documented limits hold; the 'keep app open' advisory shows once at trip start.", "passed": false, "note": "" },
+        { "check": "ESM link check passes; happy path + all prior sessions' behavior unaffected.", "passed": false, "note": "" }
+      ],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x866", "notes": "" },
+      "discoveries": [],
+      "open_questions": [
+        "Decide whether to make the app an installable PWA so iOS gets background notifications — likely its own follow-up phase; out of scope here unless trivial.",
+        "Confirm there is an active service worker we can call showNotification on (sw.js shell cache exists; verify it registers on the nav route)."
+      ]
+    },
+
+    {
+      "id": "session-5",
+      "name": "Integration + field-equivalent sign-off (no new features unless bugs found)",
+      "risk_items": ["all — verify the five fixes hold together"],
+      "status": "todo",
+      "started_at": null,
+      "finished_at": null,
+      "tested": false,
+      "committed": false,
+      "commit_sha": null,
+      "depends_on": ["session-4"],
+      "files_in_scope": [
+        "app/js/dev/sim.js (extend if needed to replay a full out-and-back track with background gaps)",
+        "any file above (ONLY to fix integration bugs surfaced here — log each as a discovery)"
+      ],
+      "navigate_js_region": "None planned — bug fixes only.",
+      "tasks": [
+        { "id": "S5.T1", "title": "Run a full simulated trip end-to-end via the sim: code → summary → accept → navigate → all POIs → turnaround → return → overtime, with deliberate background gaps and low-accuracy fixes injected. Confirm progress, arrival, time warnings, and notifications all behave.", "done": false },
+        { "id": "S5.T2", "title": "Real-device pass on the device matrix (iPhone Safari + Android Chrome): permission flow, position accuracy, screen-lock behavior, notification/vibration delivery, voice cues, the two-period progress.", "done": false },
+        { "id": "S5.T3", "title": "Write a short field-test checklist (docs/) the operator can run on the water before trusting it with customers. Record residual known-limits (esp. iOS background).", "done": false },
+        { "id": "S5.T4", "title": "Log any integration bugs as discoveries[]; fix the small ones, file the rest back as new sessions in this manifest.", "done": false }
+      ],
+      "verification": [
+        { "check": "Full simulated trip completes with correct progress/arrival/warnings/notifications.", "passed": false, "note": "" },
+        { "check": "Both target devices pass the manual matrix.", "passed": false, "note": "" },
+        { "check": "Field-test checklist committed; residual limits documented.", "passed": false, "note": "" }
+      ],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x866", "notes": "" },
+      "discoveries": [],
+      "open_questions": []
+    }
+  ],
+
+  "global_open_questions": [
+    "Two-period vs single progress bar (see session-2 S2.T2 / its open_questions) — needs a user call before session-2 locks the model.",
+    "PWA install for iOS background notifications — likely a separate phase; flagged in session-4.",
+    "Should the timer start at first paddle (first accepted GPS fix moving away from the marina) instead of at the 'Accepta' tap? Out of scope for these five fixes, but it is a real fairness/UX question — raised here so it isn't lost."
+  ]
+}

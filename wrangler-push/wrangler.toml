@@ -1,0 +1,23 @@
+# wrangler-push/wrangler.toml — the timed-push cron Worker.
+#
+# Cloudflare PAGES Functions (the rest of functions/) can't run cron, so this is
+# a separate standalone Worker bound to the SAME D1 database. Once a minute it
+# calls dispatchDuePushes() to fire the return-to-base warnings to backgrounded
+# phones. See docs/web-push.md for the one-time deploy + secrets.
+#
+# Deploy:  npm run deploy:push
+# Secrets: wrangler secret put VAPID_PRIVATE_KEY --config wrangler-push/wrangler.toml
+#          (also VAPID_PUBLIC_KEY, VAPID_SUBJECT, and optional CRON_SECRET)
+
+name = "sablava-push-cron"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+[triggers]
+crons = ["* * * * *"]
+
+# Bind the SAME database as the Pages project (id copied from ../wrangler.toml).
+[[d1_databases]]
+binding = "DB"
+database_name = "sablava-sessions"
+database_id = "3970fd9c-c208-4b25-9da9-da4a7bad4ff2"

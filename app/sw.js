@@ -21,7 +21,7 @@
 // index.html listens for `controllerchange` and reloads once, so an
 // already-open page also picks up the new version automatically.
 
-const SHELL_CACHE = "sablava-shell-v21";
+const SHELL_CACHE = "sablava-shell-v22";
 const TILE_CACHE  = "sablava-tiles-v2";
 
 // Core shell, pre-cached so the app boots offline even on first run.
@@ -100,6 +100,45 @@ self.addEventListener("fetch", (e) => {
 
   // Everything else same-origin (navigations, HTML, JS, CSS) → network-first.
   e.respondWith(networkFirst(req, SHELL_CACHE));
+});
+
+// ── Web Push ────────────────────────────────────────────────────────────────────
+// The server (functions/_lib/push.js) sends an encrypted JSON payload at each
+// time threshold so a backgrounded/locked phone still gets the return-to-base
+// warnings. We just render it. userVisibleOnly was promised at subscribe time,
+// so every push MUST show a notification.
+
+self.addEventListener("push", (e) => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch { /* non-JSON push — use defaults */ }
+
+  const title = data.title || "Sa Blava Kayak";
+  const options = {
+    body: data.body || "",
+    tag: data.tag || "nav-time",          // coalesces with the in-app banner
+    renotify: !!data.renotify,
+    requireInteraction: !!data.urgent,     // urgent cues (t5/t0) stay until tapped
+    vibrate: data.urgent ? [120, 60, 120] : [90],
+    lang: data.lang || undefined,
+    data: { url: data.url || "/" },
+  };
+  e.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Tapping a notification focuses the open app (or opens it), so the paddler
+// lands back on the live navigation screen.
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = e.notification.data?.url || "/";
+  e.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of windows) {
+        if ("focus" in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })(),
+  );
 });
 
 // ── Strategies ────────────────────────────────────────────────────────────────

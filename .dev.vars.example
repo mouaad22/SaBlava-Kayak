@@ -10,3 +10,12 @@ STAFF_PASSCODE="0000"
 
 # HMAC key used to sign the staff session cookie. Use a long random string.
 PANEL_SECRET="dev-only-not-secret-change-me"
+
+# Web Push (timed return-to-base alerts). Generate with `npm run gen:vapid`.
+# The public key is sent to every push service (not secret); the private key is.
+# Without these, /api/push/* cleanly no-ops and the app falls back to foreground
+# alerts. See docs/web-push.md. (The cron Worker needs the same three set as its
+# own secrets — these .dev.vars only cover the Pages dev server.)
+VAPID_PUBLIC_KEY=""
+VAPID_PRIVATE_KEY=""
+VAPID_SUBJECT="mailto:ops@sablavakayaks.com"

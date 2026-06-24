@@ -20,6 +20,7 @@ import { createTripProgress } from "../nav/trip-progress.js";
 import { reconcileThresholds } from "../nav/alerts.js";
 import { speak, chime, announceArrival, notify, vibrate, prime } from "../nav/audio.js";
 import { acquire, release, attachVisibilityHandler } from "../nav/wake-lock.js";
+import { ensurePushSubscription } from "../nav/push.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, ALERT_RESUME_GRACE_MS, KAYAK_SPEED_KMH } from "../config.js";
 import { addRouteTrack } from "./map.js";
 import { mountNavTweakpane } from "../dev/nav-tweakpane.js";
@@ -617,6 +618,9 @@ export function renderNavigateScreen(host, routeId) {
     // (idempotent) on resume so the next voice cue still speaks. This runs
     // inside the visibilitychange handler, which iOS treats as a user gesture.
     prime(lang);
+    // Permission may have just been granted via this gesture — (re)register for
+    // server-sent timed pushes so a backgrounded phone still gets the warnings.
+    ensurePushSubscription(lang);
     updateUI();
     checkThresholds();
   }
@@ -806,6 +810,11 @@ export function renderNavigateScreen(host, routeId) {
   // ── Wake lock ─────────────────────────────────────────────────────────────
   acquire();
   const cleanupVisibility = attachVisibilityHandler();
+
+  // Register for server-sent timed pushes. No-op unless a QR was scanned and
+  // notifications are granted; silently subscribes if a prior trip already
+  // granted permission, otherwise the onVisible handler picks it up post-grant.
+  ensurePushSubscription(lang);
 
   // ── Activate ──────────────────────────────────────────────────────────────
   requestAnimationFrame(() => {

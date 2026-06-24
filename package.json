@@ -7,9 +7,14 @@
   "scripts": {
     "dev": "wrangler pages dev app",
     "db:init": "wrangler d1 execute DB --local --file=./schema.sql",
-    "db:init:remote": "wrangler d1 execute DB --remote --file=./schema.sql"
+    "db:init:remote": "wrangler d1 execute DB --remote --file=./schema.sql",
+    "db:migrate:push": "wrangler d1 execute DB --local --file=./migrations/0002_push.sql",
+    "db:migrate:push:remote": "wrangler d1 execute DB --remote --file=./migrations/0002_push.sql",
+    "gen:vapid": "node scripts/gen-vapid.mjs",
+    "deploy:push": "wrangler deploy --config wrangler-push/wrangler.toml",
+    "test:push": "node --test functions/_lib/webpush.test.mjs functions/_lib/push.test.mjs"
   },
   "devDependencies": {
-    "wrangler": "^3.90.0"
+    "wrangler": "^4.104.0"
   }
 }

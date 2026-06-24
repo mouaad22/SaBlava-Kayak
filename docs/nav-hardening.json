@@ -224,7 +224,7 @@
       "open_questions": [
         "Note clearly: this fixes time-warning CORRECTNESS after resume. It does NOT make alerts fire WHILE the page is suspended — that is session-4's Notification/vibration job. Keep the two honest and separate.",
         "ALERT_RESUME_GRACE_MS=60s means a threshold crossed >60s before you reopen the tab is silently marked fired (no stale cue). Confirm on a real trip that 60s feels right — too short and a brief glance-away near a boundary could swallow a still-relevant warning; too long and you get a stale cue. Tune in session-5 field testing.",
-        "BRANCH/DEPLOY: like sessions 1 & 2, decide whether to merge session-3 to main (Cloudflare auto-deploys from main) now or batch with session-4. Session-2 was merged to main; session-1 landed on feat/staff-panel-phase-1 and is NOT yet on main — confirm session-1's GPS fixes reach main before trusting the full nav-hardening set in production."
+        "BRANCH/DEPLOY: sessions 1 AND 2 are both confirmed on main (session-1 commits 2e3d26e/b26ba9b/bdcffd3 reached main via the staff-panel merge; the earlier 'session-1 not on main' note was stale). Session-3 is merged to main the same way (Cloudflare auto-deploys from main). Pushing main triggers the production deploy."
       ]
     },
 

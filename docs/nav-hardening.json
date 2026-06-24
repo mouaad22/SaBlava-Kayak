@@ -282,8 +282,8 @@
       "started_at": "2026-06-24",
       "finished_at": null,
       "tested": "partial — logic/integration fully tested headlessly (40/40 suite incl. 6 new integration tests); real-device matrix pending owner",
-      "committed": false,
-      "commit_sha": null,
+      "committed": "deliverables only — code+docs landed; session NOT fully done until S5.T2 device pass",
+      "commit_sha": "c52338b (code+docs+manifest, branch nav-hardening-session-5) + sha-backfill; merge-to-main sha recorded post-merge. NOT pushed (no production behavior change — only dev test/sim + docs; push after the S5.T2 device pass).",
       "depends_on": ["session-4"],
       "files_in_scope": [
         "app/js/dev/sim.js (extend if needed to replay a full out-and-back track with background gaps)",

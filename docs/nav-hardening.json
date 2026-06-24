@@ -237,7 +237,7 @@
       "finished_at": "2026-06-24",
       "tested": true,
       "committed": true,
-      "commit_sha": "103a5af (code + manifest) on branch feat/nav-hardening-session-4, NOT yet merged to main. Merging to main triggers the Cloudflare production deploy — left to the owner (same flag sessions 1-3 carried). The unrelated working-tree changes (package.json, sun-clock.js, docs) were deliberately NOT included in the commit.",
+      "commit_sha": "103a5af (code) + 2f69fd6 (sha-backfill); MERGED to main as 1b56ed6 (no-ff) and PUSHED 2026-06-24 (51dc1b0..1b56ed6) → Cloudflare auto-deploy from main triggered. Pre-push ESM link check passed (44 modules); full suite 34/34. The unrelated working-tree changes (package.json, sun-clock.js, docs) were deliberately NOT included. Real-device notification/vibration/re-prime/iOS QA still pending (folded into session-5).",
       "depends_on": ["session-3"],
       "files_in_scope": [
         "app/js/nav/audio.js (owns: add Notification + vibration + re-prime; keep speak/chime/announceArrival API stable)",

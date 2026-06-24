@@ -13,12 +13,14 @@ import { t, getLanguage } from "../i18n.js";
 import { navigate } from "../router.js";
 import {
   getSession, endSession, timeRemainingMs, isActive,
+  getFiredThresholds, markThresholdsFired,
 } from "../nav/session.js";
 import { haversineM, trackThroughPois, watchFilteredPosition, geoPermissionState } from "../nav/geo.js";
 import { createTripProgress } from "../nav/trip-progress.js";
+import { reconcileThresholds } from "../nav/alerts.js";
 import { speak, chime, announceArrival } from "../nav/audio.js";
 import { acquire, release, attachVisibilityHandler } from "../nav/wake-lock.js";
-import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, OVERTIME_WARNINGS_MIN, KAYAK_SPEED_KMH } from "../config.js";
+import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, ALERT_RESUME_GRACE_MS, KAYAK_SPEED_KMH } from "../config.js";
 import { addRouteTrack } from "./map.js";
 import { mountNavTweakpane } from "../dev/nav-tweakpane.js";
 
@@ -57,8 +59,12 @@ export function renderNavigateScreen(host, routeId) {
   let positionMarker   = null;
   let watchCleanup     = null;
   let rafId            = null;
+  let clockId          = null;     // setInterval id for the wall-clock alert tick
   let lastTickMs       = 0;
-  const firedThresholds = new Set(); // "t30" | "t15" | "t5" | "t0"
+  // Seed from the session so a refresh / background-lock mid-trip cannot replay
+  // an already-fired time warning. nav/alerts.js owns which are due; we persist
+  // the ones announced (see markThresholdsFired).
+  const firedThresholds = new Set(getFiredThresholds()); // "t30" | "t15" | "t5" | "t0"
 
   // Trip phase mirrors the reducer below: "out" = anada (heading through the
   // POIs), "back" = tornada (returning to base). updateUI and the threshold net
@@ -555,15 +561,38 @@ export function renderNavigateScreen(host, routeId) {
     flashBanner(t(key, lastName, remMin));
   }
 
-  // ── rAF tick loop (~1/sec) ────────────────────────────────────────────────
+  // ── rAF repaint loop (~1/sec) ─────────────────────────────────────────────
+  // rAF drives the SMOOTH UI repaint only (countdown, progress, distances — all
+  // already derived from the wall clock via timeRemainingMs/the reducer). It is
+  // intentionally NOT responsible for time-warning correctness: rAF throttles
+  // hard when the tab is backgrounded or the screen locks, which used to drop or
+  // delay the 30/15/5/0-min cues. Those run off the wall-clock interval below.
   function tick(ts) {
     if (ts - lastTickMs >= 1000) {
       lastTickMs = ts;
       updateUI();
-      checkThresholds();
     }
     rafId = requestAnimationFrame(tick);
   }
+
+  // ── Wall-clock alert tick (independent of rAF) ────────────────────────────
+  // A plain interval whose correctness comes from Date.now inside checkThresholds,
+  // so the warnings fire at the right wall-clock times even if rAF stalls.
+  // Coalesced / late / dropped interval ticks are harmless: checkThresholds
+  // reconciles against the clock, not against tick count, and a tick missed while
+  // the page is hidden is recovered by onVisible below.
+  function startClock() {
+    clockId = setInterval(checkThresholds, 1000);
+  }
+
+  // Resume reconciliation: on returning to a visible page, immediately recompute
+  // (don't wait up to a second for the interval) so a missed warning that
+  // crossed while hidden surfaces at once — reconcileThresholds collapses a
+  // backlog to a single fresh cue. Also repaints the countdown right away.
+  function onVisible() {
+    if (document.visibilityState === "visible") { updateUI(); checkThresholds(); }
+  }
+  document.addEventListener("visibilitychange", onVisible);
 
   function updateUI() {
     const remMs    = timeRemainingMs();
@@ -653,24 +682,35 @@ export function renderNavigateScreen(host, routeId) {
     }
   }
 
-  // ── Threshold warnings ────────────────────────────────────────────────────
+  // ── Threshold warnings (wall-clock scheduler) ─────────────────────────────
+  // Correctness derives from Date.now vs the session's start+duration, NOT from
+  // how many ticks ran (nav/alerts.js). reconcileThresholds fires at most one
+  // cue — the most recently crossed, and only if within ALERT_RESUME_GRACE_MS —
+  // and tells us every threshold to mark fired, so returning from a long
+  // background gap announces a single fresh warning instead of a stale backlog.
+  // Fired keys are persisted to the session so a reload can't replay them.
   function checkThresholds() {
-    const remMs  = timeRemainingMs();
-    if (isNaN(remMs)) return;
-    const remMin = remMs / 60_000;
+    const s = getSession();
+    if (!s) return;
 
-    for (const threshMin of OVERTIME_WARNINGS_MIN) {
-      const key = `t${threshMin}`;
-      if (!firedThresholds.has(key) && remMin <= threshMin) {
-        firedThresholds.add(key);
-        fireWarning(threshMin);
-      }
+    const { fire, markFired } = reconcileThresholds({
+      nowMs: Date.now(),
+      startedAtMs: s.startedAtMs,
+      durationMs: s.durationHours * 3_600_000,
+      fired: [...firedThresholds],
+      graceMs: ALERT_RESUME_GRACE_MS,
+    });
+    if (markFired.length) {
+      markFired.forEach((k) => firedThresholds.add(k));
+      markThresholdsFired(markFired);
     }
+    if (fire) fireWarning(fire.threshMin);
 
     // Tornada safety net: if a shortfall develops mid-return (and wasn't already
     // flagged at the turnaround), warn once. The red time stat is live-driven
     // in updateUI; this just adds the one-time voice + banner.
     if (phase === "back" && !shortWarned && userCoords) {
+      const remMs     = timeRemainingMs();
       const etaBackMs = (haversineM(userCoords, MARINA.coords) / 1000) / KAYAK_SPEED_KMH * 3_600_000;
       if (remMs < etaBackMs) {
         shortWarned = true;
@@ -713,6 +753,7 @@ export function renderNavigateScreen(host, routeId) {
   requestAnimationFrame(() => {
     screen.classList.add("is-active");
     rafId = requestAnimationFrame(tick);
+    startClock();
     updateUI();
   });
 
@@ -722,6 +763,8 @@ export function renderNavigateScreen(host, routeId) {
     routeId,
     teardown() {
       if (rafId) cancelAnimationFrame(rafId);
+      if (clockId) clearInterval(clockId);
+      document.removeEventListener("visibilitychange", onVisible);
       if (watchCleanup) watchCleanup();
       cleanupVisibility();
       release();

@@ -62,6 +62,43 @@ export function endSession() {
   } catch {}
 }
 
+// ─── Fired time-warning thresholds ──────────────────────────────────────────────
+// Persisted on the session so a refresh, tab switch, or device lock can neither
+// replay an already-fired warning nor lose one. The nav alert scheduler
+// (nav/alerts.js) owns WHICH thresholds are due; this just durably records the
+// ones already announced. Additive field — never written by startSession, so a
+// fresh trip starts with none.
+
+/**
+ * Threshold keys ("t30" | "t15" | "t5" | "t0") already announced this session.
+ * @returns {string[]}
+ */
+export function getFiredThresholds() {
+  const s = getSession();
+  return Array.isArray(s?.firedThresholds) ? s.firedThresholds : [];
+}
+
+/**
+ * Mark one or more threshold keys as fired, persisting to the session. Merges
+ * with any already recorded; a no-op if there is no active session or nothing
+ * new to add.
+ * @param {string[]} keys
+ */
+export function markThresholdsFired(keys) {
+  const s = getSession();
+  if (!s) return;
+  const set = new Set(Array.isArray(s.firedThresholds) ? s.firedThresholds : []);
+  let changed = false;
+  for (const k of keys) {
+    if (!set.has(k)) { set.add(k); changed = true; }
+  }
+  if (!changed) return;
+  s.firedThresholds = [...set];
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+  } catch {}
+}
+
 /** Returns true if a session exists (does not check if time has run out). */
 export function isActive() {
   return getSession() !== null;

@@ -1,11 +1,32 @@
 // dev/sim.js — Kayak trip simulator for testing the navigate screen.
 //
-// Paste the contents of this file into the browser DevTools console while
-// the app is open at http://localhost:8080
+// Paste the contents of this file into the browser DevTools console while the
+// app is open at the dev server (python app/server.py → http://localhost:5173).
 //
 // Controls:
 //   __stopSim()          — end simulation and clear session
 //   __simSpeed(n)        — change speed multiplier (default 10 = 35 km/h)
+//
+//   ── Fault injection (session-5 / S5.T1) — exercise the hardening paths the
+//      plain happy-path replay can't reach: ──────────────────────────────────
+//   __simAccuracy(m)     — set the accuracy (metres) reported on every fix.
+//                          Set it ABOVE GPS_MAX_ACCURACY_M (35) to verify the
+//                          accuracy filter drops fixes (marker must NOT jump;
+//                          a sustained spell raises the "weak signal" banner).
+//                          Back to <=35 to recover. Default 4.
+//   __simDenied()        — fire the geolocation error callback with code 1
+//                          (permission denied) → the denied banner + retry path.
+//   __simTimeout()       — error code 3 (timeout) banner.
+//   __simUnavailable()   — error code 2 (position unavailable) banner.
+//   __simError(code)     — fire an arbitrary geolocation error code.
+//   __simGap(sec)        — suspend GPS fixes for `sec` real seconds, simulating
+//                          the watch stalling while the screen is locked /
+//                          backgrounded. The wall clock keeps running, so the
+//                          countdown self-corrects on resume. NOTE: this pauses
+//                          GPS only — it does NOT make the browser throttle rAF
+//                          or set document.hidden, so the TRUE background-alert
+//                          behaviour (system notification, on-resume re-prime)
+//                          still has to be confirmed on a real device (S5.T2).
 
 (function startSim() {
   // ── Configuration ─────────────────────────────────────────────────────────
@@ -14,6 +35,10 @@
   const POI_INDICES   = [0,1,2,3,4]; // which sud POIs to include
   let   SPEED_MULT    = 10;          // real-time multiplier (10 = 10× faster)
   const KAYAK_KMH     = 3.5;        // realistic base speed
+
+  // Fault-injection state (driven by the __sim* controls below).
+  let   ACCURACY      = 4;            // metres reported on every fix
+  let   gapUntil      = 0;            // Date.now() until which fixes are suspended
 
   // ── Sud-route waypoints (Marina → POIs → Marina) ─────────────────────────
   const WAYPOINTS = [
@@ -57,33 +82,44 @@
   }
 
   // ── Mock navigator.geolocation ────────────────────────────────────────────
-  const watchers = {};
+  const watchers = {};      // id → { success, error }
   let nextId = 1;
   const simStart = Date.now();
 
   Object.defineProperty(navigator, 'geolocation', {
     configurable: true,
     value: {
-      watchPosition(success) {
+      watchPosition(success, error) {
         const id = nextId++;
-        watchers[id] = success;
+        watchers[id] = { success, error };
         return id;
       },
       clearWatch(id) { delete watchers[id]; },
       getCurrentPosition(success) {
         const [lon, lat] = posAt((Date.now() - simStart) / 1000);
-        success({ coords: { longitude: lon, latitude: lat, accuracy: 4 } });
+        success({ coords: { longitude: lon, latitude: lat, accuracy: ACCURACY } });
       },
     },
   });
 
-  // Tick every second — fires all active watch callbacks
-  const iv = setInterval(() => {
+  // Fire every active watch's success callback with the current position.
+  function emitFix() {
+    if (Date.now() < gapUntil) return; // suspended (simulated background gap)
     const [lon, lat] = posAt((Date.now() - simStart) / 1000);
-    Object.values(watchers).forEach(cb =>
-      cb && cb({ coords: { longitude: lon, latitude: lat, accuracy: 4 } })
+    Object.values(watchers).forEach(w =>
+      w.success && w.success({ coords: { longitude: lon, latitude: lat, accuracy: ACCURACY } })
     );
-  }, 1000);
+  }
+
+  // Fire every active watch's error callback.
+  function emitError(code) {
+    Object.values(watchers).forEach(w =>
+      w.error && w.error({ code, message: `[Sim] injected error ${code}` })
+    );
+  }
+
+  // Tick every second.
+  const iv = setInterval(emitFix, 1000);
 
   // ── Seed session in localStorage ──────────────────────────────────────────
   localStorage.setItem('sa-blava.session', JSON.stringify({
@@ -112,6 +148,21 @@
     console.log(`%c[Sim] Speed ×${mult} — full route ETA ~${etaMin} min`, 'color:#1b6b8a');
   };
 
+  // ── Fault injection ────────────────────────────────────────────────────────
+  window.__simAccuracy = (m) => {
+    ACCURACY = m;
+    const drop = m > 35 ? ' (> GPS_MAX_ACCURACY_M 35 → fixes DROPPED by the filter)' : '';
+    console.log(`%c[Sim] Accuracy = ${m} m${drop}`, 'color:#b26b00');
+  };
+  window.__simError       = (code) => { emitError(code); console.log(`%c[Sim] error code ${code}`, 'color:#b00'); };
+  window.__simDenied      = () => window.__simError(1);
+  window.__simUnavailable = () => window.__simError(2);
+  window.__simTimeout     = () => window.__simError(3);
+  window.__simGap = (sec = 30) => {
+    gapUntil = Date.now() + sec * 1000;
+    console.log(`%c[Sim] GPS suspended ${sec}s (simulated background gap — wall clock keeps running)`, 'color:#b26b00');
+  };
+
   // ── Report ────────────────────────────────────────────────────────────────
   const etaMin = (totalDist / 1000 / KAYAK_KMH / SPEED_MULT * 60).toFixed(1);
   console.log('%c[Sa Blava Sim] Running', 'color:#1b6b8a;font-weight:bold;font-size:14px');
@@ -119,6 +170,9 @@
   console.log(`  Session:  ${DURATION_H}h (${DURATION_H*60} min countdown)`);
   console.log(`  Speed:    ${KAYAK_KMH} km/h × ${SPEED_MULT} = ${KAYAK_KMH*SPEED_MULT} km/h simulated`);
   console.log(`  ETA full: ~${etaMin} min of real time`);
-  console.log('  __stopSim()      — end simulation');
-  console.log('  __simSpeed(n)    — change speed multiplier');
+  console.log('  __stopSim()         — end simulation');
+  console.log('  __simSpeed(n)       — change speed multiplier');
+  console.log('  __simAccuracy(m)    — set fix accuracy (m > 35 → dropped)');
+  console.log('  __simDenied() / __simTimeout() / __simUnavailable() / __simError(code)');
+  console.log('  __simGap(sec)       — suspend GPS fixes for sec seconds');
 })();

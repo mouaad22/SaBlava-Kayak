@@ -283,7 +283,7 @@
       "finished_at": null,
       "tested": "partial — logic/integration fully tested headlessly (40/40 suite incl. 6 new integration tests); real-device matrix pending owner",
       "committed": "deliverables only — code+docs landed; session NOT fully done until S5.T2 device pass",
-      "commit_sha": "c52338b (code+docs+manifest) + c429971 (sha-backfill) on branch nav-hardening-session-5; MERGED to main as 5a23c15 (no-ff). NOT pushed (no production behavior change — only dev test/sim + docs; push after the S5.T2 device pass).",
+      "commit_sha": "c52338b (code+docs+manifest) + c429971 (sha-backfill) on branch nav-hardening-session-5; MERGED to main as 5a23c15 (no-ff) and PUSHED 2026-06-24 (060a063..be89055) → Cloudflare auto-deploy from main triggered. Pre-push ESM link check passed (44 modules). No production behavior change (dev test/sim + docs only); the S5.T2 real-device pass is still owed before customer use.",
       "depends_on": ["session-4"],
       "files_in_scope": [
         "app/js/dev/sim.js (extend if needed to replay a full out-and-back track with background gaps)",

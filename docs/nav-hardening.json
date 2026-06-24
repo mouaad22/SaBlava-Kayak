@@ -191,7 +191,7 @@
       "finished_at": "2026-06-24",
       "tested": true,
       "committed": true,
-      "commit_sha": "e735af8 (code) + 592f311 (sha-backfill); MERGED to main as 1f2966d (no-ff). NOT yet pushed to origin — push triggers the Cloudflare prod deploy; awaiting owner go-ahead.",
+      "commit_sha": "e735af8 (code) + 592f311 (sha-backfill); MERGED to main as 1f2966d (no-ff) and PUSHED 2026-06-24 (95a10f1..0c9b31c) → Cloudflare auto-deploy from main triggered. Pre-push ESM link check passed (44 modules). Browser/device background-gap + reload QA still pending (folded into session-5).",
       "depends_on": ["session-2"],
       "files_in_scope": [
         "app/js/nav/alerts.js (NEW — pure scheduler: which thresholds have fired given now vs startedAtMs+durationMs)",

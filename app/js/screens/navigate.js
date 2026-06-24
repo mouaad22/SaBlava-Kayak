@@ -18,13 +18,18 @@ import {
 import { haversineM, trackThroughPois, watchFilteredPosition, geoPermissionState } from "../nav/geo.js";
 import { createTripProgress } from "../nav/trip-progress.js";
 import { reconcileThresholds } from "../nav/alerts.js";
-import { speak, chime, announceArrival } from "../nav/audio.js";
+import { speak, chime, announceArrival, notify, vibrate, prime } from "../nav/audio.js";
 import { acquire, release, attachVisibilityHandler } from "../nav/wake-lock.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, ALERT_RESUME_GRACE_MS, KAYAK_SPEED_KMH } from "../config.js";
 import { addRouteTrack } from "./map.js";
 import { mountNavTweakpane } from "../dev/nav-tweakpane.js";
 
 const TABS = { MAP: "map", DATA: "data" };
+
+// Vibration patterns (ms; arrays are on/off/on…). A pocketed phone still buzzes
+// these where navigator.vibrate is supported (Android Chrome; ignored on iOS).
+const VIBE_ARRIVAL = [120];            // gentle single pulse — a POI is reached
+const VIBE_URGENT  = [200, 100, 200];  // double buzz — T-0 / "head back" / unsafe
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -524,9 +529,15 @@ export function renderNavigateScreen(host, routeId) {
     switch (ev.type) {
       case "arrival":
       case "pass": {
-        // Both mean the paddler genuinely got to / past this POI — warm cue.
+        // Both mean the paddler genuinely got to / past this POI — warm cue,
+        // plus a notification + buzz so it lands on a pocketed/hidden phone.
         const poi = activePois[ev.poiIdx];
-        if (poi) announceArrival(poi.name[lang] ?? poi.name.ca, lang);
+        if (poi) {
+          const name = poi.name[lang] ?? poi.name.ca;
+          announceArrival(name, lang);
+          notify({ title: t("nav.notify.arrival"), body: name, tag: "nav-arrival", vibrate: VIBE_ARRIVAL });
+          vibrate(VIBE_ARRIVAL);
+        }
         return;
       }
       case "turnaround":
@@ -539,6 +550,8 @@ export function renderNavigateScreen(host, routeId) {
         const m = Math.max(0, Math.round(ev.remainingMs / 60_000));
         speak("nav.voice.short", lang, m);
         flashBanner(t("nav.voice.short", m));
+        notify({ title: t("nav.notify.return"), body: t("nav.voice.short", m), tag: "nav-return", vibrate: VIBE_URGENT });
+        vibrate(VIBE_URGENT);
         return;
       }
     }
@@ -559,6 +572,8 @@ export function renderNavigateScreen(host, routeId) {
     // Let the chime ring first, then speak — same two-beat feel as arrivals.
     setTimeout(() => speak(key, lang, lastName, remMin), 1200);
     flashBanner(t(key, lastName, remMin));
+    notify({ title: t("nav.notify.turnaround"), body: t(key, lastName, remMin), tag: "nav-turnaround", vibrate: VIBE_URGENT });
+    vibrate(VIBE_URGENT);
   }
 
   // ── rAF repaint loop (~1/sec) ─────────────────────────────────────────────
@@ -590,7 +605,13 @@ export function renderNavigateScreen(host, routeId) {
   // crossed while hidden surfaces at once — reconcileThresholds collapses a
   // backlog to a single fresh cue. Also repaints the countdown right away.
   function onVisible() {
-    if (document.visibilityState === "visible") { updateUI(); checkThresholds(); }
+    if (document.visibilityState !== "visible") return;
+    // iOS drops the audio/TTS unlock after a lock or long inactivity. Re-prime
+    // (idempotent) on resume so the next voice cue still speaks. This runs
+    // inside the visibilitychange handler, which iOS treats as a user gesture.
+    prime(lang);
+    updateUI();
+    checkThresholds();
   }
   document.addEventListener("visibilitychange", onVisible);
 
@@ -717,6 +738,8 @@ export function renderNavigateScreen(host, routeId) {
         const m = Math.max(0, Math.round(remMs / 60_000));
         speak("nav.voice.short", lang, m);
         flashBanner(t("nav.voice.short", m));
+        notify({ title: t("nav.notify.return"), body: t("nav.voice.short", m), tag: "nav-return", vibrate: VIBE_URGENT });
+        vibrate(VIBE_URGENT);
       }
     }
   }
@@ -730,6 +753,32 @@ export function renderNavigateScreen(host, routeId) {
     if (threshMin === 0) chime();
     speak(voiceKey, lang);
     flashBanner(t(voiceKey));
+    // Background reach for the time warnings. Only T-0 buzzes (the urgent one);
+    // the earlier 30/15/5 cues notify quietly so a pocketed phone isn't nagged.
+    notify({ title: t("nav.notify.time"), body: t(voiceKey), tag: "nav-time", vibrate: threshMin === 0 ? VIBE_URGENT : undefined });
+    if (threshMin === 0) vibrate(VIBE_URGENT);
+  }
+
+  // One-time honesty advisory shown once at trip start: the alert channels are
+  // best-effort (esp. iOS Safari, which has no background notifications and a
+  // silent switch that can mute the chime), so the only reliable setup is to
+  // keep the app open with the screen on. Tap to dismiss; auto-hides after 9s.
+  function showStartAdvisory() {
+    const el = document.createElement("div");
+    el.className = "nav-advisory";
+    el.setAttribute("role", "status");
+    el.innerHTML = `
+      <img src="./assets/icons/regular/Info.svg" width="20" height="20" alt="" aria-hidden="true" />
+      <span class="nav-advisory__text">${t("nav.advisory.keepOpen")}</span>
+    `;
+    const dismiss = () => {
+      el.classList.remove("is-visible");
+      el.addEventListener("transitionend", () => el.remove(), { once: true });
+    };
+    el.addEventListener("click", dismiss);
+    screen.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("is-visible"));
+    setTimeout(dismiss, 9000);
   }
 
   // Transient centered banner that fades itself out after 4s.
@@ -755,6 +804,7 @@ export function renderNavigateScreen(host, routeId) {
     rafId = requestAnimationFrame(tick);
     startClock();
     updateUI();
+    showStartAdvisory();
   });
 
   // ── Teardown ──────────────────────────────────────────────────────────────

@@ -2801,6 +2801,43 @@
   transform: translate(-50%, -50%);
 }
 
+/* ── Trip-start advisory (alert reliability honesty note) ── */
+.nav-advisory {
+  position: absolute;
+  top: max(calc(env(safe-area-inset-top) + 72px), 88px);
+  left: 12px;
+  right: 12px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-card, 16px);
+  corner-shape: var(--corner-shape);
+  background: rgba(27, 107, 138, 0.94);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  box-shadow: 0 2px 12px rgba(10, 30, 50, 0.28);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 240ms var(--ease-entrance),
+    transform 240ms var(--ease-entrance);
+}
+
+.nav-advisory.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.nav-advisory img {
+  flex: 0 0 auto;
+  filter: brightness(0) invert(1); /* tint the dark icon white */
+}
+
 /* ── Map POI markers ── */
 .nav-poi-marker {
   width: 32px;

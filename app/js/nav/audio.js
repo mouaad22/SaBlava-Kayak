@@ -8,11 +8,25 @@
 //   spoken. The two beats never overlap, which is what makes it feel like a
 //   friendly guide rather than a robot reading coordinates.
 //
+// Alert delivery (Phase 2.1, session-4):
+//   Voice + chime + an in-app banner only reach a paddler who is LOOKING at the
+//   screen. To also reach a hidden/pocketed phone we add two best-effort
+//   channels alongside (never instead of) the foreground ones:
+//     - notify(): a system notification, preferring registration.showNotification
+//       so it survives a backgrounded/locked page where a service worker is
+//       active. Permission is asked ONCE, on the start gesture (prime()).
+//     - vibrate(): a tactile buzz for the alerts that matter most.
+//   Both no-op gracefully where unsupported — notably iOS Safari (non-PWA) has
+//   no Web Notifications and may ignore vibrate; those limits are documented for
+//   the user via the trip-start advisory in navigate.js.
+//
 // iOS notes:
 //   - SpeechSynthesis must be triggered in a user-gesture handler the FIRST
 //     time it's called. prime() fires a silent utterance in the start-tap.
 //   - HTMLAudio likewise needs a gesture-initiated play() before it will fire
 //     on its own later, so prime() also unlocks the chime element (muted).
+//   - iOS drops the audio/TTS unlock after a screen-lock or long inactivity, so
+//     prime() is idempotent and navigate.js re-invokes it on visibilitychange.
 //   - Catalan (ca-ES) TTS is absent on many devices; we fall back to es-ES
 //     then en-US silently (console warning only).
 
@@ -41,6 +55,7 @@ const PREMIUM_VOICE_HINTS = [
 
 let primedLang = null;
 let arrivalAudio = null; // reused element so the iOS unlock persists
+let notifPermissionAsked = false; // request the Notification permission only once
 
 // Warm up the voice list early — getVoices() is often empty until this fires.
 if ("speechSynthesis" in window) {
@@ -55,11 +70,17 @@ if ("speechSynthesis" in window) {
 /**
  * Unlock audio on the user gesture (start tap). Fires a silent utterance to
  * prime SpeechSynthesis and a muted chime play to prime HTMLAudio, so both can
- * fire autonomously later out on the water.
+ * fire autonomously later out on the water. Also asks for Notification
+ * permission once (the start tap is a valid user gesture for the prompt).
+ *
+ * Idempotent and safe to re-invoke: navigate.js calls it again on
+ * visibilitychange because iOS drops the audio/TTS unlock after a lock. The
+ * Notification permission is only ever requested once (notifPermissionAsked).
+ *
  * @param {string} lang — current i18n language code ("ca" | "es" | "en" | "fr")
  */
 export function prime(lang) {
-  primedLang = lang;
+  if (lang) primedLang = lang;
 
   if ("speechSynthesis" in window) {
     const u = new SpeechSynthesisUtterance("");
@@ -76,6 +97,27 @@ export function prime(lang) {
       .catch(() => { a.muted = false; });
   } catch {
     // Audio unavailable — no-op.
+  }
+
+  requestNotificationPermission();
+}
+
+/**
+ * Ask for Notification permission, at most once per page life. Called from the
+ * start gesture inside prime() so the native prompt has a valid user gesture.
+ * No-ops where Notifications are unsupported (iOS Safari non-PWA) or already
+ * decided. Handles both the modern promise form and Safari's legacy callback.
+ */
+function requestNotificationPermission() {
+  if (notifPermissionAsked) return;
+  if (!("Notification" in window)) return;
+  notifPermissionAsked = true;
+  if (Notification.permission !== "default") return; // already granted/denied
+  try {
+    const r = Notification.requestPermission();
+    if (r && typeof r.then === "function") r.catch(() => {});
+  } catch {
+    // Older callback-only signature or a security error — ignore.
   }
 }
 
@@ -165,7 +207,66 @@ export function chime() {
   }
 }
 
+/**
+ * Raise a system notification so an alert reaches a hidden/locked page. Prefers
+ * the active service worker's showNotification (the only form that survives a
+ * backgrounded page); falls back to the page-scoped Notification constructor.
+ * No-op (returns false) when Notifications are unsupported or not granted —
+ * the foreground voice/chime/banner always fire regardless, so a denial just
+ * means "no background reach", never a missed alert on a visible screen.
+ *
+ * @param {{ title: string, body?: string, tag?: string, vibrate?: number[] }} opts
+ * @returns {boolean} whether a notification was dispatched
+ */
+export function notify({ title, body = "", tag, vibrate: vibratePattern } = {}) {
+  if (!title) return false;
+  if (!("Notification" in window) || Notification.permission !== "granted") return false;
+
+  const options = { body, tag, lang: primedLang ?? undefined, renotify: !!tag };
+  // showNotification (SW) honours a vibrate pattern; the page Notification
+  // constructor ignores it, so we also call navigator.vibrate at the call site.
+  if (vibratePattern) options.vibrate = vibratePattern;
+
+  try {
+    if (navigator.serviceWorker?.ready) {
+      navigator.serviceWorker.ready
+        .then((reg) => reg.showNotification(title, options))
+        .catch(() => fallbackNotification(title, options));
+      return true;
+    }
+    return fallbackNotification(title, options);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Tactile fallback for a pocketed phone. Pattern is a navigator.vibrate
+ * argument (ms, or an on/off array). No-op where unsupported (most iOS).
+ * @param {number | number[]} pattern
+ * @returns {boolean}
+ */
+export function vibrate(pattern) {
+  try {
+    if ("vibrate" in navigator) return navigator.vibrate(pattern);
+  } catch {
+    // Some browsers throw if called outside a user gesture — ignore.
+  }
+  return false;
+}
+
 // ── Internals ─────────────────────────────────────────────────────────────────
+
+function fallbackNotification(title, options) {
+  try {
+    new Notification(title, options);
+    return true;
+  } catch {
+    // Some browsers only allow showNotification (SW) and throw on the
+    // constructor — degrade silently to the foreground channels.
+    return false;
+  }
+}
 
 function getArrivalAudio() {
   if (!arrivalAudio) {

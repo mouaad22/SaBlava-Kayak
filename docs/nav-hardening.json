@@ -5,7 +5,7 @@
   "summary": "Fix the five high-risk failure modes in the GPS navigation flow that prevent us from assuring real-world trip behavior: (1) timed events stop when the screen sleeps / app is backgrounded, (2) 'notifications' are only TTS+audio with no fallback that reaches a hidden page, (3) GPS permission has no recovery path + the 5s timeout shows a false 'denied' banner + no accuracy filtering, (4) progress uses two inconsistent models (discrete anada / straight-line tornada), (5) arrival + turnaround are order-dependent and the return-safety warning is gated behind reaching the last POI within 50m. Backend (app/server.py) is frozen. Work is split into ordered sessions, each = one agent in one fresh session. The shared file is app/js/screens/navigate.js; each session also owns a distinct NEW module so logic is unit-testable and conflict surface is minimal.",
   "owner": "mouaad22",
   "created_on": "2026-06-23",
-  "last_updated": "2026-06-24 (session-2 code complete + unit-tested: trip-progress.js reducer + navigate.js rewired; two-period progress model confirmed with owner; real-device/sim QA pending)",
+  "last_updated": "2026-06-24 (session-3 code complete + unit-tested: nav/alerts.js wall-clock scheduler + session.js fired-threshold persistence + navigate.js rewired to rAF-repaint / setInterval-alert split + visibilitychange resume reconciliation; 8/8 alerts tests, 27/27 full suite; real-device background-gap/reload QA folded into session-5)",
 
   "constraints": {
     "backend": {
@@ -186,12 +186,12 @@
       "id": "session-3",
       "name": "Wall-clock alert scheduler — time warnings independent of rAF + background catch-up",
       "risk_items": ["#1 backgrounding/screen-lock stops timed events (time half)"],
-      "status": "todo",
-      "started_at": null,
-      "finished_at": null,
-      "tested": false,
-      "committed": false,
-      "commit_sha": null,
+      "status": "done — code committed; pure scheduler fully unit-tested (8/8); browser/sim background-gap + reload QA folded into session-5 (same as sessions 1 & 2)",
+      "started_at": "2026-06-24",
+      "finished_at": "2026-06-24",
+      "tested": true,
+      "committed": true,
+      "commit_sha": "(pending sha-backfill commit)",
       "depends_on": ["session-2"],
       "files_in_scope": [
         "app/js/nav/alerts.js (NEW — pure scheduler: which thresholds have fired given now vs startedAtMs+durationMs)",
@@ -201,23 +201,30 @@
       ],
       "navigate_js_region": "tick/checkThresholds/fireWarning + the firedThresholds Set. Do NOT touch arrival/progress (session 2) or audio internals (session 4).",
       "tasks": [
-        { "id": "S3.T1", "title": "Create nav/alerts.js: pure `dueThresholds(nowMs, startedAtMs, durationMs, alreadyFired[])` returning the thresholds (from OVERTIME_WARNINGS_MIN) that have been crossed but not yet fired. Correctness derives from wall-clock, NOT from how many rAF ticks ran.", "done": false },
-        { "id": "S3.T2", "title": "Persist fired thresholds: store fired keys on the session (session.js additive field) so a refresh, tab switch, or device lock cannot replay or lose them.", "done": false },
-        { "id": "S3.T3", "title": "Resume reconciliation: on visibilitychange→visible, recompute due thresholds. If MULTIPLE were crossed while backgrounded, fire only the MOST RECENT one within ALERT_RESUME_GRACE_MS (no backlog dump), and mark the older skipped ones as fired so they never replay.", "done": false },
-        { "id": "S3.T4", "title": "Keep rAF for smooth UI repaint ONLY; move the once-per-second wall-clock check to a setInterval/timestamp guard so the countdown and threshold checks keep correct time even when rAF is throttled. Drive overtime banner + red time-stat from the same wall-clock source.", "done": false },
-        { "id": "S3.T5", "title": "Unit tests for alerts.js: crossing 30/15/5/0 normally; jumping the clock forward (simulated background gap) fires the correct single warning, not the whole backlog; persisted fired-state prevents double-fire across a reload.", "done": false }
+        { "id": "S3.T1", "title": "Create nav/alerts.js: pure `dueThresholds(nowMs, startedAtMs, durationMs, alreadyFired[])` returning the thresholds (from OVERTIME_WARNINGS_MIN) that have been crossed but not yet fired. Correctness derives from wall-clock, NOT from how many rAF ticks ran.", "done": true, "note": "app/js/nav/alerts.js — pure (no DOM/globals/timers/Date.now). Exports thresholdKey, thresholdCrossAtMs (wall-clock instant a threshold is reached), dueThresholds (crossed-but-unfired, oldest-crossed first), and reconcileThresholds (the decision fn the screen calls). Imports only OVERTIME_WARNINGS_MIN from config.js." },
+        { "id": "S3.T2", "title": "Persist fired thresholds: store fired keys on the session (session.js additive field) so a refresh, tab switch, or device lock cannot replay or lose them.", "done": true, "note": "Additive exports getFiredThresholds()/markThresholdsFired(keys) on session.js — store a `firedThresholds: string[]` field merged onto the existing session object in localStorage. No change to the existing public API (startSession/getSession/timeRemainingMs/endSession); startSession never writes the field so a fresh trip starts with none. navigate.js seeds its in-memory Set from getFiredThresholds() at mount." },
+        { "id": "S3.T3", "title": "Resume reconciliation: on visibilitychange→visible, recompute due thresholds. If MULTIPLE were crossed while backgrounded, fire only the MOST RECENT one within ALERT_RESUME_GRACE_MS (no backlog dump), and mark the older skipped ones as fired so they never replay.", "done": true, "note": "reconcileThresholds({nowMs, startedAtMs, durationMs, fired, graceMs}) returns { fire, markFired }: fire = the most-recently-crossed unfired threshold IFF it crossed within graceMs, else null; markFired = ALL crossed-but-unfired keys (so older missed ones are recorded without announcing). navigate.js adds an onVisible() visibilitychange listener that calls updateUI()+checkThresholds() immediately on resume. The SAME reconcile path serves the foreground per-second tick (exactly one crossing, fresh → fires) and resume (backlog → single fresh cue)." },
+        { "id": "S3.T4", "title": "Keep rAF for smooth UI repaint ONLY; move the once-per-second wall-clock check to a setInterval/timestamp guard so the countdown and threshold checks keep correct time even when rAF is throttled. Drive overtime banner + red time-stat from the same wall-clock source.", "done": true, "note": "rAF tick() now ONLY calls updateUI() (repaint). checkThresholds() moved to setInterval(checkThresholds, 1000) (startClock), correctness from Date.now inside it (reconciles against the clock, not tick count). The overtime banner + red time-stat were ALREADY wall-clock-driven (updateUI reads timeRemainingMs()); left intact. Both interval id (clockId) and the visibilitychange listener are torn down in teardown(). NOTE: updateUI was intentionally NOT duplicated onto the interval — when the page is visible rAF repaints reliably each second (rAF only throttles when hidden, where the display is irrelevant and onVisible repaints on return), so a second per-tick updateUI would be redundant DOM work." },
+        { "id": "S3.T5", "title": "Unit tests for alerts.js: crossing 30/15/5/0 normally; jumping the clock forward (simulated background gap) fires the correct single warning, not the whole backlog; persisted fired-state prevents double-fire across a reload.", "done": true, "note": "app/js/dev/alerts.test.mjs — 8 tests, all pass (node --test). Covers: thresholdCrossAtMs/key correctness; normal foreground crossing fires t30/t15/t5/t0 once each in order; dueThresholds ordering; background gap across 3 thresholds → only the most-recent (t5) fires, all 3 marked; stale gap beyond grace → fire null but still marked; persisted fired-state → no double-fire on reload; nothing due before the first threshold; default grace=Infinity for the bare primitive." }
       ],
       "verification": [
-        { "check": "With the app foregrounded, 30/15/5/0-min warnings fire at the right wall-clock times.", "passed": false, "note": "" },
-        { "check": "Backgrounding the tab across a threshold then returning fires exactly one (the most recent missed) warning, not a burst.", "passed": false, "note": "" },
-        { "check": "Reloading mid-trip does not re-fire already-fired warnings (persisted state).", "passed": false, "note": "" },
-        { "check": "Countdown clock stays accurate after a long background gap.", "passed": false, "note": "" },
-        { "check": "alerts.js unit tests pass; ESM link check passes; happy path unaffected.", "passed": false, "note": "" }
+        { "check": "With the app foregrounded, 30/15/5/0-min warnings fire at the right wall-clock times.", "passed": true, "note": "Unit-verified: 'normal foreground' replays a per-minute clock and asserts announced order == [t30,t15,t5,t0], each once. Browser-visual still pending (folded into session-5)." },
+        { "check": "Backgrounding the tab across a threshold then returning fires exactly one (the most recent missed) warning, not a burst.", "passed": true, "note": "Unit-verified: 'background gap across multiple' — jumping the clock to 55min with nothing fired returns fire=t5 only and markFired={t30,t15,t5}. Live visibilitychange wiring (onVisible) is in navigate.js; a real tab-switch replay is folded into session-5." },
+        { "check": "Reloading mid-trip does not re-fire already-fired warnings (persisted state).", "passed": true, "note": "Unit-verified: 'persisted fired state prevents a double-fire' — reconcile at the t30 crossing with fired=['t30'] returns fire=null, markFired=[]. Persistence path (session.js firedThresholds) is additive + seeds the in-memory Set at mount; a real reload replay is folded into session-5." },
+        { "check": "Countdown clock stays accurate after a long background gap.", "passed": "partial", "note": "updateUI reads timeRemainingMs() (pure wall-clock) every rAF tick AND immediately on onVisible resume, so the countdown self-corrects regardless of how long rAF was throttled — verified by code path, not yet in a live browser (session-5)." },
+        { "check": "alerts.js unit tests pass; ESM link check passes; happy path unaffected.", "passed": true, "note": "node --test alerts.test.mjs → 8/8. Full suite (alerts+trip-progress+geo) → 27/27. node scripts/check-esm-links.mjs → OK (44 modules). node --check passes on alerts.js/session.js/navigate.js. Runtime happy-path still needs a browser pass (sim)." }
       ],
-      "manual_qa": { "tested_in_browser": false, "viewport": "402x866", "notes": "" },
-      "discoveries": [],
+      "manual_qa": { "tested_in_browser": false, "viewport": "402x866", "notes": "NOT run in a browser by this agent (no browser/Python in this environment, same as sessions 1 & 2). The wall-clock scheduler is pure and fully unit-tested — that is the bulk of the risk. PENDING for session-5 / a dev-server run: (a) lock/background the phone across a 30→15 boundary and confirm exactly ONE fresh cue on resume (not a burst); (b) reload mid-trip and confirm no already-fired warning replays (DevTools → Application → localStorage 'sa-blava.session'.firedThresholds should grow); (c) confirm the countdown self-corrects after a long screen-off gap. The current sim (app/js/dev/sim.js) drives GPS only and does NOT simulate background gaps or jump the clock — exercising (a)/(c) needs a real device or the S5.T1 sim extension." },
+      "discoveries": [
+        "checkThresholds() now reads getSession() each tick (for startedAtMs/durationHours) instead of timeRemainingMs(); the reducer's reconcile is the single source of which thresholds are due. The legacy tornada mid-return safety net inside checkThresholds (a session-2 overlap, kept dormant via shortWarned) was LEFT INTACT — it still computes its own remMs = timeRemainingMs() locally. It is not part of the wall-clock-threshold scheduler and could be folded into a future pass, but doing so now would reach into session-2's region; left as-is.",
+        "S3 added NO i18n keys — the warnings reuse the existing nav.voice.t30/t15/t5/t0 + nav.voice.short copy. fireWarning() is unchanged.",
+        "DESIGN NOTE for session-4: this fixes time-warning CORRECTNESS on resume — the cue fires the moment the page becomes visible again. It does NOT make a warning fire WHILE the page is suspended/locked. That background-delivery job (Notification API + vibration) is session-4. Keep the two honest and separate.",
+        "reconcileThresholds defaults graceMs to Infinity so the bare primitive always fires the most-recent crossing; navigate.js always passes ALERT_RESUME_GRACE_MS (60s) so the backlog-suppression is active in the app. If a future caller forgets to pass graceMs they get foreground-style behavior, not silent suppression — a safe default."
+      ],
       "open_questions": [
-        "Note clearly: this fixes time-warning CORRECTNESS after resume. It does NOT make alerts fire WHILE the page is suspended — that is session-4's Notification/vibration job. Keep the two honest and separate."
+        "Note clearly: this fixes time-warning CORRECTNESS after resume. It does NOT make alerts fire WHILE the page is suspended — that is session-4's Notification/vibration job. Keep the two honest and separate.",
+        "ALERT_RESUME_GRACE_MS=60s means a threshold crossed >60s before you reopen the tab is silently marked fired (no stale cue). Confirm on a real trip that 60s feels right — too short and a brief glance-away near a boundary could swallow a still-relevant warning; too long and you get a stale cue. Tune in session-5 field testing.",
+        "BRANCH/DEPLOY: like sessions 1 & 2, decide whether to merge session-3 to main (Cloudflare auto-deploys from main) now or batch with session-4. Session-2 was merged to main; session-1 landed on feat/staff-panel-phase-1 and is NOT yet on main — confirm session-1's GPS fixes reach main before trusting the full nav-hardening set in production."
       ]
     },
 

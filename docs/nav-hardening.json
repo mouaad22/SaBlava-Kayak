@@ -191,7 +191,7 @@
       "finished_at": "2026-06-24",
       "tested": true,
       "committed": true,
-      "commit_sha": "(pending sha-backfill commit)",
+      "commit_sha": "e735af8 (on branch nav-hardening/session-3, NOT yet merged to main — merge/deploy decision left to owner, see open_questions)",
       "depends_on": ["session-2"],
       "files_in_scope": [
         "app/js/nav/alerts.js (NEW — pure scheduler: which thresholds have fired given now vs startedAtMs+durationMs)",

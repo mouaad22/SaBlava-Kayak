@@ -49,6 +49,22 @@ export async function hasSecondDevice(db, sessionId) {
 }
 
 /**
+ * True if the customer tapped "finish trip" on their phone for this session.
+ * This is a flag only — it never closes the session (the kayak is still
+ * physically out until staff confirm, POST /api/panel/finish). The board uses it
+ * to surface the kayak as a pending return; the history shows the event inline.
+ */
+export async function hasCustomerEnded(db, sessionId) {
+  if (!sessionId) return false;
+  const row = await first(
+    db,
+    `SELECT 1 AS hit FROM events WHERE session_id = ? AND type = 'customer_ended' LIMIT 1`,
+    [sessionId],
+  );
+  return !!row;
+}
+
+/**
  * Derive the board state for a kayak from its open session (or null).
  *   no open session            -> 'available'
  *   open & now < expires_at     -> 'active'
@@ -93,13 +109,25 @@ export async function buildBoard(db, now = Date.now()) {
       remaining_ms: s ? s.expires_at - now : null, // negative when over (time_off)
       duration_min: s?.duration_min ?? null,
       second_device: s ? await hasSecondDevice(db, s.id) : false,
+      // Customer tapped "finish" on their phone — a pending return that still
+      // needs staff to confirm. Surfaced as a flag, never auto-closed.
+      customer_ended: s ? await hasCustomerEnded(db, s.id) : false,
     });
   }
-  // time_off first (needs action), then active by soonest expiry, then available.
-  const rank = { time_off: 0, active: 1, available: 2, closed: 3 };
+  // Sort by how much staff attention each kayak needs:
+  //   0  pending return (customer finished, still out)  — act now
+  //   1  time_off (overtime)                            — act soon
+  //   2  active                                         — running, by soonest expiry
+  //   3  available                                      — nothing to do
+  const sortRank = (it) => {
+    if (it.customer_ended && (it.state === "active" || it.state === "time_off")) return 0;
+    return { time_off: 1, active: 2, available: 3, closed: 4 }[it.state];
+  };
   items.sort((a, b) => {
-    if (rank[a.state] !== rank[b.state]) return rank[a.state] - rank[b.state];
-    if (a.state === "active") return (a.expires_at ?? 0) - (b.expires_at ?? 0);
+    const ra = sortRank(a), rb = sortRank(b);
+    if (ra !== rb) return ra - rb;
+    // Within a tier, soonest/most-overdue expiry first; available falls back to id.
+    if (a.expires_at != null && b.expires_at != null) return a.expires_at - b.expires_at;
     return a.kayak_id.localeCompare(b.kayak_id);
   });
   return items;

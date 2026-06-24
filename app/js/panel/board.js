@@ -25,6 +25,7 @@ const PILL = {
   active: "A l'aigua",
   time_off: "Temps exhaurit",
   available: "Al moll",
+  pending_return: "Client ha finalitzat",
 };
 
 /** Pure: turn a board item + current time into everything the card displays. */
@@ -34,8 +35,13 @@ export function computeView(item, now) {
   if (item.started_at != null) state = now >= item.expires_at ? "time_off" : "active";
 
   if (state === "available") {
-    return { state, fillPct: 0, label: "—", pill: PILL.available, actionLabel: "", showAction: false };
+    return { state, flagged: false, fillPct: 0, label: "—", pill: PILL.available, actionLabel: "", showAction: false };
   }
+
+  // The customer tapped "finish" on their phone — a pending return. The kayak is
+  // still out, so it keeps its time label (early vs overtime), but the pill flags
+  // it and it sorts to the top (server-side) so staff confirm the return.
+  const flagged = !!item.customer_ended;
 
   const durationMs = item.duration_min * MIN;
   const elapsed = now - item.started_at;
@@ -45,10 +51,11 @@ export function computeView(item, now) {
     const remainingMin = Math.ceil((item.expires_at - now) / MIN);
     return {
       state,
+      flagged,
       fillPct,
       label: remainingMin >= 1 ? `${remainingMin} min restants` : "menys d'1 min",
-      pill: PILL.active,
-      actionLabel: "Finalitzar",
+      pill: flagged ? PILL.pending_return : PILL.active,
+      actionLabel: flagged ? "Caiac retornat" : "Finalitzar",
       showAction: true,
     };
   }
@@ -57,9 +64,10 @@ export function computeView(item, now) {
   const overMin = Math.max(0, Math.round((now - item.expires_at) / MIN));
   return {
     state,
+    flagged,
     fillPct: 100,
     label: overMin >= 1 ? `${overMin} min passats` : "temps esgotat",
-    pill: PILL.time_off,
+    pill: flagged ? PILL.pending_return : PILL.time_off,
     actionLabel: "Caiac retornat",
     showAction: true,
   };
@@ -132,6 +140,9 @@ export function renderBoard(host, hooks = {}) {
     const { item, el, refs } = entry;
     const v = computeView(item, now);
     el.dataset.state = v.state;
+    // Pending return (customer finished, still out) — a styling/sort hook for CSS.
+    if (v.flagged) el.dataset.flag = "pending_return";
+    else delete el.dataset.flag;
     refs.fill.style.width = `${v.fillPct}%`;
     refs.label.textContent = v.label;
     // Soft, informational only: more than one phone scanned this live kayak
@@ -185,7 +196,7 @@ export function renderBoard(host, hooks = {}) {
   async function handleFinish(entry) {
     const { item, el, refs } = entry;
     const v = computeView(item, Date.now());
-    const verb = v.state === "time_off" ? "retornat" : "finalitzat";
+    const verb = v.state === "time_off" || v.flagged ? "retornat" : "finalitzat";
     if (!confirm(`Confirmar caiac ${item.kayak_id} ${verb}?`)) return;
 
     // Optimistic: drop the card now so the board feels instant.

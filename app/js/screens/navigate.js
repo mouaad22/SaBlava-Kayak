@@ -23,6 +23,8 @@ import { acquire, release, attachVisibilityHandler } from "../nav/wake-lock.js";
 import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, ALERT_RESUME_GRACE_MS, KAYAK_SPEED_KMH } from "../config.js";
 import { addRouteTrack } from "./map.js";
 import { mountNavTweakpane } from "../dev/nav-tweakpane.js";
+import { getKayakId } from "../kayak.js";
+import { getDeviceToken } from "../nav/device.js";
 
 const TABS = { MAP: "map", DATA: "data" };
 
@@ -262,6 +264,11 @@ export function renderNavigateScreen(host, routeId) {
     endDialog.close?.() ?? (endDialog.open = false);
   });
   endDialog.querySelector(".nav-end-dialog__confirm").addEventListener("click", () => {
+    // Tell the server the customer finished so the kayak shows as a pending return
+    // on the staff board instead of silently staying "active". Best-effort and not
+    // awaited (keepalive lets it outlive teardown) — it only flags the session;
+    // staff still confirm the physical return. A failure must never block exit.
+    reportSessionEnd();
     endSession();
     navigate(`/route/${routeId}`);
   });
@@ -632,9 +639,10 @@ export function renderNavigateScreen(host, routeId) {
       : `${isOver ? "+" : ""}${m}m`;
 
     // Distance to base + whether the remaining time still covers the paddle
-    // home (distance ÷ paddling speed). On the tornada a shortfall paints the
-    // time stat red, same treatment as being overtime.
-    const baseDistM = userCoords ? haversineM(userCoords, MARINA.coords) : null;
+    // home (distance ÷ paddling speed). The reducer measures this ALONG the
+    // track (the real coastline paddle home), not as the crow flies. On the
+    // tornada a shortfall paints the time stat red, same as being overtime.
+    const baseDistM = userCoords ? snap.baseDistAlongM : null;
     const etaBackMs = baseDistM != null ? (baseDistM / 1000) / KAYAK_SPEED_KMH * 3_600_000 : 0;
     const timeShort = phase === "back" && !isOver && baseDistM != null && remMs < etaBackMs;
 
@@ -655,9 +663,10 @@ export function renderNavigateScreen(host, routeId) {
       floatPoiName.textContent  = "";
     }
 
-    // Next-point distance stat. After the last POI, this targets the base.
+    // Next-point distance stat — coastline metres along the track to the next
+    // POI (or to base after the last POI), from the reducer. NOT straight-line.
     if (poi) {
-      const dist = userCoords ? Math.round(haversineM(userCoords, poi.coords)) : null;
+      const dist = userCoords ? Math.round(snap.distToTargetM) : null;
       statusDist.innerHTML = dist !== null ? `${dist}${u("m")}` : "--";
     } else {
       statusDist.innerHTML = baseDistM !== null ? `${Math.round(baseDistM)}${u("m")}` : "--";
@@ -686,7 +695,7 @@ export function renderNavigateScreen(host, routeId) {
       dadesTime.classList.toggle("is-overtime", isOver || timeShort);
 
       if (poi) {
-        const distM = userCoords ? Math.round(haversineM(userCoords, poi.coords)) : null;
+        const distM = userCoords ? Math.round(snap.distToTargetM) : null;
         dadesPoi.textContent  = t("nav.dades.next", activePOIIdx + 1, poi.name[lang] ?? poi.name.ca);
         dadesDist.textContent = distM !== null ? `${distM} m` : "--";
       } else {
@@ -732,7 +741,7 @@ export function renderNavigateScreen(host, routeId) {
     // in updateUI; this just adds the one-time voice + banner.
     if (phase === "back" && !shortWarned && userCoords) {
       const remMs     = timeRemainingMs();
-      const etaBackMs = (haversineM(userCoords, MARINA.coords) / 1000) / KAYAK_SPEED_KMH * 3_600_000;
+      const etaBackMs = (snap.baseDistAlongM / 1000) / KAYAK_SPEED_KMH * 3_600_000;
       if (remMs < etaBackMs) {
         shortWarned = true;
         const m = Math.max(0, Math.round(remMs / 60_000));
@@ -823,4 +832,25 @@ export function renderNavigateScreen(host, routeId) {
       setTimeout(() => screen.remove(), 320);
     },
   };
+}
+
+// Report the customer's "finish trip" tap to the session API so the staff board
+// shows the kayak as a pending return (it never closes the session — staff still
+// confirm the physical return). No-op when no QR was scanned (getKayakId() is
+// null), and intentionally not awaited: the request is dispatched immediately
+// (keepalive lets it outlive the screen teardown) and any failure is swallowed so
+// exiting the trip is never blocked by the network.
+function reportSessionEnd() {
+  const kayakId = getKayakId();
+  if (!kayakId) return;
+  try {
+    fetch("/api/session/end", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kayak_id: kayakId, device_token: getDeviceToken() }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* fetch unavailable — ignore, the local session is cleared regardless */
+  }
 }

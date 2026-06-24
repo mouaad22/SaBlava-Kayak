@@ -60,7 +60,7 @@ CREATE TABLE events (              -- append-only audit log; the dispute record
   id           TEXT PRIMARY KEY,
   session_id   TEXT,
   kayak_id     TEXT NOT NULL,
-  type         TEXT NOT NULL,     -- started|resumed|second_device|expired|return_confirmed|finished_early|superseded
+  type         TEXT NOT NULL,     -- started|resumed|second_device|customer_ended|expired|return_confirmed|finished_early|superseded
   device_token TEXT,              -- hashed, nullable
   at           INTEGER NOT NULL,  -- epoch ms
   meta         TEXT               -- JSON string, optional
@@ -80,6 +80,7 @@ All under the same Pages project; D1 bound as `env.DB`.
 |---|---|---|
 | `POST /api/session/start` | none | Start/resume per the Part-2 table. Body `{ kayak_id, device_token, duration_min? }`. Returns the authoritative session `{ id, kayak_id, started_at, expires_at, status }`. |
 | `GET /api/session/current?kayak_id=` | none | Latest open session for a kayak (customer timer rehydrate on reload). |
+| `POST /api/session/end` | none | Customer tapped **"Finish trip"** on their phone. Body `{ kayak_id, device_token? }`. Logs `customer_ended` and flags the open session as a **pending return** — does **NOT** close it (the kayak is still physically out; staff confirm via `/api/panel/finish`). Idempotent and best-effort; a missing/closed session returns `ok` with `flagged:false`. |
 | `GET /api/panel/board` | staff | Array of all kayaks with derived state for the dashboard (see shape below). |
 | `POST /api/panel/finish` | staff | Body `{ kayak_id }` (or `session_id`). Sets `returned_at`, `status='closed'`, `closed_reason` = `finished_early` if before `expires_at` else `staff_return`. Logs `return_confirmed`/`finished_early`. |
 | `POST /api/dev/seed` | dev only | Seeds fake kayaks/sessions in all states so the dashboard can be built standalone. Guard behind an env flag; never enabled in prod. |
@@ -95,7 +96,8 @@ All under the same Pages project; D1 bound as `env.DB`.
   "expires_at": 1718024400000,
   "remaining_ms": 1320000,      // negative when over (time_off)
   "duration_min": 60,
-  "second_device": true         // soft badge; from a second_device event on this session
+  "second_device": true,        // soft badge; from a second_device event on this session
+  "customer_ended": true        // pending return — customer tapped "finish"; still out, sorts to top
 }
 ```
 
@@ -141,7 +143,8 @@ Vertical scroll list. **Each card spans the full screen width**, three columns l
 | `closed` | — | — | — | not on the live board; available in a History view |
 
 - **`second_device` badge:** a small unobtrusive chip on the card (e.g. "2 devices") when true. Informational only — **not** styled as an alarm.
-- **Sort order:** `time_off` first (needs action), then `active` by soonest `expires_at`, then `available`.
+- **`customer_ended` (pending return):** when true the card overrides its tag to 🔵 **"Client ha finalitzat"** (brand-teal, not the amber alarm) and its button becomes **Kayak returned** — the customer signalled they're done, but the kayak is still out until staff confirm. The session is **not** closed by the customer's tap.
+- **Sort order:** **pending return** (`customer_ended` & still out) first, then `time_off` (overtime), then `active` by soonest `expires_at`, then `available`.
 
 ### 5.3 Interactions
 

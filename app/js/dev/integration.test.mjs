@@ -156,6 +156,23 @@ test("S5: low-accuracy fixes never reach the reducer (S1 filter → S2 progress 
   assert.equal(p.events.length, 0, "a dropped fix must not emit arrival/turnaround events");
 });
 
+test("S5: a far-away first fix (testing from the city) does not false-complete the trip", () => {
+  // Regression for the field-reported bug: opening the navigate screen from
+  // Barcelona (~100 km away, but an ACCURATE 8 m fix) instantly said "arrived"
+  // + showed 'completat' / 0% tornada, because the huge distance home read as
+  // "out of time". An accurate-but-off-route fix must pass the accuracy filter
+  // yet drive NO arrival/turnaround logic.
+  const p = makePipeline();
+  p.setClock(0);
+  p.fixAt(2.17, 41.39, 8); // Barcelona-ish, accurate → passes session-1's filter
+  assert.equal(p.acceptedFixes.length, 1, "an accurate fix still passes the accuracy filter");
+  assert.equal(p.events.length, 0, "but an off-route fix emits no arrival/turnaround");
+  assert.equal(p.snap.phase, "out", "no instant flip to tornada");
+  assert.equal(p.snap.activePOIIdx, 0, "no POIs marked passed");
+  assert.equal(p.snap.progressPct, 0, "progress stays at 0%");
+  assert.equal(p.snap.offRoute, true);
+});
+
 test("S5: full out-and-back through the integrated geo→progress pipeline", () => {
   const p = makePipeline();
 

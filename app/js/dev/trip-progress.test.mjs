@@ -153,6 +153,24 @@ test("too-slow return: a single return-unsafe fires once on the way home", () =>
   assert.equal(trip.getSnapshot().returnSafety.safe, false);
 });
 
+test("off-route: a fix far from the track holds progress and emits nothing", () => {
+  // Regression for the Barcelona bug: a precise fix ~111 km from the route
+  // (passes the accuracy filter, but nowhere near the water) used to read as
+  // "out of time" → instant false turnaround + "arrived" + 'completat'.
+  const trip = makeTrip();
+  const snap = trip.update({ coords: [LNG0, LAT + 1.0], tMs: 0 });
+  assert.equal(snap.offRoute, true, "the fix is flagged off-route");
+  assert.equal(snap.events.length, 0, "no arrival/turnaround from an off-route fix");
+  assert.equal(snap.phase, "out", "phase must not flip to tornada");
+  assert.equal(snap.activePOIIdx, 0, "the POI chain must not advance");
+  assert.equal(snap.progressPct, 0, "progress stays at 0%");
+
+  // Once genuinely on the route, the state machine resumes normally.
+  const back = trip.update({ coords: TRACK[5], tMs: 1000 });
+  assert.equal(back.offRoute, false);
+  assert.equal(back.phase, "out");
+});
+
 test("return-safety is decoupled from the 50 m last-POI gate", () => {
   // 8-minute trip: the paddler runs low on time mid-anada and the reducer flips
   // to the tornada on the time trigger (the last POI is never reached within

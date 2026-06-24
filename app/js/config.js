@@ -55,3 +55,11 @@ export const RETURN_SAFETY_MARGIN_RATIO = 1.15;
 // On resume from background, only re-announce a missed time-warning if it
 // crossed within this window — avoids dumping a backlog of stale alerts. [session-3]
 export const ALERT_RESUME_GRACE_MS = 60_000;
+
+// A fix whose perpendicular distance from the route track exceeds this (metres)
+// is treated as "off-route" and does NOT drive arrival/turnaround/progress — it
+// is precise but in the wrong place (e.g. testing from the city, or a stray
+// fix), so the huge distance home must not read as "out of time" and instantly
+// false-complete the trip. Generous vs. the coastal track so a real paddler in
+// a wide bay is never suppressed. [session-5]
+export const NAV_OFFROUTE_THRESHOLD_M = 1500;

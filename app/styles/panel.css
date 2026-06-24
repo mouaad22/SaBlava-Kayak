@@ -88,8 +88,8 @@ body {
 .panel-login__input {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 28px;
-  letter-spacing: 0.4em;
+  font-size: 22px;
+  letter-spacing: 0.15em;
   text-align: center;
   padding: var(--space-4);
   border: 1.5px solid var(--color-border);

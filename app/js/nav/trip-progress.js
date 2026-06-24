@@ -25,6 +25,7 @@ import {
   ARRIVAL_SKIP_MARGIN_M,
   RETURN_SAFETY_MARGIN_RATIO,
   KAYAK_SPEED_KMH,
+  NAV_OFFROUTE_THRESHOLD_M,
 } from "../config.js";
 
 /**
@@ -41,6 +42,7 @@ import {
  * @property {number} progressPct — 0..100, two-period (resets at turnaround)
  * @property {number} distAlongM — metres along the track to the live projection
  * @property {number} totalAnadaM — track metres from base to the furthest active POI
+ * @property {boolean} offRoute — the last fix was implausibly far from the track (logic held)
  * @property {number|null} baseDistM — straight-line metres to the marina
  * @property {number|null} returnStartDistM — straight-line base distance captured at turnaround
  * @property {{ remainingMs: number, etaBackMs: number, safe: boolean }} returnSafety
@@ -73,6 +75,7 @@ export function createTripProgress({
   const skipMarginM       = opts.skipMarginM       ?? ARRIVAL_SKIP_MARGIN_M;
   const safetyRatio       = opts.safetyRatio       ?? RETURN_SAFETY_MARGIN_RATIO;
   const speedKmh          = opts.speedKmh          ?? KAYAK_SPEED_KMH;
+  const offRouteThresholdM = opts.offRouteThresholdM ?? NAV_OFFROUTE_THRESHOLD_M;
 
   // A usable polyline is required; fall back to base→POIs if the track is thin.
   const line = track && track.length > 1
@@ -105,6 +108,7 @@ export function createTripProgress({
   let lastDistAlongM  = marinaAlong;
   let lastBaseDistM   = null;
   let lastRemainingMs = durationMs;
+  let offRoute        = false;   // last fix was implausibly far from the track
 
   function progressPct() {
     if (phase === "out") {
@@ -128,6 +132,7 @@ export function createTripProgress({
       progressPct: progressPct(),
       distAlongM: lastDistAlongM,
       totalAnadaM,
+      offRoute,
       baseDistM: lastBaseDistM,
       returnStartDistM,
       returnSafety: {
@@ -148,10 +153,23 @@ export function createTripProgress({
   function update({ coords, tMs }) {
     lastCoords = coords;
     const proj = projectOntoTrack(line, coords, cum);
-    lastDistAlongM = proj.distAlongM;
-    maxDistAlongM = Math.max(maxDistAlongM, lastDistAlongM);
     lastBaseDistM = haversineM(coords, marinaCoords);
     lastRemainingMs = durationMs - (tMs - startedAtMs);
+
+    // ── Off-route guard ──────────────────────────────────────────────────────
+    // A fix far from the route track is precise-but-wrong (testing from the
+    // city, or a stray fix that passed the accuracy filter): its huge distance
+    // home would read as "out of time" and instantly false-complete the trip,
+    // and its projection would mass-"pass" the POIs. Hold progress where it is
+    // and emit nothing until the paddler is actually on the route.
+    if (proj.crossDistM > offRouteThresholdM) {
+      offRoute = true;
+      return snapshot([]);
+    }
+    offRoute = false;
+
+    lastDistAlongM = proj.distAlongM;
+    maxDistAlongM = Math.max(maxDistAlongM, lastDistAlongM);
 
     /** @type {TripEvent[]} */
     const events = [];

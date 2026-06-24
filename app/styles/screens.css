@@ -2158,7 +2158,7 @@
 
 /* Open circle for the fixed start point */
 .summary-timeline__dot--open {
-  background: transparent;
+  background: #e8ece4;
   border: 2.5px solid var(--color-text-primary);
 }
 

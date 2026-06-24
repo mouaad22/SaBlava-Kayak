@@ -12,10 +12,13 @@ export function renderLogin(host, onSuccess) {
         <input
           class="panel-login__input"
           type="password"
-          inputmode="numeric"
+          inputmode="text"
           autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           aria-label="Codi d'accés"
-          placeholder="••••"
+          placeholder="••••••••••••"
         />
         <p class="panel-login__error" role="alert" hidden></p>
         <button class="panel-btn panel-btn--primary panel-login__submit" type="submit">Entrar</button>

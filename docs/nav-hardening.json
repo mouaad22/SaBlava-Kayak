@@ -236,8 +236,8 @@
       "started_at": "2026-06-24",
       "finished_at": "2026-06-24",
       "tested": true,
-      "committed": false,
-      "commit_sha": null,
+      "committed": true,
+      "commit_sha": "103a5af (code + manifest) on branch feat/nav-hardening-session-4, NOT yet merged to main. Merging to main triggers the Cloudflare production deploy — left to the owner (same flag sessions 1-3 carried). The unrelated working-tree changes (package.json, sun-clock.js, docs) were deliberately NOT included in the commit.",
       "depends_on": ["session-3"],
       "files_in_scope": [
         "app/js/nav/audio.js (owns: add Notification + vibration + re-prime; keep speak/chime/announceArrival API stable)",

@@ -187,11 +187,6 @@ const POIS_SUD = [
       { type: "image", src: "./assets/photos/ruta-sud/poi-5-cova-bisbe/3.webp" },
       { type: "image", src: "./assets/photos/ruta-sud/poi-5-cova-bisbe/4.webp" },
       { type: "image", src: "./assets/photos/ruta-sud/poi-5-cova-bisbe/5.webp" },
-      {
-        type: "video",
-        src: "./assets/photos/ruta-sud/poi-5-cova-bisbe/6.mp4",
-        poster: "./assets/photos/ruta-sud/poi-5-cova-bisbe/5.webp",
-      },
       { type: "image", src: "./assets/photos/ruta-sud/poi-5-cova-bisbe/0.webp" },
     ],
   },
@@ -224,6 +219,10 @@ const POIS_SUD = [
       },
       { type: "image", src: "./assets/photos/ruta-sud/poi-6-cova-gavina/3.webp" },
       { type: "image", src: "./assets/photos/ruta-sud/poi-6-cova-gavina/4.webp" },
+      {
+        type: "video",
+        src: "./assets/photos/ruta-sud/poi-6-cova-gavina/5.mp4",
+      },
       { type: "image", src: "./assets/photos/ruta-sud/poi-6-cova-gavina/0.webp" },
     ],
   },

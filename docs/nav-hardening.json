@@ -191,7 +191,7 @@
       "finished_at": "2026-06-24",
       "tested": true,
       "committed": true,
-      "commit_sha": "e735af8 (on branch nav-hardening/session-3, NOT yet merged to main — merge/deploy decision left to owner, see open_questions)",
+      "commit_sha": "e735af8 (code) + 592f311 (sha-backfill); MERGED to main as 1f2966d (no-ff). NOT yet pushed to origin — push triggers the Cloudflare prod deploy; awaiting owner go-ahead.",
       "depends_on": ["session-2"],
       "files_in_scope": [
         "app/js/nav/alerts.js (NEW — pure scheduler: which thresholds have fired given now vs startedAtMs+durationMs)",

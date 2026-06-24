@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS events (
   id           TEXT PRIMARY KEY,
   session_id   TEXT,
   kayak_id     TEXT NOT NULL,
-  type         TEXT NOT NULL,  -- started|resumed|second_device|expired|return_confirmed|finished_early|superseded
+  type         TEXT NOT NULL,  -- started|resumed|second_device|customer_ended|expired|return_confirmed|finished_early|superseded
   device_token TEXT,           -- hashed, nullable
   at           INTEGER NOT NULL,
   meta         TEXT            -- JSON string, optional

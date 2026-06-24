@@ -272,6 +272,24 @@ body {
   color: var(--color-text-secondary);
 }
 
+/* ── Pending return (customer tapped "finish" — still out, awaiting staff) ────
+   Sorts to the top server-side. A distinct brand-teal treatment (not the coral
+   time_off alarm) so it reads as "customer's done, go confirm", and a filled
+   action button so the return tap is the obvious next step. Overrides whatever
+   underlying state (active or time_off) the card is in. */
+.kayak-card[data-flag="pending_return"] {
+  border-left-color: var(--color-primary);
+}
+.kayak-card[data-flag="pending_return"] .kayak-card__pill {
+  background: var(--color-primary);
+  color: #fff;
+}
+.kayak-card[data-flag="pending_return"] .kayak-card__action {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
 /* ── History view ────────────────────────────────────────────────────────── */
 
 .panel__heading {

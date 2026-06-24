@@ -19,6 +19,7 @@ const EVENT_LABEL = {
   started: "Inici",
   resumed: "Représ",
   second_device: "2n dispositiu",
+  customer_ended: "Client ha finalitzat",
   expired: "Temps exhaurit",
   return_confirmed: "Retorn confirmat",
   finished_early: "Finalitzat aviat",

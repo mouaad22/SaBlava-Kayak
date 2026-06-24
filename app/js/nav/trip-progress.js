@@ -42,8 +42,13 @@ import {
  * @property {number} progressPct — 0..100, two-period (resets at turnaround)
  * @property {number} distAlongM — metres along the track to the live projection
  * @property {number} totalAnadaM — track metres from base to the furthest active POI
+ * @property {number} distToTargetM — metres ALONG the track from the live projection to
+ *   the current target (next POI on the anada, the marina on the tornada). This is the
+ *   coastline paddle distance the UI shows, NOT a straight line.
+ * @property {number} baseDistAlongM — metres ALONG the track from the live projection back
+ *   to the marina (the real paddle-home distance; drives the return ETA + safety)
  * @property {boolean} offRoute — the last fix was implausibly far from the track (logic held)
- * @property {number|null} baseDistM — straight-line metres to the marina
+ * @property {number|null} baseDistM — straight-line metres to the marina (kept for reference)
  * @property {number|null} returnStartDistM — straight-line base distance captured at turnaround
  * @property {{ remainingMs: number, etaBackMs: number, safe: boolean }} returnSafety
  * @property {TripEvent[]} events — events produced by the update that returned this snapshot
@@ -110,6 +115,12 @@ export function createTripProgress({
   let lastRemainingMs = durationMs;
   let offRoute        = false;   // last fix was implausibly far from the track
 
+  // Remaining paddle-home distance measured ALONG the track (from the live
+  // projection back to the marina's projection), not as the crow flies. On a
+  // curving coast the straight line badly under-counts the real paddle home, so
+  // every distance/ETA the paddler sees — and the return-safety math — uses this.
+  const baseAlongM = () => Math.max(0, lastDistAlongM - marinaAlong);
+
   function progressPct() {
     if (phase === "out") {
       if (totalAnadaM <= 0) return idx >= activePois.length ? 100 : 0;
@@ -124,7 +135,11 @@ export function createTripProgress({
     const nextTarget = phase === "out" && idx < activePois.length
       ? { poiIdx: idx, coords: activePois[idx].coords }
       : { marina: true, coords: marinaCoords };
-    const etaBackMs = lastBaseDistM != null ? etaMs(lastBaseDistM) : 0;
+    const baseDistAlongM = baseAlongM();
+    const distToTargetM = phase === "out" && idx < activePois.length
+      ? Math.max(0, poiAlong[idx] - lastDistAlongM)
+      : baseDistAlongM;
+    const etaBackMs = lastBaseDistM != null ? etaMs(baseDistAlongM) : 0;
     return {
       phase,
       activePOIIdx: idx,
@@ -132,6 +147,8 @@ export function createTripProgress({
       progressPct: progressPct(),
       distAlongM: lastDistAlongM,
       totalAnadaM,
+      distToTargetM,
+      baseDistAlongM,
       offRoute,
       baseDistM: lastBaseDistM,
       returnStartDistM,
@@ -202,7 +219,7 @@ export function createTripProgress({
 
     // ── Turnaround: flip to tornada on ANY trigger ───────────────────────────
     if (phase === "out") {
-      const etaBackMs = etaMs(lastBaseDistM);
+      const etaBackMs = etaMs(baseAlongM());
       const allPoisDone = idx >= activePois.length;
       const timeCritical = lastRemainingMs <= etaBackMs;
       // Furthest point passed and now closing back toward base — catches a manual
@@ -244,7 +261,7 @@ export function createTripProgress({
     // paddle home with the safety margin — regardless of whether the last POI was
     // ever reached within 50 m.
     if (phase === "back" && !returnUnsafeFired) {
-      const etaBackMs = etaMs(lastBaseDistM);
+      const etaBackMs = etaMs(baseAlongM());
       if (lastRemainingMs < etaBackMs * safetyRatio) {
         returnUnsafeFired = true;
         events.push({ type: "return-unsafe", remainingMs: lastRemainingMs, etaBackMs });

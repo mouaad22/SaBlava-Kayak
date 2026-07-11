@@ -182,6 +182,52 @@ const dict = {
     "nav.float.poi.done": "✓ Completat",
     "nav.timeline.poi": (n, name) => `${n} – ${name}`,
     "nav.timeline.base": "Base",
+    "legal.link": "Privadesa i cookies",
+    "legal.title": "Privadesa i avís legal",
+    "legal.updated": "Última actualització: 11 de juliol de 2026",
+    "legal.intro": "Aquesta pàgina explica quines dades recull l'aplicació Sa Blava Kayak quan reserves i navegues amb un dels nostres kayaks, per què les recollim i quins drets tens. Ho fem seguint el Reglament General de Protecció de Dades (RGPD) i la normativa espanyola de protecció de dades (LOPDGDD).",
+    "legal.controller.heading": "Responsable del tractament",
+    "legal.controller.body": [
+      "Magda Romaní Mascarreras, amb NIF 40525951C i domicili a Francesc Sabater, 16, Begur, és responsable del tractament de les dades descrites en aquesta pàgina. Pots contactar-nos a sablavakayaks@gmail.com per qualsevol qüestió relacionada amb la privadesa.",
+    ],
+    "legal.data.heading": "Quines dades recollim i per què",
+    "legal.data.body": [
+      "Codi de lloguer i sessió: quan introdueixes el codi de 6 dígits del teu kayak, guardem la ruta triada, la durada i l'hora d'inici al teu dispositiu i al nostre servidor, per controlar el temps de lloguer i mostrar-te el progrés de la ruta.",
+      "Identificador anònim del dispositiu: generem un codi aleatori al teu telèfon i només n'enviem una versió xifrada (hash) al servidor, perquè mai viatgi com a dada identificable. Serveix per confirmar que ets tu qui continua una sessió activa.",
+      "Ubicació GPS: si ho permets, l'aplicació utilitza la ubicació del teu telèfon per mostrar-te on ets al mapa i per als avisos de temps de tornada. Aquesta ubicació es processa NOMÉS al teu dispositiu: mai s'envia ni es guarda al nostre servidor.",
+      "Notificacions push (opcionals): si actives els avisos, el navegador crea una subscripció (una adreça tècnica i unes claus de xifratge) que fem servir exclusivament per enviar-te els avisos de temps de tornada mentre dura el teu lloguer, vinculada a la teva sessió.",
+      "Ús intern: el nostre personal pot registrar el nom de l'empleat que confirma la devolució d'un kayak, per motius operatius i de resolució d'incidències. Aquesta dada no és teva com a client.",
+    ],
+    "legal.basis.heading": "Base legal",
+    "legal.basis.body": [
+      "Tractem aquestes dades per executar el contracte de lloguer (art. 6.1.b RGPD) i pel nostre interès legítim en gestionar la seguretat i el bon funcionament del servei (art. 6.1.f). Els permisos d'ubicació i de notificacions del navegador es demanen amb el teu consentiment explícit (art. 6.1.a) i pots revocar-los en qualsevol moment des de la configuració del teu telèfon o navegador.",
+    ],
+    "legal.cookies.heading": "Cookies i emmagatzematge local",
+    "legal.cookies.body": [
+      "L'aplicació que fas servir com a client NO utilitza cookies de seguiment ni de publicitat. Fem servir l'emmagatzematge local del navegador únicament per a finalitats tècniques imprescindibles: recordar la teva sessió de lloguer, l'idioma triat i l'identificador anònim del dispositiu. Cap d'aquestes dades es fa servir per fer-te seguiment entre webs ni per publicitat.",
+      "El nostre panell intern per a personal sí que utilitza una cookie tècnica de sessió, estrictament necessària per iniciar sessió; no afecta els clients.",
+    ],
+    "legal.thirdparties.heading": "Serveis de tercers",
+    "legal.thirdparties.body": [
+      "Per funcionar, l'aplicació carrega recursos d'aquests proveïdors: Mapbox (mapes), Google Fonts (tipografies) i unpkg (animacions). Poden rebre la teva adreça IP com a part tècnica inevitable de qualsevol connexió a internet, però no els enviem cap altra dada personal teva.",
+      "Si actives les notificacions push, el servei de missatgeria del teu navegador (segons el dispositiu, per exemple Google, Apple o Mozilla) actua com a intermediari tècnic per lliurar l'avís; només rep l'adreça de subscripció xifrada, no el contingut en clar ni la teva identitat.",
+    ],
+    "legal.retention.heading": "Conservació de les dades",
+    "legal.retention.body": [
+      "Les dades de la sessió de lloguer (codi, ruta, horaris, identificador xifrat del dispositiu) es conserven al nostre servidor durant 6 mesos per motius operatius i de resolució de disputes. La subscripció de notificacions push s'esborra automàticament si deixa de ser vàlida. La ubicació GPS no es conserva enlloc, perquè mai surt del teu dispositiu.",
+    ],
+    "legal.rights.heading": "Els teus drets",
+    "legal.rights.body": [
+      "Pots exercir en qualsevol moment els drets d'accés, rectificació, supressió, oposició, limitació del tractament i portabilitat de les teves dades, escrivint a sablavakayaks@gmail.com. També tens dret a presentar una reclamació davant l'Agència Espanyola de Protecció de Dades (aepd.es) si consideres que no hem tractat les teves dades correctament.",
+    ],
+    "legal.changes.heading": "Canvis a aquesta política",
+    "legal.changes.body": [
+      "Podem actualitzar aquesta pàgina si canviem com tractem les teves dades. La data de l'última actualització apareix a dalt de tot.",
+    ],
+    "legal.contact.heading": "Contacte",
+    "legal.contact.body": [
+      "Per a qualsevol pregunta sobre privadesa, escriu-nos a sablavakayaks@gmail.com.",
+    ],
   },
   es: {
     "lang.welcome": "¡Bienvenido!",
@@ -357,6 +403,52 @@ const dict = {
     "nav.float.poi.done": "✓ Completado",
     "nav.timeline.poi": (n, name) => `${n} – ${name}`,
     "nav.timeline.base": "Base",
+    "legal.link": "Privacidad y cookies",
+    "legal.title": "Privacidad y aviso legal",
+    "legal.updated": "Última actualización: 11 de julio de 2026",
+    "legal.intro": "Esta página explica qué datos recoge la aplicación Sa Blava Kayak cuando reservas y navegas con uno de nuestros kayaks, por qué los recogemos y qué derechos tienes. Lo hacemos conforme al Reglamento General de Protección de Datos (RGPD) y la normativa española de protección de datos (LOPDGDD).",
+    "legal.controller.heading": "Responsable del tratamiento",
+    "legal.controller.body": [
+      "Magda Romaní Mascarreras, con NIF 40525951C y domicilio en Francesc Sabater, 16, Begur, es responsable del tratamiento de los datos descritos en esta página. Puedes contactarnos en sablavakayaks@gmail.com para cualquier cuestión relacionada con la privacidad.",
+    ],
+    "legal.data.heading": "Qué datos recogemos y por qué",
+    "legal.data.body": [
+      "Código de alquiler y sesión: cuando introduces el código de 6 dígitos de tu kayak, guardamos la ruta elegida, la duración y la hora de inicio en tu dispositivo y en nuestro servidor, para controlar el tiempo de alquiler y mostrarte el progreso de la ruta.",
+      "Identificador anónimo del dispositivo: generamos un código aleatorio en tu teléfono y solo enviamos una versión cifrada (hash) al servidor, para que nunca viaje como dato identificable. Sirve para confirmar que eres tú quien continúa una sesión activa.",
+      "Ubicación GPS: si lo permites, la aplicación usa la ubicación de tu teléfono para mostrarte dónde estás en el mapa y para los avisos de tiempo de vuelta. Esta ubicación se procesa SOLO en tu dispositivo: nunca se envía ni se guarda en nuestro servidor.",
+      "Notificaciones push (opcionales): si activas los avisos, el navegador crea una suscripción (una dirección técnica y unas claves de cifrado) que usamos exclusivamente para enviarte los avisos de tiempo de vuelta mientras dura tu alquiler, vinculada a tu sesión.",
+      "Uso interno: nuestro personal puede registrar el nombre del empleado que confirma la devolución de un kayak, por motivos operativos y de resolución de incidencias. Este dato no es tuyo como cliente.",
+    ],
+    "legal.basis.heading": "Base legal",
+    "legal.basis.body": [
+      "Tratamos estos datos para ejecutar el contrato de alquiler (art. 6.1.b RGPD) y por nuestro interés legítimo en gestionar la seguridad y el buen funcionamiento del servicio (art. 6.1.f). Los permisos de ubicación y de notificaciones del navegador se solicitan con tu consentimiento explícito (art. 6.1.a) y puedes revocarlos en cualquier momento desde la configuración de tu teléfono o navegador.",
+    ],
+    "legal.cookies.heading": "Cookies y almacenamiento local",
+    "legal.cookies.body": [
+      "La aplicación que usas como cliente NO utiliza cookies de seguimiento ni de publicidad. Usamos el almacenamiento local del navegador únicamente para fines técnicos imprescindibles: recordar tu sesión de alquiler, el idioma elegido y el identificador anónimo del dispositivo. Ninguno de estos datos se usa para hacerte seguimiento entre webs ni para publicidad.",
+      "Nuestro panel interno para el personal sí utiliza una cookie técnica de sesión, estrictamente necesaria para iniciar sesión; no afecta a los clientes.",
+    ],
+    "legal.thirdparties.heading": "Servicios de terceros",
+    "legal.thirdparties.body": [
+      "Para funcionar, la aplicación carga recursos de estos proveedores: Mapbox (mapas), Google Fonts (tipografías) y unpkg (animaciones). Pueden recibir tu dirección IP como parte técnica inevitable de cualquier conexión a internet, pero no les enviamos ningún otro dato personal tuyo.",
+      "Si activas las notificaciones push, el servicio de mensajería de tu navegador (según el dispositivo, por ejemplo Google, Apple o Mozilla) actúa como intermediario técnico para entregar el aviso; solo recibe la dirección de suscripción cifrada, no el contenido en claro ni tu identidad.",
+    ],
+    "legal.retention.heading": "Conservación de los datos",
+    "legal.retention.body": [
+      "Los datos de la sesión de alquiler (código, ruta, horarios, identificador cifrado del dispositivo) se conservan en nuestro servidor durante 6 meses por motivos operativos y de resolución de disputas. La suscripción de notificaciones push se borra automáticamente si deja de ser válida. La ubicación GPS no se conserva en ningún sitio, porque nunca sale de tu dispositivo.",
+    ],
+    "legal.rights.heading": "Tus derechos",
+    "legal.rights.body": [
+      "Puedes ejercer en cualquier momento los derechos de acceso, rectificación, supresión, oposición, limitación del tratamiento y portabilidad de tus datos, escribiendo a sablavakayaks@gmail.com. También tienes derecho a presentar una reclamación ante la Agencia Española de Protección de Datos (aepd.es) si consideras que no hemos tratado tus datos correctamente.",
+    ],
+    "legal.changes.heading": "Cambios en esta política",
+    "legal.changes.body": [
+      "Podemos actualizar esta página si cambiamos cómo tratamos tus datos. La fecha de la última actualización aparece arriba del todo.",
+    ],
+    "legal.contact.heading": "Contacto",
+    "legal.contact.body": [
+      "Para cualquier pregunta sobre privacidad, escríbenos a sablavakayaks@gmail.com.",
+    ],
   },
   en: {
     "lang.welcome": "Welcome!",
@@ -532,6 +624,52 @@ const dict = {
     "nav.float.poi.done": "✓ Completed",
     "nav.timeline.poi": (n, name) => `${n} – ${name}`,
     "nav.timeline.base": "Base",
+    "legal.link": "Privacy & cookies",
+    "legal.title": "Privacy & legal notice",
+    "legal.updated": "Last updated: July 11, 2026",
+    "legal.intro": "This page explains what data the Sa Blava Kayak app collects when you book and navigate with one of our kayaks, why we collect it, and what rights you have. We follow the General Data Protection Regulation (GDPR) and Spanish data-protection law (LOPDGDD).",
+    "legal.controller.heading": "Data controller",
+    "legal.controller.body": [
+      "Magda Romaní Mascarreras, tax ID (NIF) 40525951C, registered at Francesc Sabater, 16, Begur, is the controller responsible for the data described on this page. You can contact us at sablavakayaks@gmail.com for any privacy-related question.",
+    ],
+    "legal.data.heading": "What data we collect and why",
+    "legal.data.body": [
+      "Rental code and session: when you enter your kayak's 6-digit code, we store the chosen route, duration and start time on your device and on our server, to track your rental time and show your route progress.",
+      "Anonymous device identifier: we generate a random code on your phone and only send a hashed (encrypted) version to the server, so it never travels as identifiable data. It's used to confirm you're the one continuing an active session.",
+      "GPS location: if you allow it, the app uses your phone's location to show your position on the map and to drive the return-time alerts. This location is processed ONLY on your device — it is never sent to or stored on our server.",
+      "Push notifications (optional): if you enable alerts, your browser creates a subscription (a technical address and encryption keys) that we use exclusively to send you return-time alerts for the duration of your rental, linked to your session.",
+      "Internal use: our staff may record the name of the employee who confirms a kayak's return, for operational and dispute-resolution purposes. This is not data about you as a customer.",
+    ],
+    "legal.basis.heading": "Legal basis",
+    "legal.basis.body": [
+      "We process this data to perform the rental contract (GDPR art. 6.1.b) and based on our legitimate interest in operating the service safely and reliably (art. 6.1.f). Browser location and notification permissions are requested with your explicit consent (art. 6.1.a) and you can revoke them at any time from your phone or browser settings.",
+    ],
+    "legal.cookies.heading": "Cookies & local storage",
+    "legal.cookies.body": [
+      "The app you use as a customer does NOT use tracking or advertising cookies. We use the browser's local storage only for essential technical purposes: remembering your rental session, your chosen language, and the anonymous device identifier. None of this data is used to track you across websites or for advertising.",
+      "Our internal staff panel does use a technical session cookie, strictly necessary to log in; this does not affect customers.",
+    ],
+    "legal.thirdparties.heading": "Third-party services",
+    "legal.thirdparties.body": [
+      "To function, the app loads resources from these providers: Mapbox (maps), Google Fonts (typefaces) and unpkg (animations). They may receive your IP address as an unavoidable technical part of any internet connection, but we do not send them any other personal data of yours.",
+      "If you enable push notifications, your browser's push service (depending on your device — e.g. Google, Apple or Mozilla) acts as a technical intermediary to deliver the alert; it only receives the encrypted subscription address, not the message content or your identity.",
+    ],
+    "legal.retention.heading": "Data retention",
+    "legal.retention.body": [
+      "Rental-session data (code, route, timestamps, hashed device identifier) is kept on our server for 6 months for operational and dispute-resolution purposes. A push subscription is automatically deleted once it becomes invalid. GPS location is never retained anywhere, because it never leaves your device.",
+    ],
+    "legal.rights.heading": "Your rights",
+    "legal.rights.body": [
+      "You can exercise your rights of access, rectification, erasure, objection, restriction of processing and data portability at any time by writing to sablavakayaks@gmail.com. You also have the right to lodge a complaint with the Spanish Data Protection Agency (aepd.es) if you believe we haven't handled your data correctly.",
+    ],
+    "legal.changes.heading": "Changes to this policy",
+    "legal.changes.body": [
+      "We may update this page if we change how we handle your data. The last-updated date appears at the top.",
+    ],
+    "legal.contact.heading": "Contact",
+    "legal.contact.body": [
+      "For any privacy question, write to us at sablavakayaks@gmail.com.",
+    ],
   },
   fr: {
     "lang.welcome": "Bienvenue !",
@@ -708,6 +846,52 @@ const dict = {
     "nav.float.poi.done": "✓ Terminé",
     "nav.timeline.poi": (n, name) => `${n} – ${name}`,
     "nav.timeline.base": "Base",
+    "legal.link": "Confidentialité et cookies",
+    "legal.title": "Confidentialité et mentions légales",
+    "legal.updated": "Dernière mise à jour : 11 juillet 2026",
+    "legal.intro": "Cette page explique quelles données l'application Sa Blava Kayak recueille lorsque tu réserves et navigues avec l'un de nos kayaks, pourquoi nous les recueillons et quels sont tes droits. Nous suivons le Règlement général sur la protection des données (RGPD) et la loi espagnole sur la protection des données (LOPDGDD).",
+    "legal.controller.heading": "Responsable du traitement",
+    "legal.controller.body": [
+      "Magda Romaní Mascarreras, NIF 40525951C, domiciliée à Francesc Sabater, 16, Begur, est responsable du traitement des données décrites sur cette page. Tu peux nous contacter à sablavakayaks@gmail.com pour toute question relative à la confidentialité.",
+    ],
+    "legal.data.heading": "Quelles données nous recueillons et pourquoi",
+    "legal.data.body": [
+      "Code de location et session : lorsque tu saisis le code à 6 chiffres de ton kayak, nous enregistrons l'itinéraire choisi, la durée et l'heure de début sur ton appareil et sur notre serveur, pour suivre la durée de location et t'afficher la progression de l'itinéraire.",
+      "Identifiant anonyme de l'appareil : nous générons un code aléatoire sur ton téléphone et n'envoyons qu'une version chiffrée (hash) au serveur, afin qu'il ne circule jamais comme donnée identifiable. Il sert à confirmer que c'est bien toi qui poursuis une session active.",
+      "Localisation GPS : si tu l'autorises, l'application utilise la position de ton téléphone pour t'afficher sur la carte et pour les alertes de temps de retour. Cette position est traitée UNIQUEMENT sur ton appareil : elle n'est jamais envoyée ni conservée sur notre serveur.",
+      "Notifications push (facultatives) : si tu actives les alertes, le navigateur crée un abonnement (une adresse technique et des clés de chiffrement) que nous utilisons exclusivement pour t'envoyer les alertes de temps de retour pendant la durée de ta location, lié à ta session.",
+      "Usage interne : notre personnel peut enregistrer le nom de l'employé qui confirme le retour d'un kayak, à des fins opérationnelles et de résolution de litiges. Cette donnée ne te concerne pas en tant que client.",
+    ],
+    "legal.basis.heading": "Base légale",
+    "legal.basis.body": [
+      "Nous traitons ces données pour exécuter le contrat de location (art. 6.1.b RGPD) et sur la base de notre intérêt légitime à assurer la sécurité et le bon fonctionnement du service (art. 6.1.f). Les autorisations de localisation et de notifications du navigateur sont demandées avec ton consentement explicite (art. 6.1.a) et tu peux les révoquer à tout moment depuis les réglages de ton téléphone ou navigateur.",
+    ],
+    "legal.cookies.heading": "Cookies et stockage local",
+    "legal.cookies.body": [
+      "L'application que tu utilises en tant que client N'UTILISE PAS de cookies de suivi ni publicitaires. Nous utilisons le stockage local du navigateur uniquement à des fins techniques indispensables : mémoriser ta session de location, la langue choisie et l'identifiant anonyme de l'appareil. Aucune de ces données n'est utilisée pour te suivre entre les sites ni à des fins publicitaires.",
+      "Notre panneau interne pour le personnel utilise bien un cookie technique de session, strictement nécessaire pour se connecter ; cela ne concerne pas les clients.",
+    ],
+    "legal.thirdparties.heading": "Services tiers",
+    "legal.thirdparties.body": [
+      "Pour fonctionner, l'application charge des ressources depuis ces fournisseurs : Mapbox (cartes), Google Fonts (typographies) et unpkg (animations). Ils peuvent recevoir ton adresse IP, partie technique inévitable de toute connexion internet, mais nous ne leur envoyons aucune autre donnée personnelle te concernant.",
+      "Si tu actives les notifications push, le service de messagerie de ton navigateur (selon l'appareil, par exemple Google, Apple ou Mozilla) agit comme intermédiaire technique pour livrer l'alerte ; il ne reçoit que l'adresse d'abonnement chiffrée, ni le contenu en clair ni ton identité.",
+    ],
+    "legal.retention.heading": "Conservation des données",
+    "legal.retention.body": [
+      "Les données de session de location (code, itinéraire, horaires, identifiant chiffré de l'appareil) sont conservées sur notre serveur pendant 6 mois à des fins opérationnelles et de résolution de litiges. L'abonnement aux notifications push est automatiquement supprimé s'il devient invalide. La localisation GPS n'est jamais conservée nulle part, car elle ne quitte jamais ton appareil.",
+    ],
+    "legal.rights.heading": "Tes droits",
+    "legal.rights.body": [
+      "Tu peux exercer à tout moment tes droits d'accès, de rectification, d'effacement, d'opposition, de limitation du traitement et de portabilité de tes données, en écrivant à sablavakayaks@gmail.com. Tu as également le droit de déposer une réclamation auprès de l'Agence espagnole de protection des données (aepd.es) si tu estimes que tes données n'ont pas été traitées correctement.",
+    ],
+    "legal.changes.heading": "Modifications de cette politique",
+    "legal.changes.body": [
+      "Nous pouvons mettre à jour cette page si nous modifions la façon dont nous traitons tes données. La date de dernière mise à jour figure en haut de la page.",
+    ],
+    "legal.contact.heading": "Contact",
+    "legal.contact.body": [
+      "Pour toute question sur la confidentialité, écris-nous à sablavakayaks@gmail.com.",
+    ],
   },
 };
 

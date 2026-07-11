@@ -1,6 +1,7 @@
 // Lightweight hash router. Routes:
 //   #/                              → language selection
 //   #/weather                       → weather screen
+//   #/legal                         → privacy & legal notice
 //   #/routes                        → routes browser
 //   #/route/:id                     → route detail
 //   #/route/:id/map                 → full-screen map (markers only)
@@ -17,6 +18,7 @@ export function parseHash() {
   const parts = raw.split("/").filter(Boolean);
   if (parts.length === 0) return { name: "language", params: {} };
   if (parts[0] === "weather") return { name: "weather", params: {} };
+  if (parts[0] === "legal") return { name: "legal", params: {} };
   if (parts[0] === "routes") return { name: "routes", params: {} };
   if (
     parts[0] === "route" &&

@@ -99,6 +99,9 @@ export function renderLanguageScreen(host) {
       <button class="lang-screen__cta" type="button" data-action="continue">
         <span data-i18n="lang.cta">${t("lang.cta")}</span>
       </button>
+      <button type="button" class="lang-screen__legal" data-action="legal">
+        <span data-i18n="legal.link">${t("legal.link")}</span>
+      </button>
     </div>
   `;
 
@@ -156,6 +159,11 @@ export function renderLanguageScreen(host) {
   screen
     .querySelector("[data-action=weather-details]")
     .addEventListener("click", () => openWeatherOverlay());
+
+  // Privacy & legal notice — small unobtrusive link below the primary CTA.
+  screen
+    .querySelector("[data-action=legal]")
+    .addEventListener("click", () => navigate("/legal"));
 
   // ── Wind / Onatge tabs ─────────────────────────────────────────────────────
   const tabs   = screen.querySelectorAll(".weather-tab");

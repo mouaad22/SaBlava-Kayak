@@ -13,6 +13,7 @@ import { renderCodeEntryScreen } from "./screens/code-entry.js";
 import { renderRouteSummaryScreen } from "./screens/route-summary.js";
 import { renderNavigateScreen } from "./screens/navigate.js";
 import { renderWeatherScreen } from "./screens/weather.js";
+import { renderLegalScreen } from "./screens/legal.js";
 
 // Native-app feel: never let the browser restore a previous scroll position
 // when navigating between hash routes — every screen lands at the top.
@@ -28,6 +29,7 @@ const host = document.getElementById("screen-stack");
 const SCREEN_DEPTH = {
   language: 0,
   weather: 1,
+  legal: 1,
   routes: 1,
   route: 2,
   map: 2,
@@ -123,6 +125,12 @@ function render(route) {
       ensureMain({
         name: "weather",
         factory: () => renderWeatherScreen(host),
+      });
+      break;
+    case "legal":
+      ensureMain({
+        name: "legal",
+        factory: () => renderLegalScreen(host),
       });
       break;
     case "routes":

@@ -241,6 +241,19 @@ export function renderRouteScreen(host, routeId) {
   }
   carousel.addEventListener("scroll", recomputeActive, { passive: true });
 
+  // --- Scroll-linked header glass (S-06) -----------------------------------
+  // --header-p goes 0 → 1 over the first 64px of scroll; the CSS derives the
+  // header's translucency, backdrop blur, and shadow from it, so the glass
+  // tracks the finger 1:1. The listener dies with the screen element.
+  const headerEl = screen.querySelector(".route-screen__header");
+  const headerScroller = screen.querySelector(".route-screen__scroll");
+  function syncHeaderGlass() {
+    const p = Math.min(1, headerScroller.scrollTop / 64);
+    headerEl.style.setProperty("--header-p", p.toFixed(3));
+  }
+  headerScroller.addEventListener("scroll", syncHeaderGlass, { passive: true });
+  syncHeaderGlass();
+
   // --- Header buttons -----------------------------------------------------
   screen
     .querySelector("[data-action=back]")
@@ -305,8 +318,18 @@ export function renderRouteScreen(host, routeId) {
   });
 
   // --- CTA: navigate to code entry screen (Phase 2) -----------------------
-  screen.querySelector("[data-action=start]").addEventListener("click", () => {
-    navigate(`/route/${routeId}/code`);
+  // Confirm pulse (S-07): the button plays a quick scale pulse, then the
+  // navigation fires 180ms in — late enough to see the press-and-release,
+  // early enough to feel instant.
+  const startBtn = screen.querySelector("[data-action=start]");
+  startBtn.addEventListener("click", () => {
+    startBtn.classList.add("is-confirming");
+    startBtn.addEventListener(
+      "animationend",
+      () => startBtn.classList.remove("is-confirming"),
+      { once: true }
+    );
+    setTimeout(() => navigate(`/route/${routeId}/code`), 180);
   });
 
   requestAnimationFrame(() => {

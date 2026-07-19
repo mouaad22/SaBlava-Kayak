@@ -97,7 +97,8 @@ export function renderMapScreen(host, routeId) {
     .querySelector(".route-screen__back")
     .addEventListener("click", () => navigate(`/route/${routeId}`));
 
-  // Layer toggle — Paper map-stack-layer. CSS pins it just above the CTA bar.
+  // Layer toggle — Paper map-stack-layer. CSS pins it bottom-right, 8px
+  // above the Comença button in the CTA bar.
   const layerToggleEl = document.createElement("button");
   layerToggleEl.className = "poi-screen__map-toggle";
   layerToggleEl.type = "button";

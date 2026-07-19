@@ -95,8 +95,7 @@ p {
   position: relative;
   overflow: hidden;
   height: 100dvh;
-  box-shadow: 0 0 0 1px rgba(10, 77, 107, 0.06),
-    0 30px 80px rgba(10, 77, 107, 0.18);
+  box-shadow: var(--shadow-hairline), var(--shadow-2xl);
 }
 
 .screen-stack {

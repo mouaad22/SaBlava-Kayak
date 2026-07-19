@@ -42,6 +42,7 @@ export function renderCodeEntryScreen(host, routeId) {
             data-digit-idx="${i}"
             aria-label="Digit ${i + 1} of 6"
             autocomplete="off"
+            placeholder=" "
           />
         `).join("")}
       </div>
@@ -58,6 +59,7 @@ export function renderCodeEntryScreen(host, routeId) {
 
   const backBtn     = screen.querySelector(".code-entry-screen__back");
   const digitInputs = [...screen.querySelectorAll(".code-entry-screen__digit")];
+  const digitsRow   = screen.querySelector(".code-entry-screen__digits");
   const errorEl     = screen.querySelector(".code-entry-screen__error");
   const continueBtn = screen.querySelector(".code-entry-screen__continue");
 
@@ -87,6 +89,16 @@ export function renderCodeEntryScreen(host, routeId) {
       errorEl.hidden = true;
     } else {
       continueBtn.disabled = true;
+      // Shake the row once as the code first turns invalid — not on every
+      // keystroke while the error is already showing.
+      if (errorEl.hidden) {
+        digitsRow.classList.add("is-shaking");
+        digitsRow.addEventListener(
+          "animationend",
+          () => digitsRow.classList.remove("is-shaking"),
+          { once: true }
+        );
+      }
       errorEl.textContent = t("code.invalid");
       errorEl.hidden = false;
     }

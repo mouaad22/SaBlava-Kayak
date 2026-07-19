@@ -26,10 +26,27 @@ export function renderRoutesScreen(host) {
   `;
 
   host.appendChild(screen);
+
+  // Stagger the tile entrances (S-02): each card lands 80ms after the last.
+  screen.querySelectorAll(".route-tile").forEach((tile, i) => {
+    tile.style.animationDelay = `${i * 80}ms`;
+  });
+
   requestAnimationFrame(() => {
     screen.classList.add("is-active");
     screen.scrollTop = 0;
   });
+
+  // Scroll-linked header shadow (S-06) — same progress driver as the route
+  // detail screen so the shared header behaves identically on both pages.
+  const headerEl = screen.querySelector(".route-screen__header");
+  const scroller = screen.querySelector(".routes-screen__main");
+  function syncHeaderGlass() {
+    const p = Math.min(1, scroller.scrollTop / 64);
+    headerEl.style.setProperty("--header-p", p.toFixed(3));
+  }
+  scroller.addEventListener("scroll", syncHeaderGlass, { passive: true });
+  syncHeaderGlass();
 
   // ── Back → home (language screen) ─────────────────────────────────────────
   screen

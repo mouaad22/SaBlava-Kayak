@@ -25,16 +25,28 @@
   width: 100%;
 }
 
+@media (hover: hover) {
+  .btn--primary:hover {
+    filter: brightness(1.07);
+  }
+}
+
 .btn--primary:active {
   background: var(--color-primary-dark);
   transform: translateY(1px);
-  box-shadow: 0 2px 8px rgba(11, 110, 140, 0.3);
+  box-shadow: var(--shadow-cta-pressed);
 }
 
 .btn--ghost {
   background: transparent;
   color: var(--color-primary);
   border: 1.5px solid var(--color-border);
+}
+
+@media (hover: hover) {
+  .btn--ghost:hover {
+    background: var(--color-surface-tinted);
+  }
 }
 
 .btn--ghost:active {
@@ -52,7 +64,8 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: var(--color-primary-dark);
-  box-shadow: 0 2px 8px rgba(10, 77, 107, 0.18);
+  border: 1px solid var(--hairline-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .icon {
@@ -247,14 +260,20 @@
 .btn--danger {
   background: var(--color-emergency);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(217, 58, 43, 0.28);
+  box-shadow: var(--shadow-emergency);
   width: 100%;
+}
+
+@media (hover: hover) {
+  .btn--danger:hover {
+    filter: brightness(1.06);
+  }
 }
 
 .btn--danger:active {
   background: #b52d1f;
   transform: translateY(1px);
-  box-shadow: 0 2px 6px rgba(217, 58, 43, 0.2);
+  box-shadow: var(--shadow-emergency-pressed);
 }
 
 /* ── Start-route safety modal ──────────────────────────────────────────────── */
@@ -371,7 +390,7 @@
 
 .start-modal__code-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(27, 107, 138, 0.15);
+  box-shadow: var(--ring);
 }
 
 .start-modal__code-input.is-shaking {
@@ -479,6 +498,7 @@
   height: 32px;
   border: 0;
   border-radius: var(--radius-pill);
+  corner-shape: var(--corner-shape);
   background: var(--color-track);
   color: var(--color-text-secondary);
   cursor: pointer;

@@ -103,24 +103,56 @@ export function renderGalleryScreen(host, routeId, poiIndex) {
     slide.dataset.hydrated = "1";
   }
 
-  function showSlide(i) {
+  function showSlide(i, direction) {
     const next = clamp(i, 0, gallery.length - 1);
     if (next === currentSlide && stackEl.children[next]?.classList.contains("is-active")) {
       return;
     }
+    // Direction-aware transition (S-04): forward slides enter from the right,
+    // backward from the left. Explicit direction comes from the gesture; the
+    // index comparison covers programmatic jumps (e.g. future dot clicks).
+    const dir = direction ?? (next > currentSlide ? "forward" : "backward");
+    const prevSlide = stackEl.children[currentSlide];
+    const nextSlide = stackEl.children[next];
     // Pause any video that was playing on the slide we're leaving
-    const prevVid = stackEl.children[currentSlide]?.querySelector("video");
+    const prevVid = prevSlide?.querySelector("video");
     if (prevVid) {
       try {
         prevVid.pause();
       } catch {}
     }
-    Array.from(stackEl.children).forEach((s, j) =>
-      s.classList.toggle("is-active", j === next)
-    );
+    // Outgoing slide drifts out the opposite way, then drops its exit class
+    // once the 280ms transition has finished (opacity:0 keeps it hidden).
+    if (prevSlide && prevSlide !== nextSlide) {
+      prevSlide.classList.add(
+        dir === "forward" ? "is-exiting-left" : "is-exiting-right"
+      );
+      prevSlide.classList.remove("is-active");
+      setTimeout(
+        () => prevSlide.classList.remove("is-exiting-left", "is-exiting-right"),
+        300
+      );
+    }
     currentSlide = next;
     sessionStorage.setItem("sa-blava.gallery.slide", String(currentSlide));
+    // Hydrate before activating so the <img> exists when the slide glides in
     hydrateSlide(currentSlide);
+    if (nextSlide) {
+      // A rapid back-and-forth can catch this slide mid-exit — reset it.
+      nextSlide.classList.remove("is-exiting-left", "is-exiting-right");
+      nextSlide.classList.add(
+        dir === "forward" ? "is-entering-from-right" : "is-entering-from-left"
+      );
+      // Force a style flush so the translated start position is committed —
+      // a bare rAF can coalesce both class changes into one recalc and skip
+      // the transition entirely.
+      void nextSlide.offsetWidth;
+      nextSlide.classList.remove(
+        "is-entering-from-right",
+        "is-entering-from-left"
+      );
+      nextSlide.classList.add("is-active");
+    }
     // Preload immediate neighbours so a swipe shows instantly
     hydrateSlide(currentSlide + 1);
     hydrateSlide(currentSlide - 1);
@@ -158,11 +190,11 @@ export function renderGalleryScreen(host, routeId, poiIndex) {
   attachSwipe(mediaEl, {
     onLeft: () => {
       suppressClickUntil = Date.now() + 350;
-      showSlide(currentSlide + 1);
+      showSlide(currentSlide + 1, "forward");
     },
     onRight: () => {
       suppressClickUntil = Date.now() + 350;
-      showSlide(currentSlide - 1);
+      showSlide(currentSlide - 1, "backward");
     },
   });
 
@@ -175,8 +207,8 @@ export function renderGalleryScreen(host, routeId, poiIndex) {
     if (e.target instanceof HTMLVideoElement) return;
     const rect = mediaEl.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    if (x < rect.width / 2) showSlide(currentSlide - 1);
-    else showSlide(currentSlide + 1);
+    if (x < rect.width / 2) showSlide(currentSlide - 1, "backward");
+    else showSlide(currentSlide + 1, "forward");
   });
 
   function teardown() {

@@ -327,17 +327,59 @@ export function watchFilteredPosition(onFix, onState, opts = {}) {
 }
 
 /**
+ * Decide what a `code 1` denial should show the paddler.
+ *
+ * Pure so the escalation is testable without a browser — it is the recovery
+ * path for the most common on-water failure, and it used to be wrong.
+ *
+ * A denial cannot be classified from the error alone: the same `code 1` covers
+ * a hard block, a dismissed prompt and a mis-tapped "Don't Allow", and the
+ * Permissions API cannot separate them either (see geoPermissionState). So the
+ * distinction is made empirically, by spending a retry:
+ *
+ *   1st denial  → offer the retry alone. Re-requesting re-prompts whenever the
+ *                 refusal was soft, which is the common case, and an extra line
+ *                 of settings instructions would just be noise.
+ *   2nd denial  → the retry was spent and still failed, so treat it as a real
+ *                 block and name the settings path. The retry stays, because the
+ *                 paddler may fix it in Settings and come back to this screen.
+ *
+ * @param {number} deniedCount  consecutive code-1 denials (reset on any fix)
+ * @param {{ios?: boolean, standalone?: boolean}} [env]
+ * @returns {{messageKey: string, helpKey: string|null, retry: boolean}}
+ */
+export function planDeniedBanner(deniedCount, env = {}) {
+  if (deniedCount < 2) {
+    return { messageKey: "nav.permission.denied", helpKey: null, retry: true };
+  }
+  // iOS keeps the switch in the OS Settings app, and an installed PWA has its
+  // own entry there separate from Safari's — so "browser settings" is a dead
+  // end on the platform that makes up most of this app's traffic.
+  const helpKey = !env.ios
+    ? "nav.gps.denied.help"
+    : env.standalone
+      ? "nav.gps.denied.help.ios.pwa"
+      : "nav.gps.denied.help.ios";
+  return { messageKey: "nav.gps.denied", helpKey, retry: true };
+}
+
+/**
  * Current geolocation permission state via the Permissions API.
  *
- * Distinguishes a hard "Block" (state "denied" — JS can no longer surface the
- * native prompt, the user must re-enable it in browser settings) from a merely
- * dismissed prompt (state "prompt" — calling watchPosition again WILL re-prompt).
- * The geolocation error callback reports `code 1` for both, so this is the only
- * way to tell them apart and offer the right recovery UI.
+ * DO NOT gate recovery UI on this. It was previously used to tell a hard block
+ * from a dismissed prompt, but that is not safe: a real-device run on iOS 18.7 /
+ * Safari 26.5 returned "denied" while watchPosition was streaming 10 good fixes
+ * (best 7 m). Safari appears to collapse the never-asked "prompt" state onto
+ * "denied", so on iPhone — the majority of this app's traffic — the answer is
+ * wrong in exactly the case the UI cared about, and the paddler loses the retry
+ * button they needed. navigate.js now establishes the difference empirically
+ * instead, by spending a retry and seeing whether it re-prompts.
+ *
+ * Still useful as corroboration ("granted" is trustworthy — nothing reports
+ * granted when it is blocked) and for diagnostics. See /diag.html.
  *
  * @returns {Promise<"granted"|"denied"|"prompt"|"unknown">} "unknown" when the
- *   Permissions API is unavailable (older iOS Safari) — callers should then
- *   assume a retry might still work.
+ *   Permissions API is unavailable — callers should then assume a retry may work.
  */
 export async function geoPermissionState() {
   if (!navigator.permissions?.query) return "unknown";

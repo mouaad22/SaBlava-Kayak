@@ -15,7 +15,7 @@ import {
   getSession, endSession, timeRemainingMs, isActive,
   getFiredThresholds, markThresholdsFired,
 } from "../nav/session.js";
-import { haversineM, trackThroughPois, watchFilteredPosition, geoPermissionState } from "../nav/geo.js";
+import { haversineM, trackThroughPois, watchFilteredPosition, planDeniedBanner } from "../nav/geo.js";
 import { createTripProgress } from "../nav/trip-progress.js";
 import { reconcileThresholds } from "../nav/alerts.js";
 import { speak, chime, announceArrival, notify, vibrate, prime } from "../nav/audio.js";
@@ -25,7 +25,7 @@ import { MAPBOX_TOKEN, MAPBOX_STYLE, MAPBOX_SATELLITE_STYLE, ALERT_RESUME_GRACE_
 import { addRouteTrack } from "./map.js";
 import { mountNavTweakpane } from "../dev/nav-tweakpane.js";
 import { getKayakId } from "../kayak.js";
-import { getDeviceToken } from "../nav/device.js";
+import { getDeviceToken, isIOS, isStandalone } from "../nav/device.js";
 
 const TABS = { MAP: "map", DATA: "data" };
 
@@ -66,6 +66,10 @@ export function renderNavigateScreen(host, routeId) {
   let mapReady         = false;
   let positionMarker   = null;
   let watchCleanup     = null;
+  // Consecutive code-1 denials across watch attempts. Drives whether the denied
+  // banner offers just a retry (1st) or the settings path too (2nd+); reset on
+  // any accepted fix so a later, unrelated denial starts from the gentle case.
+  let deniedCount      = 0;
   let rafId            = null;
   let clockId          = null;     // setInterval id for the wall-clock alert tick
   let lastTickMs       = 0;
@@ -371,12 +375,12 @@ export function renderNavigateScreen(host, routeId) {
   // ── GPS watch ─────────────────────────────────────────────────────────────
   // Reflect a coarse GPS state to the banner. "acquiring" is non-alarming and
   // auto-hides on the first accepted fix; timeout/unavailable/denied surface an
-  // honest message, and the recoverable cases offer a "Tornar a provar" button
-  // (denied also shows one line of OS guidance, since most browsers won't
-  // re-prompt once a permission is set).
+  // honest message and ALWAYS offer a retry — a wasted tap costs nothing, while
+  // a missing button strands a paddler who could have recovered in one tap.
   function setGpsState(state) {
     switch (state) {
       case "ok":
+        deniedCount = 0;
         gpsBanner.hidden = true;
         return;
       case "acquiring":
@@ -386,30 +390,31 @@ export function renderNavigateScreen(host, routeId) {
         showGpsBanner(t("nav.gps.weak"), { tone: "info" });
         return;
       case "timeout":
-        showGpsBanner(t("nav.gps.timeout"), { tone: "warn" });
+        // A timeout is the MOST recoverable state there is — the fix is usually
+        // just "wait a bit longer under open sky". It previously offered no way
+        // back at all.
+        showGpsBanner(t("nav.gps.timeout"), { tone: "warn", retry: true });
         return;
       case "unavailable":
         showGpsBanner(t("nav.gps.unavailable"), { tone: "warn", retry: true });
         return;
       case "denied":
-        // err.code 1 fires for BOTH a hard "Block" and a merely dismissed
-        // prompt. Only the Permissions API can tell them apart, so refine the
-        // banner async: offer a retry button only when it can actually re-prompt.
-        refineDeniedBanner();
+        deniedCount++;
+        showDeniedBanner();
         return;
     }
   }
 
-  // Hard-denied → a retry can't re-surface the native prompt, so drop the button
-  // and point the paddler at browser settings. Dismissed/unknown → the prompt
-  // can still reappear, so show the retry button instead.
-  async function refineDeniedBanner() {
-    const state = await geoPermissionState();
-    if (state === "denied") {
-      showGpsBanner(t("nav.gps.denied"), { tone: "warn", help: t("nav.gps.denied.help") });
-    } else {
-      showGpsBanner(t("nav.permission.denied"), { tone: "warn", retry: true });
-    }
+  // A code-1 denial can't be classified from the error alone, so the escalation
+  // (retry first, settings path only once a retry has been spent) lives in the
+  // pure planDeniedBanner — see its docblock for why.
+  function showDeniedBanner() {
+    const plan = planDeniedBanner(deniedCount, { ios: isIOS(), standalone: isStandalone() });
+    showGpsBanner(t(plan.messageKey), {
+      tone:  "warn",
+      retry: plan.retry,
+      help:  plan.helpKey ? t(plan.helpKey) : "",
+    });
   }
 
   function showGpsBanner(msg, { tone = "warn", retry = false, help = "" } = {}) {

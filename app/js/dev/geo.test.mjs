@@ -10,7 +10,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { watchFilteredPosition, geoPermissionState, haversineM } from "../nav/geo.js";
+import {
+  watchFilteredPosition,
+  geoPermissionState,
+  planDeniedBanner,
+  haversineM,
+} from "../nav/geo.js";
 import { GPS_MAX_ACCURACY_M, GPS_STALE_FIX_MS } from "../config.js";
 
 /** Replace globalThis.navigator (read-only in modern node) for one test. */
@@ -137,4 +142,53 @@ test("geoPermissionState falls back to 'unknown' when query throws", async () =>
 test("haversineM sanity: ~111 m for 0.001° of latitude", () => {
   const d = haversineM([3.21, 41.93], [3.21, 41.931]);
   assert.ok(Math.abs(d - 111) < 2, `expected ~111 m, got ${d}`);
+});
+
+// ── planDeniedBanner ──────────────────────────────────────────────────────────
+// The recovery path for a denied permission. The previous implementation gated
+// the retry button on the Permissions API, which iOS Safari answers "denied"
+// even while GPS streams fine — so every iPhone lost the button it needed.
+
+test("first denial offers a retry and no settings lecture", () => {
+  const plan = planDeniedBanner(1, { ios: true, standalone: false });
+  assert.equal(plan.retry, true);
+  assert.equal(plan.helpKey, null);
+  assert.equal(plan.messageKey, "nav.permission.denied");
+});
+
+test("second denial adds the settings path but KEEPS the retry", () => {
+  // The paddler may fix it in Settings and come straight back to this screen,
+  // so removing the button here is what stranded them before.
+  const plan = planDeniedBanner(2, { ios: true, standalone: false });
+  assert.equal(plan.retry, true);
+  assert.equal(plan.helpKey, "nav.gps.denied.help.ios");
+  assert.equal(plan.messageKey, "nav.gps.denied");
+});
+
+test("iOS gets the OS settings path, never the browser-settings copy", () => {
+  const plan = planDeniedBanner(3, { ios: true, standalone: false });
+  assert.notEqual(plan.helpKey, "nav.gps.denied.help");
+  assert.ok(plan.helpKey.startsWith("nav.gps.denied.help.ios"));
+});
+
+test("an installed PWA is pointed at its own Location Services entry", () => {
+  const plan = planDeniedBanner(2, { ios: true, standalone: true });
+  assert.equal(plan.helpKey, "nav.gps.denied.help.ios.pwa");
+});
+
+test("non-iOS keeps the generic browser-settings copy", () => {
+  const plan = planDeniedBanner(2, { ios: false, standalone: false });
+  assert.equal(plan.helpKey, "nav.gps.denied.help");
+});
+
+test("a missing env argument does not throw and stays generic", () => {
+  assert.equal(planDeniedBanner(2).helpKey, "nav.gps.denied.help");
+});
+
+test("the retry is offered at EVERY denial count — never withdrawn", () => {
+  // Regression guard for the original bug: an iPhone that reports "denied"
+  // must never reach a state with no way back.
+  for (const n of [1, 2, 3, 10]) {
+    assert.equal(planDeniedBanner(n, { ios: true }).retry, true, `denial #${n}`);
+  }
 });

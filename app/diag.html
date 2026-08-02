@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#1b6b8a" />
+    <title>Sa Blava — GPS diagnostic</title>
+
+    <!--
+      Standalone iOS geolocation diagnostic.
+
+      Deliberately self-contained: no ESM imports, no shared stylesheet, no
+      service-worker registration, no Mapbox. The whole point is to still work
+      on a phone where the app itself is misbehaving, so it must not share a
+      failure mode with the app (a broken module graph, a stale cached CSS
+      file, a wedged SW).
+
+      It answers one question: after the user taps "Allow", what does iOS
+      ACTUALLY hand the page, and how long does it take? The three candidate
+      causes produce clearly different traces:
+
+        • OS Location Services off for Safari → err.code 1, instantly.
+        • Precise Location off              → fixes arrive, accuracy stays
+                                              in the kilometres, forever.
+        • Cold-start GPS + the app's 35 m
+          accuracy gate                     → fixes arrive coarse, then
+                                              converge under 35 m after N s.
+                                              (N is the number we want.)
+    -->
+
+    <style>
+      :root {
+        --bg: #f6f7f8;
+        --card: #ffffff;
+        --ink: #12181d;
+        --muted: #5c6b76;
+        --line: #dfe4e8;
+        --brand: #1b6b8a;
+        --ok: #1a7f4b;
+        --warn: #a35a00;
+        --bad: #b3261e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1418;
+          --card: #171e24;
+          --ink: #eef2f5;
+          --muted: #9aa9b4;
+          --line: #2a343c;
+          --brand: #5fb3d4;
+          --ok: #5cd699;
+          --warn: #f0b355;
+          --bad: #ff8a80;
+        }
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 16px 16px calc(32px + env(safe-area-inset-bottom));
+        background: var(--bg);
+        color: var(--ink);
+        font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      h1 { font-size: 20px; margin: 0 0 4px; }
+      .sub { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 14px;
+      }
+      .card h2 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin: 0 0 10px;
+        font-weight: 600;
+      }
+
+      button {
+        font: inherit;
+        font-weight: 600;
+        width: 100%;
+        padding: 16px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--brand);
+        color: #fff;
+        -webkit-appearance: none;
+        cursor: pointer;
+      }
+      button:disabled { opacity: 0.45; }
+      button.secondary {
+        background: transparent;
+        color: var(--brand);
+        border: 1px solid var(--line);
+        padding: 13px;
+        margin-top: 10px;
+      }
+
+      /* Key/value rows for the environment block. */
+      .kv { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 14px; }
+      .kv + .kv { border-top: 1px solid var(--line); }
+      .kv dt { color: var(--muted); flex: 0 0 auto; }
+      .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; word-break: break-word; }
+      dl { margin: 0; }
+
+      /* Big live counters — readable at arm's length in sunlight. */
+      .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stat { text-align: center; padding: 10px 4px; border: 1px solid var(--line); border-radius: 10px; }
+      .stat .n { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; display: block; }
+      .stat .l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+      #log {
+        font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+        white-space: pre;
+        overflow-x: auto;
+        max-height: 260px;
+        overflow-y: auto;
+        margin: 0;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      #verdict { display: none; }
+      #verdict.show { display: block; }
+      #verdict .title { font-size: 17px; font-weight: 700; margin: 0 0 6px; }
+      #verdict .body { font-size: 14px; margin: 0; color: var(--muted); }
+      .ok   { color: var(--ok); }
+      .warn { color: var(--warn); }
+      .bad  { color: var(--bad); }
+    </style>
+  </head>
+
+  <body>
+    <h1>GPS diagnostic</h1>
+    <p class="sub">
+      Run this on an iPhone that shows the problem. Go outside with a clear view
+      of the sky, tap Start, then tap <strong>Allow</strong> on the iOS prompt and
+      leave the screen on for 45&nbsp;seconds.
+    </p>
+
+    <button id="start">Start test</button>
+
+    <div class="card" style="margin-top: 14px">
+      <h2>Live</h2>
+      <div class="stats">
+        <div class="stat"><span class="n" id="s-elapsed">—</span><span class="l">seconds</span></div>
+        <div class="stat"><span class="n" id="s-fixes">0</span><span class="l">fixes</span></div>
+        <div class="stat"><span class="n" id="s-acc">—</span><span class="l">accuracy now</span></div>
+        <div class="stat"><span class="n" id="s-best">—</span><span class="l">best accuracy</span></div>
+      </div>
+    </div>
+
+    <div class="card" id="verdict"><p class="title"></p><p class="body"></p></div>
+
+    <div class="card">
+      <h2>Environment</h2>
+      <dl id="env"></dl>
+    </div>
+
+    <div class="card">
+      <h2>Trace</h2>
+      <pre id="log">Not started.</pre>
+    </div>
+
+    <button class="secondary" id="copy" disabled>Copy results</button>
+
+    <script>
+      // ── Thresholds ────────────────────────────────────────────────────────
+      // APP_GATE mirrors GPS_MAX_ACCURACY_M in app/js/config.js — the app drops
+      // every fix worse than this, so "time until accuracy <= APP_GATE" is
+      // literally the time until the app becomes usable.
+      var APP_GATE   = 35;
+      // Reduced-accuracy mode ("Precise Location" off) hands back a circular
+      // region kilometres across. Nothing on a phone with a real GPS lock is
+      // ever this bad, so a sustained value over this is a positive ID.
+      var COARSE     = 500;
+      var RUN_MS     = 45000;
+
+      var startedAt = 0, watchId = null, tick = null;
+      var fixes = 0, best = Infinity, firstFixMs = null, firstGoodMs = null;
+      var errors = [];          // {ms, code, message}
+      var lines  = [];          // trace lines, also what "Copy results" exports
+      var permAtStart = "not-checked";
+
+      var $ = function (id) { return document.getElementById(id); };
+
+      function log(msg) {
+        var t = startedAt ? ((Date.now() - startedAt) / 1000).toFixed(1) : "0.0";
+        lines.push("[" + t + "s] " + msg);
+        var el = $("log");
+        el.textContent = lines.join("\n");
+        el.scrollTop = el.scrollHeight;
+      }
+
+      // ── Environment ───────────────────────────────────────────────────────
+      // Captured before the test so it lands in the copied report even if the
+      // run is cut short.
+
+      function standaloneMode() {
+        // iOS sets navigator.standalone for home-screen web apps; the media
+        // query is the cross-browser equivalent. Either one means the page is
+        // NOT running inside Safari, which matters a lot here: an installed PWA
+        // gets its own Location Services entry in iOS Settings, separate from
+        // "Safari Websites", and has a long history of never showing the prompt.
+        if (navigator.standalone === true) return "yes (iOS home screen)";
+        if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) {
+          return "yes (display-mode)";
+        }
+        return "no (in browser)";
+      }
+
+      function iosVersion() {
+        var m = navigator.userAgent.match(/OS (\d+)[_.](\d+)/);
+        return m ? m[1] + "." + m[2] : "n/a";
+      }
+
+      function renderEnv(rows) {
+        $("env").innerHTML = rows.map(function (r) {
+          return "<div class='kv'><dt>" + r[0] + "</dt><dd>" + r[1] + "</dd></div>";
+        }).join("");
+      }
+
+      var env = [
+        ["Standalone", standaloneMode()],
+        ["iOS version", iosVersion()],
+        ["Geolocation API", navigator.geolocation ? "present" : "MISSING"],
+        ["Permissions API", (navigator.permissions && navigator.permissions.query) ? "present" : "missing"],
+        ["Permission state", "not checked yet"],
+        ["Secure context", window.isSecureContext ? "yes" : "NO — geolocation is blocked"],
+        ["Service worker", navigator.serviceWorker && navigator.serviceWorker.controller ? "controlling" : "none"],
+        ["Screen", window.screen.width + "×" + window.screen.height],
+      ];
+      renderEnv(env);
+
+      function setEnv(label, value) {
+        for (var i = 0; i < env.length; i++) if (env[i][0] === label) env[i][1] = value;
+        renderEnv(env);
+      }
+
+      // Safari only gained Permissions API support for geolocation relatively
+      // late, so "unknown" is a normal answer here, not a failure.
+      function readPermission() {
+        if (!navigator.permissions || !navigator.permissions.query) return Promise.resolve("unknown");
+        return navigator.permissions.query({ name: "geolocation" })
+          .then(function (s) {
+            s.onchange = function () { log("permission changed → " + s.state); setEnv("Permission state", s.state); };
+            return s.state;
+          })
+          .catch(function () { return "unknown"; });
+      }
+
+      readPermission().then(function (s) { setEnv("Permission state", s); });
+
+      // ── The run ───────────────────────────────────────────────────────────
+
+      function start() {
+        $("start").disabled = true;
+        $("start").textContent = "Running…";
+        $("verdict").className = "card";
+        lines = []; fixes = 0; best = Infinity; firstFixMs = null; firstGoodMs = null; errors = [];
+
+        readPermission().then(function (s) {
+          permAtStart = s;
+          setEnv("Permission state", s);
+          log("permission before request: " + s);
+        });
+
+        startedAt = Date.now();
+        log("watchPosition({enableHighAccuracy:true, maximumAge:0, timeout:" + RUN_MS + "})");
+
+        if (!navigator.geolocation) { log("FATAL: navigator.geolocation missing"); return finish(); }
+
+        // Same options the app uses, except the timeout is stretched to the
+        // full run so the browser doesn't cut the trace short at 15s.
+        watchId = navigator.geolocation.watchPosition(onFix, onErr, {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: RUN_MS,
+        });
+
+        tick = setInterval(function () {
+          var ms = Date.now() - startedAt;
+          $("s-elapsed").textContent = Math.floor(ms / 1000);
+          if (ms >= RUN_MS) finish();
+        }, 250);
+      }
+
+      function onFix(pos) {
+        var ms  = Date.now() - startedAt;
+        var acc = pos.coords.accuracy;
+        fixes++;
+        if (firstFixMs === null) firstFixMs = ms;
+        if (acc < best) best = acc;
+        if (firstGoodMs === null && acc <= APP_GATE) {
+          firstGoodMs = ms;
+          log("★ first fix the APP would accept (≤" + APP_GATE + "m)");
+        }
+
+        $("s-fixes").textContent = fixes;
+        $("s-acc").textContent  = Math.round(acc) + "m";
+        $("s-best").textContent = Math.round(best) + "m";
+
+        // Coordinates rounded to ~1 m — enough to sanity-check the fix is real
+        // and in Aiguablava, without writing a precise track into a report the
+        // user is going to paste somewhere.
+        log("fix #" + fixes + "  acc=" + Math.round(acc) + "m  " +
+            pos.coords.latitude.toFixed(5) + "," + pos.coords.longitude.toFixed(5) +
+            (acc > APP_GATE ? "  ← app DROPS this" : ""));
+      }
+
+      function onErr(err) {
+        var ms = Date.now() - startedAt;
+        errors.push({ ms: ms, code: err.code, message: err.message });
+        var name = err.code === 1 ? "PERMISSION_DENIED"
+                 : err.code === 2 ? "POSITION_UNAVAILABLE"
+                 : err.code === 3 ? "TIMEOUT" : "UNKNOWN";
+        log("ERROR code=" + err.code + " (" + name + ") — " + err.message);
+        // code 1 is terminal: iOS will not deliver anything else this session.
+        if (err.code === 1) finish();
+      }
+
+      function finish() {
+        if (tick) { clearInterval(tick); tick = null; }
+        if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+        $("start").disabled = false;
+        $("start").textContent = "Run again";
+        $("copy").disabled = false;
+        verdict();
+      }
+
+      // ── Verdict ───────────────────────────────────────────────────────────
+      // Maps the trace onto the candidate causes. Ordered most-conclusive first.
+
+      function verdict() {
+        var el = $("verdict"), title, body, tone;
+        var denied = errors.some(function (e) { return e.code === 1; });
+
+        if (!navigator.geolocation || !window.isSecureContext) {
+          tone = "bad";
+          title = "Geolocation is not available at all";
+          body = "The page isn't a secure context, or the API is missing. This is an environment problem, not a permissions one.";
+        } else if (denied) {
+          tone = "bad";
+          title = "Blocked before any fix arrived (code 1)";
+          body = permAtStart === "denied"
+            ? "The permission is hard-denied for this site, so no prompt can appear. Recovery is Settings → Apps → Safari → Location, or resetting site permissions."
+            : "iOS refused immediately. If you tapped Allow, this is the OS layer: Settings → Privacy & Security → Location Services → Safari Websites is set to Never. The page cannot change this — only a settings trip fixes it.";
+        } else if (fixes === 0) {
+          tone = "bad";
+          title = "Permission looks fine, but no position ever arrived";
+          body = "No fixes and no error in " + (RUN_MS / 1000) + "s. This is the silent-failure case: the app has no branch for it today and just sits on 'acquiring'.";
+        } else if (best > COARSE) {
+          tone = "bad";
+          title = "Precise Location is OFF";
+          body = "Best accuracy in the whole run was " + Math.round(best) + "m. A real GPS lock is never that coarse — iOS is handing over a reduced-accuracy region. Fix: Settings → Privacy & Security → Location Services → Safari Websites → Precise Location ON. At this accuracy the app genuinely cannot navigate, so this one does require the settings trip.";
+        } else if (firstGoodMs === null) {
+          tone = "warn";
+          title = "Usable signal, but never good enough for the app's filter";
+          body = "Best accuracy was " + Math.round(best) + "m, and the app's gate is " + APP_GATE + "m — so every single fix was discarded and the paddler saw 'weak signal' the whole time. The GPS is working. The threshold is too strict.";
+        } else if (firstGoodMs > 8000) {
+          tone = "warn";
+          title = "This is the cold-start problem — " + (firstGoodMs / 1000).toFixed(1) + "s of looking broken";
+          body = "First fix at " + (firstFixMs / 1000).toFixed(1) + "s, but the first one the app would ACCEPT took " + (firstGoodMs / 1000).toFixed(1) + "s. Until then the app shows 'weak signal' and users go hunting in Settings — then come back to a working app and credit the settings change. Nothing is wrong with permissions here; the fix is in the app.";
+        } else {
+          tone = "ok";
+          title = "Healthy — working " + (firstGoodMs / 1000).toFixed(1) + "s after Allow";
+          body = "Permission granted, fixes flowing, accuracy inside the app's " + APP_GATE + "m gate quickly. This phone is not reproducing the bug — try one that does.";
+        }
+
+        el.querySelector(".title").className = "title " + tone;
+        el.querySelector(".title").textContent = title;
+        el.querySelector(".body").textContent = body;
+        el.className = "card show";
+        log("VERDICT: " + title);
+      }
+
+      // ── Export ────────────────────────────────────────────────────────────
+
+      function report() {
+        var out = ["Sa Blava GPS diagnostic", new Date().toISOString(), ""];
+        for (var i = 0; i < env.length; i++) out.push(env[i][0] + ": " + env[i][1]);
+        out.push("UA: " + navigator.userAgent, "");
+        out.push("fixes=" + fixes +
+                 "  best=" + (best === Infinity ? "n/a" : Math.round(best) + "m") +
+                 "  firstFix=" + (firstFixMs === null ? "never" : (firstFixMs / 1000).toFixed(1) + "s") +
+                 "  firstAccepted=" + (firstGoodMs === null ? "never" : (firstGoodMs / 1000).toFixed(1) + "s"));
+        out.push("", lines.join("\n"));
+        return out.join("\n");
+      }
+
+      $("copy").addEventListener("click", function () {
+        var text = report();
+        // navigator.clipboard needs HTTPS and can reject in a standalone PWA;
+        // fall back to a selectable dump so the report is never trapped.
+        var done = function () { $("copy").textContent = "Copied ✓"; };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () { $("log").textContent = text; done(); });
+        } else {
+          $("log").textContent = text;
+          done();
+        }
+      });
+
+      // The prompt is deliberately fired from a real tap. iOS is happier about
+      // it, and it mirrors the "priming" flow being proposed for the app.
+      $("start").addEventListener("click", start);
+    </script>
+  </body>
+</html>

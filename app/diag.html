@@ -192,6 +192,10 @@
       var errors = [];          // {ms, code, message}
       var lines  = [];          // trace lines, also what "Copy results" exports
       var permAtStart = "not-checked";
+      // Re-read after the first fix. Safari has been observed reporting "denied"
+      // while geolocation is granted and streaming positions — a contradiction
+      // the app currently trusts when deciding whether to offer a retry button.
+      var permAfterFix = "not-checked";
 
       var $ = function (id) { return document.getElementById(id); };
 
@@ -237,6 +241,7 @@
         ["Geolocation API", navigator.geolocation ? "present" : "MISSING"],
         ["Permissions API", (navigator.permissions && navigator.permissions.query) ? "present" : "missing"],
         ["Permission state", "not checked yet"],
+        ["Permission state (after a fix)", "—"],
         ["Secure context", window.isSecureContext ? "yes" : "NO — geolocation is blocked"],
         ["Service worker", navigator.serviceWorker && navigator.serviceWorker.controller ? "controlling" : "none"],
         ["Screen", window.screen.width + "×" + window.screen.height],
@@ -300,7 +305,18 @@
         var ms  = Date.now() - startedAt;
         var acc = pos.coords.accuracy;
         fixes++;
-        if (firstFixMs === null) firstFixMs = ms;
+        if (firstFixMs === null) {
+          firstFixMs = ms;
+          // A position just arrived, so permission is unambiguously granted
+          // right now. Whatever the Permissions API answers here is ground
+          // truth about the API itself, not about the permission.
+          readPermission().then(function (s) {
+            permAfterFix = s;
+            setEnv("Permission state (after a fix)", s);
+            log("permission re-read WITH fixes flowing: " + s +
+                (s === "granted" ? "" : "  ← MISREPORT: positions are arriving"));
+          });
+        }
         if (acc < best) best = acc;
         if (firstGoodMs === null && acc <= APP_GATE) {
           firstGoodMs = ms;
@@ -376,6 +392,17 @@
           tone = "ok";
           title = "Healthy — working " + (firstGoodMs / 1000).toFixed(1) + "s after Allow";
           body = "Permission granted, fixes flowing, accuracy inside the app's " + APP_GATE + "m gate quickly. This phone is not reproducing the bug — try one that does.";
+        }
+
+        // Independent of the cause above: if positions were flowing while the
+        // Permissions API claimed anything other than "granted", the API is
+        // lying — and navigate.js gates its retry button on that exact value.
+        if (fixes > 0 && permAfterFix !== "granted" && permAfterFix !== "unknown" &&
+            permAfterFix !== "not-checked") {
+          if (tone === "ok") tone = "warn";
+          body += "  ALSO: the Permissions API reported \"" + permAfterFix +
+                  "\" while " + fixes + " positions were arriving. It is misreporting, " +
+                  "and the app trusts that value to decide whether to show a retry button.";
         }
 
         el.querySelector(".title").className = "title " + tone;
